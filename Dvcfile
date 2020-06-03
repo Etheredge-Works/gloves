@@ -1,0 +1,5 @@
+md5: 638772106f53e3dd8b2b4e1099f626d4
+cmd: rm images/Abyssinian_100.mat images/Abyssinian_101.mat images/Abyssinian_102.mat
+deps:
+- md5: 5185c09a30ecbb914786cdae672ebe63.dir
+  path: .

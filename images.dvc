@@ -1,0 +1,11 @@
+md5: 3f4da36e0e2ac16048a5c6fbeade77fe
+cmd: tar -xzf images.tar.gz
+deps:
+- md5: 5c4f3ee8e5d25df40f4fd59a7f44e54c
+  path: images.tar.gz
+outs:
+- md5: 277f608c70d7bd7991e0cd5f5cc845c6.dir
+  path: images
+  cache: true
+  metric: false
+  persist: false
