@@ -9,7 +9,7 @@ pipeline {
     stage('Unit Testing') {
       steps {
         echo 'Testing Utils'
-        sh 'python -m pytest -n 32 test_utils.py'
+        sh 'python -m pytest -n 8 test_utils.py'
       }
     }
 
