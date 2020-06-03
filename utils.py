@@ -1,23 +1,44 @@
+import os
+os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 import tensorflow as tf
 from tensorflow.keras.utils import get_file
 from tensorflow.keras.applications.resnet_v2 import preprocess_input
+from tensorflow.keras import backend as K
 import pathlib
 import os
 import streamlit as st
 import numpy as np
 import re
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-  # Restrict TensorFlow to only use the first GPU
-  try:
-    tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
-    logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-    print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
-  except RuntimeError as e:
-    # Visible devices must be set before GPUs have been initialized
-    print(e)
-DATA_DIR = "images"
-DATA_URL = "https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz"
+
+def limit_gpu_memory_use():
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+      # Restrict TensorFlow to only use the first GPU
+      try:
+        tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
+        logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
+      except RuntimeError as e:
+        # Visible devices must be set before GPUs have been initialized
+        print(e)
+
+limit_gpu_memory_use()
+
+ALL = [
+    'Abyssinian',
+    'yorkshire_terrier',
+    'american_bulldog',
+    'american_pit_bull_terrier'
+]
+
+DOGS = [
+
+]
+
+CATS = [
+
+]
+
 
 def get_dataset(dir="images", url="https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz"):
     raw_data_dir = pathlib.Path(get_file(dir, url, untar=True))
@@ -175,4 +196,57 @@ def decode_img(img):
     # st.write(img)
     return img
 
+
+def read_images(decode_func, test_decode):
+    def foo(file_path):
+        #label = utils.get_encoded_label(file_path)
+        anchor_file_path, other_file_path, label = get_pairs(file_path)
+        # TODO may not need to check for different anchor/positive since they'll get morephed differently...
+        # load the raw data from the file as a string
+        #print(anchor_file_path)
+        #jprint(positive_file_path)
+        #print(negative_file_path)
+        anchor_file = tf.io.read_file(anchor_file_path)
+        other_file = tf.io.read_file(other_file_path)
+        #negative_file = tf.io.read_file(negative_file_path)
+
+        #anc_img = decode_func(anchor_file) # TODO maybe do no encoding to anc
+        anc_img = test_decode(anchor_file) # TODO maybe do no encoding to anc
+        #other_img = decode_func(other_file)
+        other_img = test_decode(other_file)
+        #neg_img = decode_func(negative_file)
+        #return anc_img, label
+        return (anc_img, other_img), label
+
+    return foo
+
+
+def prepare_for_training(ds, cache=False, shuffle=True, shuffle_buffer_size=BATCH_SIZE):
+    # This is a small dataset, only load it once, and keep it in memory.
+    # use `.cache(filename)` to cache preprocessing work for datasets that don't
+    # fit in memory.
+    if cache:
+        if isinstance(cache, str):
+            ds = ds.cache(cache)
+        else:
+            ds = ds.cache()
+    if shuffle:
+        ds = ds.shuffle(buffer_size=shuffle_buffer_size, reshuffle_each_iteration=True)
+
+    # Repeat forever
+    ds = ds.repeat()
+
+    ds = ds.batch(BATCH_SIZE)
+
+    # `prefetch` lets the dataset fetch batches in the background while the model
+    # is training.
+    ds = ds.prefetch(buffer_size=AUTOTUNE)
+
+    return ds
+
+
+def euclidean_distance(vects):
+    x, y = vects
+    sum_square = K.sum(K.square(x - y), axis=1, keepdims=True)
+    return K.sqrt(K.maximum(sum_square, K.epsilon()))
 
