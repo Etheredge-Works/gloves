@@ -19,11 +19,13 @@ if gpus:
     # Visible devices must be set before GPUs have been initialized
     print(e)
 
-from tensorflow.keras.mixed_precision import experimental as mixed_precision
-policy = mixed_precision.Policy('mixed_float16')
-mixed_precision.set_policy(policy)
-print('Compute dtype: %s' % policy.compute_dtype)
-print('Variable dtype: %s' % policy.variable_dtype)
+MIXED_PRECISION = False
+if MIXED_PRECISION:
+    from tensorflow.keras.mixed_precision import experimental as mixed_precision
+    policy = mixed_precision.Policy('mixed_float16')
+    mixed_precision.set_policy(policy)
+#print('Compute dtype: %s' % policy.compute_dtype)
+#print('Variable dtype: %s' % policy.variable_dtype)
 import utils
 from tensorflow.keras.applications.resnet_v2 import preprocess_input
 from tensorflow.keras.applications.resnet_v2 import ResNet50V2
