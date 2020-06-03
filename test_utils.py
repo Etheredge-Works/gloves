@@ -16,7 +16,7 @@ def test_get_dataset():
             assert file.endswith("jpg") # Don't want any of those dumb mat files
             assert os.path.getsize(data_dir/file) > 0, f"{file} is empty."
 
-@pytest.mark.parametrize("file", [utils.DATA_DIR/file for file in os.listdir(utils.DATA_DIR)])
+@pytest.mark.parametrize("file", [str(utils.DATA_DIR/file) for file in os.listdir(utils.DATA_DIR)])
 def test_get_pairs(file):
     #dataset_dir = utils.get_dataset()
     #for file in os.listdir(dataset_dir):
