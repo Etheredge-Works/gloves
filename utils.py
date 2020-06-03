@@ -46,92 +46,26 @@ ALL_FILES = tf.io.gfile.listdir(str(DATA_DIR))
 #print(f"all_files: {ALL_FILES}")
 def get_pairs(anchor_file_path, minval=tf.constant(-1)):
     anchor_label = get_label(anchor_file_path)
-    #split_anchor_path = tf.strings.split(anchor_file_path, sep=os.path.sep)
-    #anchor_directory = tf.strings.join(split_anchor, sep=os.path.sep)
     # TODO tweak random var
-    #3random_value = tf.random.uniform((0,), minval=minval, maxval=1)
-    #random_value = np.random.randint(-1, 1)
     # TODO might have two of the anchor, but oh well
-    #positives = list(pathlib.Path(anchor_directory).glob(f"{anchor_label}*"))
     # TODO make more efecient
-    #global ALL_FILES
-    #all_files = ALL_FILES
-    #all_files = copy.deepcopy(ALL_FILES) # TODO find a faster way
-    #match
-    #all_files.remove(os.path.basename(anchor_file_path))
-    #all_files.remove(split_anchor_path[-1])
-    #converted = str(anchor_label)
+
+    split_path = tf.strings.split(anchor_file_path, sep=os.path.sep)
+    file_name = tf.gather(split_path, tf.size(split_path) - 1)
+    anchor_file_mask = ALL_FILES == file_name
 
     labels = tf.strings.regex_replace(ALL_FILES, pattern=r'_\d.*', rewrite='')
-    #3labels = tf.strings.regex_replace(ALL_FILES, pattern='\..*', rewrite='')
-    #file_name = tf.strings.split(ALL_FILES, sep=os.path.sep)[-1]
-    #print(f"labels: {labels}")
     pos_mask = anchor_label == labels
-    #pos_mask = tf.strings.regex_full_match(ALL_FILES, fr'{anchor_label}_\d+')
 
     label = tf.cast(tf.math.round(tf.random.uniform([], maxval=1, dtype=tf.float32)), dtype=tf.int32)
-    #label = tf.cast(tf.math.round(tf.random.uniform([], 0, 1)), dtype=tf.int32)
 
-    mask = tf.cond(label == tf.constant(1), lambda: pos_mask, lambda: tf.math.logical_not(pos_mask))
-    #mask = tf.cond(label == tf.constant(1), lambda: pos_mask, lambda: tf.math.logical_not(pos_mask))
-    #if to_flip:
-         #mask = tf.math.logical_not(pos_mask)
-    #else:
-         #mask = pos_mask
-
-    #pos = tf.boolean_mask(pos_mask, all_files)
-    #pos = tf.boolean_mask(all_files, pos_mask)
-    #neg = tf.boolean_mask(tf.math.logical_not(pos_mask), all_files)
-    #neg = tf.boolean_mask(all_files, tf.math.logical_not(pos_mask))
+    pos_label_func = lambda: tf.math.logical_xor(pos_mask, ALL_FILES == file_name) # XOR prevents anchor file being used
+    neg_label_func = lambda: tf.math.logical_not(pos_mask)
+    mask = tf.cond(label == tf.constant(1), pos_label_func, neg_label_func)
     values = tf.boolean_mask(ALL_FILES, mask)
-    #tf.print(anchor_file_path, "file_path")
-    #tf.print(anchor_label, "label")
-    #Etf.assert_greater(tfI.size(anchor_label), 0)
-    #Etf.assert_greater(tf.size(values), 0, "")
-
-    #test = tf.strings.split(all_files, sep='_')[:, 0]I#
-    # TODO linearize
     '''
-    for file, splits in zip(all_files, labels):
-        #3label = tf.strings.split(file, sep='_')[0]
-        #label = splits[0]
-        label = splits
-        if label == anchor_label:
-            pos.append(file)
-        else:
-            neg.append(file)
-    '''
-    #if len(pos) == 0 or len(neg) == 0:
-        #print("well")
-    #negatives = list(set(all_files) - set(positives))
-
-    tf.debugging.assert_greater(tf.size(values), tf.constant(0), f"Values are empty.\n")
-    #tf.debugging.assert_equal(tf.shape(values), tf.constant(1), f"Size is wrong.\n")
-    idx = tf.random.uniform([], 0, 2, dtype=tf.int32)
-    #idx = tf.random.uniform([], 0, tf.size(values), dtype=tf.int32)
-    #idx = tf.random.uniform([], 0, len(values), dtype=tf.int32)
-    #neg_idx = tf.random.uniform([], 0, len(neg), dtype=tf.int32)
-    #pos_idx = tf.random.uniform([], 0, len(pos), dtype=tf.int32)
-    #pos_idx = tf.random.uniform([1], 0, len(pos), dtype=tf.int32)
-    #neg_idx = np.random.randint(0, len(neg))
-    #pos_idx = np.random.randint(0, len(pos))
-    #negative = tf.reshape(tf.gather(neg, tf.stack((neg_idx))), shape=[])
-    #positive = tf.reshape(tf.gather(pos, tf.stack((pos_idx))), shape=[])
-    #positive = tf.reshape(tf.gather(pos, tf.stack((pos_idx))), shape=[])
-    value = tf.gather(values, idx)
-    #print(negative)
-    #print(positive)
-    #positive = pos[np.random.randint(0, len(pos))]
-    #positive = pos[np.random.randint(0, len(pos))]
-    #anchor_directory = pathlib.Path(anchor_directory)
-    path = tf.strings.join([TF_DATA_DIR, value], os.path.sep)
-    sq_path = tf.squeeze(path)
-    return anchor_file_path, sq_path, label
-    #return anchor_file_path, tf.reshape(tf.strings.join([anchor_directory, positive], os.path.sep), shape=[]), \
-           #tf.reshape(tf.strings.join([anchor_directory, negative], os.path.sep), shape=[])
-
-    #negatvie = negatives[]
-
+    # TODO implement a way to grab easy, medium, hard pairs (e.g. boxer-cat, boxer-dog, boxer-pug or with losses)
+    # TODO Need a way to monitor losses and let it inform seletion weights
     if random_value < -1.33333:
         # get easy
         pass
@@ -142,6 +76,14 @@ def get_pairs(anchor_file_path, minval=tf.constant(-1)):
     else:
         # get_hard
         pass
+    '''
+
+    tf.debugging.assert_greater(tf.size(values), tf.constant(0), f"Values are empty.\n")
+    idx = tf.random.uniform([], 0, 2, dtype=tf.int32)
+    value = tf.gather(values, idx)
+    path = tf.strings.join([TF_DATA_DIR, value], os.path.sep)
+    sq_path = tf.squeeze(path)
+    return anchor_file_path, sq_path, label
 
 
 def get_label(file_path):
