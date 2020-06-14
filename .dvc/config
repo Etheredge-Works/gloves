@@ -1,0 +1,4 @@
+[core]
+    remote = nfs
+['remote "nfs"']
+    url = //192.168.1.21/mnt/user/home/data

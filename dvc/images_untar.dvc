@@ -1,11 +1,12 @@
-md5: 3f4da36e0e2ac16048a5c6fbeade77fe
-cmd: tar -xzf images.tar.gz
+md5: ebb2d6cf0ae5a8458baf19d32fc71d5f
+cmd: tar -xzf data\images.tar.gz -C data
+wdir: ..
 deps:
 - md5: 5c4f3ee8e5d25df40f4fd59a7f44e54c
-  path: images.tar.gz
+  path: data/images.tar.gz
 outs:
 - md5: 277f608c70d7bd7991e0cd5f5cc845c6.dir
-  path: images
+  path: data/images
   cache: true
   metric: false
   persist: false

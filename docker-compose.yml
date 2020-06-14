@@ -1,0 +1,12 @@
+version: '3'
+services:
+  db:
+    ports:
+      - "0.0.0.0:6379:6379"
+    image: : "redis:alpine"
+
+  watcher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python watcher.py

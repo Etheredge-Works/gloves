@@ -1,4 +1,5 @@
-md5: aa043c6ab230b45b146990fe81440100
+md5: c4cea3b8d2177f4a7ab825794cd39649
+wdir: ../data
 outs:
 - md5: 5c4f3ee8e5d25df40f4fd59a7f44e54c
   path: images.tar.gz

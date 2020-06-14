@@ -1,0 +1,19 @@
+md5: 583509b861223368a64b1b8afe7bc752
+cmd: python src\split_train_test.py data/images 0.2 data/train data/test
+wdir: ..
+deps:
+- md5: 277f608c70d7bd7991e0cd5f5cc845c6.dir
+  path: data/images
+- md5: ae68ec76f26c3c88b08e903724a6acc8
+  path: src/split_train_test.py
+outs:
+- md5: 147544d13e63af94c4e9e6712817061a.dir
+  path: data/train
+  cache: true
+  metric: false
+  persist: false
+- md5: 290fc43da7d40e4648ce1f9ddec10a1d.dir
+  path: data/test
+  cache: true
+  metric: false
+  persist: false

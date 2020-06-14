@@ -2,9 +2,10 @@ import os
 # Don't want to use GPUs for unit tests as this will cause various machine issues
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import pytest
-import utils
+from src import utils
 import pathlib
 import tensorflow as tf
+
 def test_get_dataset():
     data_dir = utils.get_dataset()
     assert os.path.isdir(data_dir), "Image directory was not created"
@@ -27,12 +28,12 @@ def test_get_label():
         predicted_label = utils.get_label(file)
         assert predicted_label == label, f"Incorrect label: Got {predicted_label} instead of {label}"
 
-@pytest.mark.parametrize("file", [str(utils.DATA_DIR/file) for file in os.listdir(utils.DATA_DIR)])
+@pytest.mark.parametrize("file", [str(utils.DATA_DIR / file) for file in os.listdir(utils.DATA_DIR)])
 def test_get_pairs(file):
     #dataset_dir = utils.get_dataset()
     #for file in os.listdir(dataset_dir):
     old_label = utils.get_label(file)
-    anchor_file, positive_file, label = utils.get_pairs(file)
+    anchor_file, positive_file, label = utils.get_pair(file)
     anchor_label = utils.get_label(anchor_file)
     assert anchor_label == old_label
     other_label = utils.get_label(positive_file)
