@@ -54,7 +54,9 @@ ALL = [
 #ALL_FILES = tf.io.gfile.listdir(str(DATA_DIR))
 #print(f"all_files: {ALL_FILES}")
 def get_pair(data_dir, all_files, labels, anchor_file_path,
-             label = tf.cast(tf.math.round(tf.random.uniform([], maxval=1, dtype=tf.float32)), dtype=tf.int32)):
+             label=None):
+    if label is None:
+        label = tf.cast(tf.math.round(tf.random.uniform([], maxval=1, dtype=tf.float32)), dtype=tf.int32)
     #anchor_label = get_label(anchor_file_path)
     # TODO tweak random var
     # TODO might have two of the anchor, but oh well
