@@ -201,38 +201,43 @@ def decode_img(img):
     return img
 
 
-def read_images(data_dir, decode_func, test_decode):
+def read_images(data_dir, anchor_decode_func, other_decode_func):
     all_files_tf = tf.io.gfile.listdir(data_dir)
-    # TODO will all labels be in training set?
+    # TODO will all labels be in testing set?
     labels = tf.strings.regex_replace(all_files_tf, pattern=r'_\d.*', rewrite='')
-    #print(all_files_tf)
-    #print(labels)
     data_dir_tf = tf.constant(str(data_dir))
 
     def foo(file_path):
-        #label = utils.get_encoded_label(file_path)
-        #3tf.print(file_path)
         anchor_file_path, other_file_path, label = get_pair(str(data_dir), all_files_tf, labels, file_path)
-        #anchor_file_path, other_file_path, label = get_pairs(data_dir_tf, all_files_tf, labels, file_path)
-        #tf.print(anchor_file_path)
-        #tf.print(other_file_path)
         # TODO may not need to check for different anchor/positive since they'll get morephed differently...
-        # load the raw data from the file as a string
-        #print(anchor_file_path)
-        #jprint(positive_file_path)
-        #print(negative_file_path)
         anchor_file = tf.io.read_file(anchor_file_path)
         other_file = tf.io.read_file(other_file_path)
         #negative_file = tf.io.read_file(negative_file_path)
 
-        anc_img = decode_func(anchor_file) # TODO maybe do no encoding to anc
-        #anc_img = test_decode(anchor_file) # TODO maybe do no encoding to anc
-        #other_img = decode_func(other_file)
-        other_img = test_decode(other_file)
-        #neg_img = decode_func(negative_file)
-        #return anc_img, label
+        anc_img = anchor_decode_func(anchor_file) # TODO maybe do no encoding to anc
+        other_img = other_decode_func(other_file)
         return (anc_img, other_img), label
 
+    return foo
+
+
+def n_way_read(data_dir, decode_func):
+    all_files_tf = tf.io.gfile.listdir(data_dir)
+    labels = tf.strings.regex_replace(all_files_tf, pattern=r'_\d.*', rewrite='')
+    count = 0
+
+    def foo(file_path):
+        # first iteration is the only one we want a positive label for
+        if count == 0:
+            label = 1
+        else:
+            label = 0
+        anchor_file_path, other_file_path, label = get_pair(str(data_dir), all_files_tf, labels, file_path, label=label)
+        anchor_file = tf.io.read_file(anchor_file_path)
+        other_file = tf.io.read_file(other_file_path)
+        anc_img = decode_func(anchor_file) # TODO maybe do no encoding to anc
+        other_img = decode_func(other_file) # TODO maybe do no encoding to anc
+        return (anc_img, other_img), label
     return foo
 
 
@@ -272,43 +277,77 @@ def euclidean_distance(vects):
     #return K.maximum(sum_square, K.epsilon())
 
 
+def n_way_verification(model: tf.keras.Model, data_dir, file_name, n=32):
+    all_files_tf = tf.io.gfile.listdir(str(data_dir))
+    labels = tf.strings.regex_replace(all_files_tf, pattern=r'_\d.*', rewrite='')
+
+    *pos_inputs, _ = get_pair(str(data_dir), all_files_tf, labels, file_name, label=1)
+    # TODO will repeat some neagtives, but that's fine
+    *neg_inputs, _ = [get_pair(str(data_dir), all_files, labels, file_name, label=0)[0] for _ in range(n-1)]
+    batch = [pos_inputs, *neg_inputs]
+    predictions = model.predict_on_batch(batch)
+    return np.argmax(predictions) == 0
+
+
+def create_n_way_datasets(data_directory_name, batch_size, anchor_decode_func,
+                         n_way_count):
+    data_directory = pathlib.Path(data_directory_name)
+    all_files = list(data_directory.glob('*.jpg'))
+    file_count = len(all_files)
+    step_per_epoch = file_count
+    ds = tf.data.Dataset.list_files(str(data_directory / '*.jpg'))
+
+    ds_labeled = ds.map(read_images(str(data_directory), anchor_decode_func, other_decode_func),
+                        num_parallel_calls=settings.AUTOTUNE)
+
+
+
+def create_dataset(data_directory_name, batch_size, anchor_decode_func,
+                   other_decode_func=None,
+                   shuffle=False,
+                   repeat=None):
+    if other_decode_func is None:
+        other_decode_func = anchor_decode_func
+
+    data_directory = pathlib.Path(data_directory_name)
+    all_files = list(data_directory.glob('*.jpg'))
+    file_count = len(all_files)
+
+    step_per_epoch = file_count // batch_size
+
+    ds = tf.data.Dataset.list_files(str(data_directory / '*.jpg'))
+
+    # Set `num_parallel_calls` so multiple images are loaded/processed in parallel.
+    ds_labeled = ds.map(read_images(str(data_directory), anchor_decode_func, other_decode_func),
+                        num_parallel_calls=settings.AUTOTUNE)
+
+    ds_prepared = prepare_for_training(ds_labeled, shuffle=shuffle, batch_size=batch_size,
+                                       shuffle_buffer_size=file_count, repeat=repeat)
+
+    return ds_prepared, step_per_epoch
+
+
 def get_dataset_values(
         train_dir,
         test_dir,
         batch_size,
-        mutate=True,
-        repeat=None,
-        autotune=tf.data.experimental.AUTOTUNE):
-    train_dir = pathlib.Path(train_dir)
-    test_dir = pathlib.Path(test_dir)
+        repeat=None):
 
-    train_ds = tf.data.Dataset.list_files(str(train_dir/'*.jpg'))
-    test_ds = tf.data.Dataset.list_files(str(test_dir/'*.jpg'))
-    all_train_files = list(train_dir.glob('*.jpg'))
-    all_test_files = list(test_dir.glob('*.jpg'))
-    train_count = len(all_train_files)
-    test_count = len(all_test_files)
+    train_ds, train_steps_per_epoch = create_dataset(data_directory_name=train_dir,
+                                                     batch_size=batch_size,
+                                                     anchor_decode_func=decode_img,
+                                                     other_decode_func=decode_img,
+                                                     shuffle=True,
+                                                     repeat=repeat)
 
-    step_per_epoch = train_count // batch_size
-    steps_per_validation = test_count // batch_size  # TODO ceil vs floor
+    test_ds, test_steps_per_epoch = create_dataset(data_directory_name=test_dir,
+                                                   batch_size=batch_size,
+                                                   anchor_decode_func=simple_decode,
+                                                   other_decode_func=simple_decode,
+                                                   shuffle=True,
+                                                   repeat=repeat)
 
-    # Set `num_parallel_calls` so multiple images are loaded/processed in parallel.
-    if mutate:
-        #train_ds_labeled = train_ds.map(read_images(str(train_dir), simple_decode, decode_img), num_parallel_calls=autotune)
-        #3train_ds_labeled = train_ds.map(read_images(str(train_dir), decode_img, simple_decode), num_parallel_calls=autotune)
-        train_ds_labeled = train_ds.map(read_images(str(train_dir), decode_img, decode_img), num_parallel_calls=autotune)
-    else:
-        train_ds_labeled = train_ds.map(read_images(str(train_dir), simple_decode, simple_decode), num_parallel_calls=autotune)
-
-    test_ds_labeled = test_ds.map(read_images(str(test_dir), simple_decode, simple_decode), num_parallel_calls=autotune)
-    #test_ds_labeled = test_ds.map(read_images(str(train_dir), simple_decode, simple_decode), num_parallel_calls=autotune)
-    #TODO test_ds_labeled = test_ds.map(read_images(str(test_dir), simple_decode, simple_decode), num_parallel_calls=autotune)
-
-    train_ds_prepared = prepare_for_training(train_ds_labeled, shuffle=True, batch_size=batch_size,
-                                             shuffle_buffer_size=train_count, repeat=repeat)
-    test_ds_prepared = prepare_for_training(test_ds_labeled, shuffle=False, batch_size=batch_size, repeat=repeat)
-
-    return train_ds_prepared, test_ds_prepared, step_per_epoch, steps_per_validation
+    return train_ds, train_steps_per_epoch, test_ds test_steps_per_epoch
 
 
 def base64_encode(image):
