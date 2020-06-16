@@ -105,7 +105,7 @@ def get_pair(data_dir, all_files, labels, anchor_file_path,
     '''
 
     tf.debugging.assert_greater(tf.size(values), tf.constant(0), f"Values are empty.\n")
-    idx = tf.random.uniform([], 0, 2, dtype=tf.int32)
+    idx = tf.random.uniform([], 0, tf.size(values), dtype=tf.int32)
     value = tf.gather(values, idx)
     path = tf.strings.join([data_dir, value], os.path.sep)
     sq_path = tf.squeeze(path)
