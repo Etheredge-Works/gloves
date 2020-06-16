@@ -1,3 +1,6 @@
+from src import utils
+utils.limit_gpu_memory_use()
+
 import tensorflow as tf
 from src import utils
 
@@ -5,7 +8,9 @@ utils.limit_gpu_memory_use()
 from tensorflow_core.python.keras import Model
 from tensorflow_core.python.keras.applications.resnet_v2 import ResNet50V2
 from tensorflow_core.python.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda
+from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
+import numpy as np
 
 from src import settings
 
@@ -19,23 +24,7 @@ class Encoder(tf.keras.Model):
 
         #model_input = Input(input_shape)
         #x = model_input
-        self.model_layers = [
-            #Conv2D(filters=16, kernel_size=(3, 3), strides=1, padding='valid', activation='relu', use_bias=False),
-            #tf.keras.layers.MaxPool2D(pool_size=2),
-            #Conv2D(filters=32, kernel_size=(3, 3), strides=1, padding='valid', activation='relu', use_bias=False),
-            #tf.keras.layers.MaxPool2D(pool_size=2),
-            #Conv2D(filters=64, kernel_size=(3, 3), strides=1, padding='valid', activation='relu', use_bias=False),
-            #tf.keras.layers.MaxPool2D(pool_size=2),
-            Conv2D(filters=32, kernel_size=(8, 8), strides=4, padding='same', activation='relu', use_bias=False),
-            Conv2D(filters=64, kernel_size=(6, 6), strides=3, padding='same', activation='relu', use_bias=False),
-            Conv2D(filters=128, kernel_size=(4, 4), strides=2, padding='same', activation='relu', use_bias=False),
-            Conv2D(filters=256, kernel_size=(3,3), strides=1, padding='same', activation='relu', use_bias=False),
-            Conv2D(filters=128, kernel_size=(3,3), strides=1, padding='same', activation='relu', use_bias=False),
-            Conv2D(filters=256, kernel_size=(3, 3), strides=2, padding='same', activation='relu', use_bias=False),
-            Flatten(),
-            Dense(8, activation='relu'),
-            Dropout(0.5),  # TODO param
-        ]
+
 
     def call(self, inputs):
         #tf.print(inputs, "inputs")
@@ -49,6 +38,19 @@ class Encoder(tf.keras.Model):
 def build_model(should_transfer_learn=False):
     pass
 
+
+def weight_init():
+    return tf.random_normal_initializer(mean=0, stddev=0.01)
+
+
+def bia_init():
+    return tf.random_normal_initializer(mean=0.5, stddev=0.01)
+
+def reg():
+    return l2(2e-4)
+
+def create_model():
+    pass
 
 class GlovesNet(tf.keras.Model):
 
@@ -65,11 +67,41 @@ class GlovesNet(tf.keras.Model):
                 layer.trainable = False
             x = base_model.output
             x = Flatten()(x)
-            x = Dense(128, activation='relu')(x)
+            x = Dense(1024, activation='relu', dtype='float32')(x)
             x = Dropout(0.5)(x)
             self.encoder_model = Model(base_model.inputs, x)
         else:
-            self.encoder_model = Encoder(dense_nodes=dense_nodes)
+            self.encoder_model = tf.keras.Sequential([
+                Conv2D(filters=64, kernel_size=(11, 11), strides=1, padding='valid', activation='relu',
+                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+                tf.keras.layers.MaxPool2D(),
+                Conv2D(filters=96, kernel_size=(9, 9), strides=1, padding='valid', activation='relu',
+                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+                tf.keras.layers.MaxPool2D(pool_size=4),
+                Conv2D(filters=128, kernel_size=(7, 7), strides=1, padding='valid', activation='relu',
+                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+                tf.keras.layers.MaxPool2D(pool_size=4),
+                #Conv2D(filters=128, kernel_size=(5, 5), strides=1, padding='valid', activation='relu',
+                       #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+                #tf.keras.layers.MaxPool2D(pool_size=2),
+                #Conv2D(filters=256, kernel_size=(3, 3), strides=1, padding='valid', activation='relu',
+                       #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+                #tf.keras.layers.MaxPool2D(pool_size=2),
+                # Conv2D(filters=32, kernel_size=(8, 8), strides=4, padding='same', activation='relu', use_bias=False),
+                # Conv2D(filters=64, kernel_size=(6, 6), strides=3, padding='same', activation='relu', use_bias=False),
+                # Conv2D(filters=128, kernel_size=(4, 4), strides=2, padding='same', activation='relu', use_bias=False),
+                # Conv2D(filters=256, kernel_size=(3,3), strides=1, padding='same', activation='relu', use_bias=False),
+                # Conv2D(filters=128, kernel_size=(3,3), strides=1, padding='same', activation='relu', use_bias=False),
+                # Conv2D(filters=256, kernel_size=(3, 3), strides=2, padding='same', activation='relu', use_bias=False),
+                Flatten(),
+                Dense(4096, activation='relu',
+                      kernel_initializer=weight_init(), bias_initializer=bia_init(),
+                      kernel_regularizer=reg(), dtype='float32'),
+                #Dropout(0.5),  # TODO param
+            ])
+        encoder_input = (None, settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS)
+        self.encoder_model.build(encoder_input)
+        print(self.encoder_model.summary())
         #base_file = tf.io.read_file("kitten_mittens.jpg")  # TODO paramaterize
         #self.base_image = utils.simple_decode(base_file)
 
@@ -84,7 +116,9 @@ class GlovesNet(tf.keras.Model):
         #$self.dense2 = self.encoder_model(self.input2)
 
         self.merge_layer = Lambda(euclidean_distance)  # ([self.dense1, self.dense2])
-        self.prediction_layer = Dense(1, activation="sigmoid")  # (self.merge_layer)
+        self.prediction_layer = Dense(1, activation="sigmoid", dtype='float32')  # (self.merge_layer)
+        #self.build(input_shape=(None, (encoder_input, encoder_input)))
+        #print(self.summary())
         #model = Model(inputs=[input1, input2], outputs=dense_layer)
 
     def call(self, inputs):
@@ -112,6 +146,8 @@ class GlovesNet(tf.keras.Model):
     #margin_square = K.square(K.maximum(margin - y_pred, 0))
     #return K.mean(y_true * square_pred + (1 - y_true) * margin_square
 
+from tensorflow.keras.callbacks import ReduceLROnPlateau
+
 # TODO test set is being paired with itself. pair it with training maybe? maybe not
 def create_model(
         train_dir,
@@ -122,25 +158,51 @@ def create_model(
         epochs=10,
         verbose=1):
     model = GlovesNet(should_transfer_learn=False, dense_nodes=dense_nodes)
-    model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), metrics=["accuracy"])
+    model.compile(loss="binary_crossentropy",
+                  optimizer=tf.keras.optimizers.Adam(learning_rate=0.00003), metrics=["accuracy"])
 
     # TODO extract and pass in
-    train_ds, test_ds, steps_per_epoch, validation_steps = get_dataset_values(train_dir=train_dir,
-                                                                              test_dir=test_dir,
-                                                                              batch_size=batch_size)
+    train_ds, steps_per_epoch, val_ds, test_ds = get_dataset_values(train_dir=train_dir,
+                                                                    test_dir=test_dir,
+                                                                    batch_size=batch_size)
+
 
     #wandb.init(project="siamese")
     #model.fit([pairs_train[:,0], pairs_train[:,1]], labels_train[:], batch_size=128, epochs=20, callbacks=[WandbCallback()])
+
+    class NWayCallback(tf.keras.callbacks.Callback):
+        def on_epoch_end(self, epoch, logs=None):
+            if epoch % 10 == 5:
+                #predictions = [self.model.predict_on_batch(n_way_batch) for n_way_batch in test_ds]
+                predictions = model.predict(test_ds)
+                highest_predictions = [np.argmax(prediction) for prediction in predictions]
+                correct_predictions = [highest_prediction == 0 for highest_prediction in highest_predictions]
+                score = np.average(correct_predictions)
+                print(f"\n\nN-Way Accuracy: {score}\n")
+
     model.fit(
         train_ds,
-        epochs=epochs,
-        validation_data=test_ds,
-        validation_steps=validation_steps,
+        epochs=500,
+        validation_data=val_ds,
         validation_freq=1,
-        steps_per_epoch=steps_per_epoch,
+        #steps_per_epoch=steps_per_epoch,
         verbose=verbose,
-        shuffle=False, # TODO dataset should handle shuffling
+        shuffle=False,  # TODO dataset should handle shuffling
+        callbacks=[ReduceLROnPlateau(monitor='loss', factor=0.1, patience=20), NWayCallback()]
     )
+    '''
+    if epoch == 0:
+        print(model.summary())
+    if epoch % 10 == 0:
+        predictions = [model.predict_on_batch(n_way_batch) for n_way_batch in test_ds]
+        #predictions = model.predict(test_ds)
+        highest_predictions = [np.argmax(prediction) for prediction in predictions]
+        correct_predictions = [highest_prediction == 0 for highest_prediction in highest_predictions]
+        score = np.average(correct_predictions)
+        print(f"\nN-Way Accuracy: {score}\n")
+    '''
+
+
     # model.save("model.h5")  # Cannot save subclassed model as it is "unsafe"
     #model.save("model")
     score = model.evaluate(test_ds, steps=validation_steps)
