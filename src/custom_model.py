@@ -116,7 +116,12 @@ class GlovesNet(tf.keras.Model):
         #$self.dense2 = self.encoder_model(self.input2)
 
         self.merge_layer = Lambda(euclidean_distance)  # ([self.dense1, self.dense2])
-        self.prediction_layer = Dense(1, activation="sigmoid", dtype='float32')  # (self.merge_layer)
+        self.prediction_layer = Dense(1,
+                                      activation="sigmoid",
+                                      kernel_initializer=weight_init(),
+                                      bias_initializer=bia_init(),
+                                      kernel_regularizer=reg(),
+                                      dtype='float32')
         #self.build(input_shape=(None, (encoder_input, encoder_input)))
         #print(self.summary())
         #model = Model(inputs=[input1, input2], outputs=dense_layer)
