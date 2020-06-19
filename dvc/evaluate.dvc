@@ -1,0 +1,19 @@
+md5: 0ac13df4439726470e8062e32ece81db
+cmd: python src\main.py
+wdir: ..
+deps:
+- md5: a2ff1cda897d61b6e552ad5aaec7cee1
+  path: src/main.py
+- md5: 499d55626b64af7525a24d76faeec0fa
+  path: src/settings.py
+outs:
+- md5: fe7ebc5d495e9eecdb8126ff696f533a
+  path: metrics.yaml
+  cache: true
+  metric: true
+  persist: false
+- md5: 22957eb5fdc16b97956095dc60be8e15
+  path: model.h5
+  cache: true
+  metric: false
+  persist: false
