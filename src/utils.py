@@ -1,11 +1,12 @@
 import base64
 import os
 import pathlib
-from src import settings
+import settings
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 import tensorflow as tf
 from tensorflow.keras.utils import get_file
-from tensorflow.keras.applications.resnet_v2 import preprocess_input
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+#from tensorflow.keras.applications.resnet_v2 import preprocess_input
 from tensorflow.keras import backend as K
 import pathlib
 import os
@@ -150,6 +151,9 @@ def zoom(x: tf.Tensor) -> tf.Tensor:
 
 def simple_decode(img):
     img = tf.image.decode_jpeg(img, channels=3)
+    #img = tf.image.convert_image_dtype(img, tf.float32)  # NOTE: Must do this before other operations or can mangle img
+    # TODO the above was causing issues? I don't understand anymore...
+    # TODO I know it should cause issues with mixed precision but why was it handicaping performance?
     img = tf.image.resize(img, [settings.IMG_WIDTH, settings.IMG_HEIGHT])
     img = preprocess_input(img)  # NOTE: This does A TON for accuracy
     #img = tf.image.convert_image_dtype(img, tf.float32)  #TODO remove this if preproces sis used
@@ -161,7 +165,8 @@ def decode_img(img):
 
     # img = tf.image.decode_jpeg(img)
     img = tf.image.decode_jpeg(img, channels=3)
-    # img = tf.image.convert_image_dtype(img, tf.float32)
+    img = tf.image.convert_image_dtype(img, tf.float32)
+    img = tf.image.resize(img, [settings.IMG_WIDTH, settings.IMG_HEIGHT])
     # img = tf.image.decode_image(img)
     # img = tf.image.decode_jpeg(img)
     # img = tf.image.decode_image(img, channels=0)
@@ -173,10 +178,10 @@ def decode_img(img):
 
     # img = tf.image.convert_image_dtype(img, tf.float32)
 
-    #NUM_BOXES = 4
+    #NUM_BOXES = 3
     #boxes = tf.random.uniform(shape=(NUM_BOXES, 3))
-    #box_indices = tf.random.uniform(shape=(NUM_BOXES,), minval=0, maxval=BATCH_SIZE, dtype=tf.int32)
-    # img = tf.image.crop_and_resize(img, boxes, box_indices, (IMG_HEIGHT, IMG_WIDTH))
+    #box_indices = tf.random.uniform(shape=(NUM_BOXES,), minval=0, maxval=settings.BATCH_SIZE, dtype=tf.int32)
+    #img = tf.image.crop_and_resize(img, boxes, box_indices, (settings.IMG_HEIGHT, settings.IMG_WIDTH))
     # st.write(img)
     # Use `convert_image_dtype` to convert to floats in the [0,1] range.
     # resize the image to the desired size.
@@ -184,15 +189,15 @@ def decode_img(img):
     img = tf.image.random_flip_left_right(img)
     img = tf.image.random_flip_up_down(img)
     img = tf.image.rot90(img, tf.random.uniform(shape=[], minval=0, maxval=4, dtype=tf.int32))
-    img = tf.image.random_hue(img, 0.08)
+    # TODO test if this is corrupting jpg
+    img = tf.image.random_hue(img, 0.02)
     #img = tf.image.random_saturation(img, 0.6, 1.6)
-    img = tf.image.random_brightness(img, 0.05)
-    #img = tf.image.random_contrast(img, 0.7, 1.3)
+    img = tf.image.random_brightness(img, 0.02)
+    img = tf.image.random_contrast(img, 0.02, 0.05)
 
     # img = tf.image.convert_image_dtype(img, tf.float16)
 
     # img = tf.image.resize(img, [IMG_WIDTH, IMG_HEIGHT])
-    img = tf.image.resize(img, [settings.IMG_WIDTH, settings.IMG_HEIGHT])
     img = preprocess_input(img)  # This handles float conversion
     # img = tf.image.resize(img, [settings.IMG_WIDTH, settings.IMG_HEIGHT])
     #img = tf.image.convert_image_dtype(img, tf.float32)  #TODO remove this if preproces sis used
@@ -221,23 +226,29 @@ def read_images(data_dir, anchor_decode_func, other_decode_func):
     return foo
 
 
-def n_way_read(data_dir, decode_func):
+def n_way_read(data_dir, decode_func, n):
     all_files_tf = tf.io.gfile.listdir(data_dir)
     labels = tf.strings.regex_replace(all_files_tf, pattern=r'_\d.*', rewrite='')
     count = 0
 
-    def foo(file_path):
-        # first iteration is the only one we want a positive label for
-        if count == 0:
-            label = 1
-        else:
-            label = 0
-        anchor_file_path, other_file_path, label = get_pair(str(data_dir), all_files_tf, labels, file_path, label=label)
-        anchor_file = tf.io.read_file(anchor_file_path)
-        other_file = tf.io.read_file(other_file_path)
-        anc_img = decode_func(anchor_file) # TODO maybe do no encoding to anc
-        other_img = decode_func(other_file) # TODO maybe do no encoding to anc
-        return (anc_img, other_img), label
+    def foo(file_name):
+        anchors, others = [], []
+        labels_list = []  # Some keras interfaces (like predict) expect a label even when not used, so we'll get them too
+        pos_anchor, pos_other, label = get_pair(str(data_dir), all_files_tf, labels, file_name, label=1)
+        anchors.append(decode_func(tf.io.read_file(pos_anchor)))
+        others.append(decode_func(tf.io.read_file(pos_other)))
+        labels_list.append(label)
+        # TODO will repeat some neagtives, but that's fine
+        for _ in range(n-1):
+            anchor, other, label = get_pair(str(data_dir), all_files_tf, labels, file_name, label=0)
+            anchors.append(decode_func(tf.io.read_file(anchor)))
+            others.append(decode_func(tf.io.read_file(other)))
+            labels_list.append(label)
+
+
+        #neg_inputs = [(decode_func(tf.io.read_file(anchor)), decode_func(tf.io.read_file(other))) for anchor, other in neg_inputs]
+
+        return (tf.convert_to_tensor(anchors), tf.convert_to_tensor(others)), tf.convert_to_tensor(labels_list)
     return foo
 
 
@@ -256,10 +267,10 @@ def prepare_for_training(ds, cache=False, shuffle=True, batch_size=1, shuffle_bu
             raise ValueError
         ds = ds.shuffle(buffer_size=shuffle_buffer_size, reshuffle_each_iteration=True)
 
-    # Repeat forever
     ds = ds.repeat(repeat)
 
-    ds = ds.batch(batch_size)
+    if batch_size:
+        ds = ds.batch(batch_size)
 
     # `prefetch` lets the dataset fetch batches in the background while the model
     # is training.
@@ -270,35 +281,40 @@ def prepare_for_training(ds, cache=False, shuffle=True, batch_size=1, shuffle_bu
 
 def euclidean_distance(vects):
     x, y = vects
-    return K.abs(x-y) # TODO test other distance metrics
+    return K.abs(x-y)  # TODO test other distance metrics
+    # TODO seems abs is performing better than euclidean...
     #sum_square = K.sum(K.square(x - y), axis=1, keepdims=True)
     #return K.maximum(sum_square, K.epsilon())
     #sum_square = K.sum(K.square(x - y), axis=1, keepdims=True)
     #return K.maximum(sum_square, K.epsilon())
 
 
-def n_way_verification(model: tf.keras.Model, data_dir, file_name, n=32):
-    all_files_tf = tf.io.gfile.listdir(str(data_dir))
-    labels = tf.strings.regex_replace(all_files_tf, pattern=r'_\d.*', rewrite='')
+#def n_way_verification(model: tf.keras.Model, data_dir, file_name, n=32):
+    #all_files_tf = tf.io.gfile.listdir(str(data_dir))
+    #labels = tf.strings.regex_replace(all_files_tf, pattern=r'_\d.*', rewrite='')
 
-    *pos_inputs, _ = get_pair(str(data_dir), all_files_tf, labels, file_name, label=1)
-    # TODO will repeat some neagtives, but that's fine
-    *neg_inputs, _ = [get_pair(str(data_dir), all_files, labels, file_name, label=0)[0] for _ in range(n-1)]
-    batch = [pos_inputs, *neg_inputs]
-    predictions = model.predict_on_batch(batch)
-    return np.argmax(predictions) == 0
+    #*pos_inputs, _ = get_pair(str(data_dir), all_files_tf, labels, file_name, label=1)
+    ## TODO will repeat some neagtives, but that's fine
+    #*neg_inputs, _ = [get_pair(str(data_dir), all_files, labels, file_name, label=0)[0] for _ in range(n-1)]
+    #batch = [pos_inputs, *neg_inputs]
+    #predictions = model.predict_on_batch(batch)
+    #return np.argmax(predictions) == 0
 
 
-def create_n_way_datasets(data_directory_name, batch_size, anchor_decode_func,
+def create_n_way_dataset(data_directory_name, batch_size, anchor_decode_func,
                          n_way_count):
     data_directory = pathlib.Path(data_directory_name)
     all_files = list(data_directory.glob('*.jpg'))
     file_count = len(all_files)
-    step_per_epoch = file_count
+    step_per_epoch = file_count * n_way_count
     ds = tf.data.Dataset.list_files(str(data_directory / '*.jpg'))
 
-    ds_labeled = ds.map(read_images(str(data_directory), anchor_decode_func, other_decode_func),
+    #ds = ds.cache()
+    ds_labeled = ds.map(n_way_read(str(data_directory), anchor_decode_func, n=n_way_count),
                         num_parallel_calls=settings.AUTOTUNE)
+    ds_prepared = prepare_for_training(ds_labeled, cache=False, shuffle=False, batch_size=None,
+                                       shuffle_buffer_size=file_count, repeat=1)
+    return ds_prepared
 
 
 
@@ -316,13 +332,17 @@ def create_dataset(data_directory_name, batch_size, anchor_decode_func,
     step_per_epoch = file_count // batch_size
 
     ds = tf.data.Dataset.list_files(str(data_directory / '*.jpg'))
+    ds = ds.cache()
 
     # Set `num_parallel_calls` so multiple images are loaded/processed in parallel.
     ds_labeled = ds.map(read_images(str(data_directory), anchor_decode_func, other_decode_func),
                         num_parallel_calls=settings.AUTOTUNE)
 
+    shuffle_buffer_size = file_count
+    if repeat is not None:
+        shuffle_buffer_size *= repeat
     ds_prepared = prepare_for_training(ds_labeled, shuffle=shuffle, batch_size=batch_size,
-                                       shuffle_buffer_size=file_count, repeat=repeat)
+                                       shuffle_buffer_size=shuffle_buffer_size, repeat=repeat)
 
     return ds_prepared, step_per_epoch
 
@@ -331,23 +351,30 @@ def get_dataset_values(
         train_dir,
         test_dir,
         batch_size,
-        repeat=None):
+        repeat=None) -> (tf.data.Dataset, int, tf.data.Dataset, int):
 
     train_ds, train_steps_per_epoch = create_dataset(data_directory_name=train_dir,
                                                      batch_size=batch_size,
-                                                     anchor_decode_func=decode_img,
-                                                     other_decode_func=decode_img,
+                                                     anchor_decode_func=simple_decode,
+                                                     other_decode_func=simple_decode,
                                                      shuffle=True,
-                                                     repeat=repeat)
+                                                     repeat=1)
 
-    test_ds, test_steps_per_epoch = create_dataset(data_directory_name=test_dir,
+    val_ds, _ = create_dataset(data_directory_name=test_dir,
                                                    batch_size=batch_size,
                                                    anchor_decode_func=simple_decode,
                                                    other_decode_func=simple_decode,
-                                                   shuffle=True,
-                                                   repeat=repeat)
+                                                   shuffle=False,
+                                                   repeat=4)
+    val_ds = val_ds.cache()
 
-    return train_ds, train_steps_per_epoch, test_ds test_steps_per_epoch
+    test_ds = create_n_way_dataset(data_directory_name=test_dir,
+                                                         batch_size=batch_size,
+                                                         anchor_decode_func=simple_decode,
+                                                         n_way_count=32)
+    test_ds = test_ds.cache()
+
+    return train_ds, train_steps_per_epoch, val_ds, test_ds
 
 
 def base64_encode(image):
