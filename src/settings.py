@@ -3,15 +3,16 @@ import tensorflow as tf
 IMG_WIDTH = 224
 IMG_HEIGHT = 224
 IMG_CHANNELS = 3
-BATCH_SIZE = 8
+BATCH_SIZE = 256
 TEST_RATIO = 0.2
 TRAIN_DIR = 'data/train'
 TEST_DIR = 'data/test'
 DATA_DIR = 'data/images'
 #AUTOTUNE = 1
 AUTOTUNE = tf.data.experimental.AUTOTUNE
-DENSE_NODES = 128
-MIXED_PRECISION = False # TODO for some reason this cuts memory usage from > 11GB to like 1GB....
+DENSE_NODES = 32
+EPOCHS = 20
+MIXED_PRECISION = True  # TODO for some reason this cuts memory usage from > 11GB to like 1GB....
 DOGS = [
 
 ]
