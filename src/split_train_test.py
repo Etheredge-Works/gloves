@@ -26,14 +26,27 @@ test_dir.mkdir()
 
 all_files = list(dir.glob('*jpg'))
 assert len(all_files) > 0
+for file in all_files:
+    file_name = str(file)
+    if "Maine_Coon" in file_name or "boxer" in file_name:
+        shutil.copyfile(file_name, str(test_dir / basename(file)))
+    else:
+        shutil.copyfile(file_name, str(train_dir / basename(file)))
 
-shuffle(all_files)
-test_files_count = int(ratio * len(all_files))
-test_files = all_files[:test_files_count]
-copy_files(test_files, test_dir)
+#all_main_coon_files = list(dir.glob("Main_Coon*"))
+#all_boxer_files = list(dir.glob("boxer*"))
 
-train_files = all_files[test_files_count:]
-copy_files(train_files, train_dir)
+
+#shuffle(all_files)
+#test_files_count = int(ratio * len(all_files))
+#test_file_count = len(all_main_coon_files) + len(all_boxer_files)
+#test_files = all_files[:test_files_count]
+#copy_files(all_main_coon_files, test_dir)
+#copy_files(all_boxer_files, test_dir)
+
+
+#train_files = all_files[test_files_count:]
+#copy_files(train_files, train_dir)
 
 
 
