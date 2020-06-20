@@ -365,7 +365,7 @@ def get_dataset_values(
                                                    anchor_decode_func=simple_decode,
                                                    other_decode_func=simple_decode,
                                                    shuffle=False,
-                                                   repeat=4)
+                                                   repeat=1)
     val_ds = val_ds.cache()
 
     test_ds = create_n_way_dataset(data_directory_name=test_dir,

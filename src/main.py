@@ -62,18 +62,37 @@ def timeit(ds, steps=default_timeit_steps):
 
 # %%
 
+import argparse
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="""
+    This script will train a siamese network
+    """)
+    parser.add_argument("--dense_nodes", default=128, help="number of dense nodes for encoder")
+    parser.add_argument("--epochs", default=1, help="Number of epochs to run")
+    parser.add_argument("--batch_size", default=32, help="None")
+    parser.add_argument("--lr", default=0.00003, help="None")
+
+    args = parser.parse_args()
+
+    nodes = int(args.dense_nodes)
+    epochs = int(args.epochs)
+    batch_size = int(args.batch_size)
+    lr = float(args.lr)
+
+
     #custom_model.gridsearch()
     model, history = custom_model.create_model(
         #train_dir=pathlib.Path('data/images'),
         train_dir=pathlib.Path('data/train'),
         test_dir=pathlib.Path('data/test'),
-        epochs=100)
+        dense_nodes=nodes, epochs=epochs, batch_size=batch_size, lr=lr)
 
     history_dict = history.history
     history_dict = {key: float(value[-1]) for key, value in history_dict.items()}
     with open('metrics.yaml', 'w') as f:
         yaml.dump(history_dict, f, default_flow_style=False)
+    print(history_dict)
 
     #model.save("model", save_format='tf')
     model.save("model.h5")

@@ -10,6 +10,7 @@ from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
 import numpy as np
+from wandb.keras import WandbCallback
 
 import settings
 
@@ -237,10 +238,11 @@ from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
 def create_model(
         train_dir,
         test_dir,
-        batch_size=settings.BATCH_SIZE,
+        batch_size,
+        dense_nodes,
+        epochs,
+        lr,
         test_ratio: float = settings.TEST_RATIO,
-        dense_nodes=settings.DENSE_NODES,
-        epochs=10,
         verbose=1) -> (tf.keras.Model, dict):
     #model = GlovesNet(should_transfer_learn=True, dense_nodes=dense_nodes)
     model = glovesnet(dense_nodes, should_transfer_learn=True)
@@ -269,14 +271,15 @@ def create_model(
 
     train_hist = model.fit(
         train_ds,
-        epochs=settings.EPOCHS,
+        epochs=epochs,
         validation_data=val_ds,
         validation_freq=1,
         #steps_per_epoch=steps_per_epoch,
         verbose=verbose,
         shuffle=False,  # TODO dataset should handle shuffling
         callbacks=[ReduceLROnPlateau(monitor='loss', factor=0.1, patience=20),
-                   NWayCallback(),
+                   #NWayCallback(),
+                   WandbCallback(),
                    ModelCheckpoint(filepath='checkpoints\checkpoint',save_weights_only=True, monitor='val_accuracy',
                                                       mode='max', save_best_only=True)]
     )
