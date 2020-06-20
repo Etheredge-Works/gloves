@@ -1,5 +1,8 @@
 data
-*dvc
-
-
-
+.dvc
+model
+wandb
+Jenkinsfile
+model.h5
+metrics.yaml
+checkpoints
