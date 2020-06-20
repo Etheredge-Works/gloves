@@ -1,5 +1,9 @@
 #! python
 import os
+os.environ['PYTHONHASHSEED']=str(4)
+import wandb
+wandb.init(project="gloves", config={"hyper":"parameter"})
+
 
 import settings
 from settings import MIXED_PRECISION
@@ -10,14 +14,18 @@ import yaml
 
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 import streamlit as st
+#import random
+#random.seed(4)
 import numpy as np
-
 np.random.seed(4)
+
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 #st.title("Mittens and Dave similarity analaysis")
 import tensorflow as tf
-import pathlib
 tf.random.set_seed(4)
+#tf.config.threading.set_inter_op_parallelism_threads(1)
+#tf.config.threading.set_intra_op_parallelism_threads(1)
+import pathlib
 
 if MIXED_PRECISION:
     from tensorflow.keras.mixed_precision import experimental as mixed_precision
