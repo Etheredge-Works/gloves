@@ -1,0 +1,12 @@
+md5: 54f56e5ef7dbb8fd0767c64dd96e8cb3
+wdir: ../data
+locked: true
+deps:
+- etag: '"2f33b97b-4c2c2a0bc94c0"'
+  path: https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
+outs:
+- md5: 5c4f3ee8e5d25df40f4fd59a7f44e54c
+  path: images.tar.gz
+  cache: true
+  metric: false
+  persist: false
