@@ -1,5 +1,6 @@
 data
-.dvc
+.dvc/cache
+.dvc/tmp
 model
 wandb
 Jenkinsfile
