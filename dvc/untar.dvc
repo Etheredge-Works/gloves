@@ -1,5 +1,5 @@
-md5: 32e72234e891b7bb7b1e436fe6959211
-cmd: tar xzf data\images.tar.gz -C data\
+md5: 2b0a51b92fd736dc0eb8434f6b018cac
+cmd: tar xzf data/images.tar.gz -C data/
 wdir: ..
 deps:
 - md5: 5c4f3ee8e5d25df40f4fd59a7f44e54c

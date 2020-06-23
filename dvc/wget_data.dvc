@@ -1,0 +1,12 @@
+md5: 30dbdbf5d302147c470bc34f6107711d
+cmd: wget -O data/images.tar.gz https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
+wdir: ..
+deps:
+- path: https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
+  etag: '"2f33b97b-4c2c2a0bc94c0"'
+outs:
+- md5: 5c4f3ee8e5d25df40f4fd59a7f44e54c
+  path: data/images.tar.gz
+  cache: true
+  metric: false
+  persist: false

@@ -1,5 +1,5 @@
-md5: 45247aef5e6860b9e3771b0cb59a127a
-cmd: python src\convert_images.py
+md5: a4032abb8abd904dff6f47b5c1b115e5
+cmd: python src/convert_images.py
 wdir: ..
 deps:
 - md5: dffdfebc9329f6864ade2e23805dcc68.dir
@@ -7,7 +7,7 @@ deps:
 - md5: 3567648806183ae02c5de1a0776281e5
   path: src/convert_images.py
 outs:
-- md5: afae67437dc236dfd7d70da1d38b8b17.dir
+- md5: 4cd0b23585aa4eaa63096ca693c28879.dir
   path: data/cleaned_images
   cache: true
   metric: false
