@@ -11,7 +11,6 @@ import yaml
 #import mlflow
 
 
-
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 import streamlit as st
 #import random
@@ -73,13 +72,19 @@ def timeit(ds, steps=default_timeit_steps):
 import argparse
 
 if __name__ == "__main__":
+    with open('params.yaml', 'r') as f:
+        d = yaml.safe_load(f)
+
+
     parser = argparse.ArgumentParser(description="""
     This script will train a siamese network
     """)
-    parser.add_argument("--dense_nodes", default=128, help="number of dense nodes for encoder")
-    parser.add_argument("--epochs", default=1, help="Number of epochs to run")
-    parser.add_argument("--batch_size", default=32, help="None")
-    parser.add_argument("--lr", default=0.00003, help="None")
+    parser.add_argument("--dense_nodes", default=d['dense_nodes'], help="number of dense nodes for encoder")
+    parser.add_argument("--epochs", default=d['epochs'], help="Number of epochs to run")
+    parser.add_argument("--batch_size", default=d['batch_size'], help="None")
+    parser.add_argument("--lr", default=d['lr'], help="None")
+    parser.add_argument("--optimizer", default=d['optimizer'], help="None")
+    parser.add_argument("--transfer_learning", default=d['transfer_learning'], help="None")
 
     args = parser.parse_args()
 
@@ -87,6 +92,8 @@ if __name__ == "__main__":
     epochs = int(args.epochs)
     batch_size = int(args.batch_size)
     lr = float(args.lr)
+    optimizer = args.optimizer
+    transfer_learning = args.transfer_learning
 
 
     #custom_model.gridsearch()
@@ -94,7 +101,8 @@ if __name__ == "__main__":
         #train_dir=pathlib.Path('data/images'),
         train_dir=pathlib.Path('data/train'),
         test_dir=pathlib.Path('data/test'),
-        dense_nodes=nodes, epochs=epochs, batch_size=batch_size, lr=lr)
+        dense_nodes=nodes, epochs=epochs, batch_size=batch_size, lr=lr,
+        optimizer=optimizer, transfer_learning=transfer_learning)
 
     history_dict = history.history
     history_dict = {key: float(value[-1]) for key, value in history_dict.items()}

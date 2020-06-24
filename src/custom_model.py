@@ -55,8 +55,8 @@ def create_model():
 
 
 def glovesnet(
-        dense_nodes=settings.DENSE_NODES,
-        should_transfer_learn=False):
+        dense_nodes,
+        should_transfer_learn):
         input1 = tf.keras.Input(input_shape)
         input2 = tf.keras.Input(input_shape)
         if should_transfer_learn:
@@ -65,7 +65,7 @@ def glovesnet(
                 layer.trainable = False
             x = base_model.output
             x = Flatten()(x)
-            x = Dense(128, activation='relu', dtype='float32',
+            x = Dense(dense_nodes, activation='relu', dtype='float32',
                       kernel_initializer=weight_init(),
                       bias_initializer=bia_init(),
                       kernel_regularizer=reg()
@@ -101,7 +101,7 @@ def glovesnet(
                 # Conv2D(filters=128, kernel_size=(3,3), strides=1, padding='same', activation='relu', use_bias=False),
                 # Conv2D(filters=256, kernel_size=(3, 3), strides=2, padding='same', activation='relu', use_bias=False),
                 Flatten(),
-                Dense(128, activation='relu', kernel_initializer=weight_init(), bias_initializer=bia_init(),
+                Dense(dense_nodes, activation='relu', kernel_initializer=weight_init(), bias_initializer=bia_init(),
                       kernel_regularizer=reg(),
                       dtype='float32'),
                 #Dropout(0.2),  # TODO param
@@ -242,10 +242,12 @@ def create_model(
         dense_nodes,
         epochs,
         lr,
+        optimizer, # not used
+        transfer_learning,
         test_ratio: float = settings.TEST_RATIO,
         verbose=1) -> (tf.keras.Model, dict):
     #model = GlovesNet(should_transfer_learn=True, dense_nodes=dense_nodes)
-    model = glovesnet(dense_nodes, should_transfer_learn=True)
+    model = glovesnet(dense_nodes, should_transfer_learn=transfer_learning)
     #print(model.summary())
     model.compile(loss="binary_crossentropy",
                   optimizer=tf.keras.optimizers.Adam(learning_rate=0.00003), metrics=["accuracy"])
