@@ -3,6 +3,7 @@ altair==4.1.0
 appdirs==1.4.4
 asn1crypto==0.24.0
 astor==0.8.1
+astroid==2.4.2
 astunparse==1.6.3
 atpublic==1.0
 attrs==19.3.0
@@ -52,6 +53,7 @@ ipykernel==5.3.0
 ipython==7.15.0
 ipython-genutils==0.2.0
 ipywidgets==7.5.1
+isort==4.3.21
 jedi==0.17.1
 Jinja2==2.11.2
 jmespath==0.10.0
@@ -62,8 +64,10 @@ jupyter-core==4.6.3
 Keras-Preprocessing==1.1.0
 keyring==10.6.0
 keyrings.alt==3.0
+lazy-object-proxy==1.4.3
 Markdown==3.2.1
 MarkupSafe==1.1.1
+mccabe==0.6.1
 mistune==0.8.4
 nanotime==0.5.2
 nbconvert==5.6.1
@@ -98,6 +102,7 @@ pydot==1.4.1
 Pygments==2.6.1
 pygobject==3.26.1
 pygtrie==2.3.2
+pylint==2.5.3
 pyparsing==2.4.7
 pyrsistent==0.16.0
 python-apt==1.6.5+ubuntu0.2
@@ -135,6 +140,7 @@ tornado==5.1.1
 tqdm==4.46.1
 traitlets==4.3.3
 treelib==1.6.1
+typed-ast==1.4.1
 tzlocal==2.1
 urllib3==1.25.9
 validators==0.15.0
