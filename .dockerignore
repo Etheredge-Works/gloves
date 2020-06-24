@@ -7,3 +7,4 @@ Jenkinsfile
 model.h5
 metrics.yaml
 checkpoints
+src/wandb

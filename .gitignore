@@ -1,2 +1,11 @@
-/metrics.yaml
-/model.h5
+metrics.yaml
+model.h5
+wandb
+.idea
+checkpoint
+checkpoints/
+.devcontainer/.env
+src/__pycache__
+src/checkpoint*
+src/checkpoints
+
