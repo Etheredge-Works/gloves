@@ -4,7 +4,8 @@ FROM tensorflow/tensorflow:latest-gpu
 COPY . /app
 WORKDIR /app
 RUN apt-get update && \
+    apt-get install -y wget git && \
     pip install -r requirements.txt
-#RUN dvc repro dvc/split
+RUN mkdir data && dvc repro dvc/split_data.dvc
 #RUN dvc repro dvc/split
 
