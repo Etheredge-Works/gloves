@@ -101,6 +101,7 @@ if __name__ == "__main__":
         #train_dir=pathlib.Path('data/images'),
         train_dir=pathlib.Path('data/train'),
         test_dir=pathlib.Path('data/test'),
+        all_data_dir=pathlib.Path('data/cleaned_images'),
         dense_nodes=nodes, epochs=epochs, batch_size=batch_size, lr=lr,
         optimizer=optimizer, transfer_learning=transfer_learning)
 

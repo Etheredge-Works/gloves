@@ -63,14 +63,9 @@ def get_pair(data_dir, all_files, labels, anchor_file_path,
     # TODO might have two of the anchor, but oh well
     # TODO make more efecient
 
-    #tf.print(anchor_file_path)
     split_path = tf.strings.split(anchor_file_path, sep=os.path.sep)
-    #tf.print(anchor_file_path)
     tf.debugging.assert_greater(tf.size(split_path), tf.constant(1), f"Split is wrong.\n")
-    #tf.print(tf.size(split_path))
-    #file_name = tf.gather(split_path, 2)
     file_name = tf.gather(split_path, tf.size(split_path) - 1)
-    #file_name = 'British_Shorthair_174.jpg'
     anchor_label = get_label(file_name)
 
 
@@ -318,24 +313,29 @@ def create_n_way_dataset(data_directory_name, batch_size, anchor_decode_func,
 
 
 
-def create_dataset(data_directory_name, batch_size, anchor_decode_func,
+
+def create_dataset(anchor_file_directory_name, batch_size, anchor_decode_func,
                    other_decode_func=None,
                    shuffle=False,
-                   repeat=None):
+                   repeat=None,
+                   other_file_data_directory_name=None):
+    if other_file_data_directory_name is None:
+        other_file_data_directory_name = anchor_file_directory_name
     if other_decode_func is None:
         other_decode_func = anchor_decode_func
 
-    data_directory = pathlib.Path(data_directory_name)
-    all_files = list(data_directory.glob('*.jpg'))
+    anchor_data_dir = pathlib.Path(anchor_file_directory_name)
+    other_data_dir = pathlib.Path(other_file_data_directory_name)
+    all_files = list(anchor_data_dir.glob('*.jpg'))
     file_count = len(all_files)
 
     step_per_epoch = file_count // batch_size
 
-    ds = tf.data.Dataset.list_files(str(data_directory / '*.jpg'))
+    ds = tf.data.Dataset.list_files(str(anchor_data_dir / '*.jpg'))
     ds = ds.cache()
 
     # Set `num_parallel_calls` so multiple images are loaded/processed in parallel.
-    ds_labeled = ds.map(read_images(str(data_directory), anchor_decode_func, other_decode_func),
+    ds_labeled = ds.map(read_images(str(other_data_dir), anchor_decode_func, other_decode_func),
                         num_parallel_calls=settings.AUTOTUNE)
 
     shuffle_buffer_size = file_count
@@ -350,29 +350,31 @@ def create_dataset(data_directory_name, batch_size, anchor_decode_func,
 def get_dataset_values(
         train_dir,
         test_dir,
+        all_data_dir,
         batch_size,
         repeat=None) -> (tf.data.Dataset, int, tf.data.Dataset, int):
 
-    train_ds, train_steps_per_epoch = create_dataset(data_directory_name=train_dir,
+    train_ds, train_steps_per_epoch = create_dataset(anchor_file_directory_name=train_dir,
                                                      batch_size=batch_size,
                                                      anchor_decode_func=simple_decode,
                                                      other_decode_func=simple_decode,
                                                      shuffle=True,
                                                      repeat=1)
 
-    val_ds, _ = create_dataset(data_directory_name=test_dir,
+    val_ds, _ = create_dataset(anchor_file_directory_name=test_dir,
                                                    batch_size=batch_size,
                                                    anchor_decode_func=simple_decode,
                                                    other_decode_func=simple_decode,
                                                    shuffle=False,
-                                                   repeat=1)
-    val_ds = val_ds.cache()
+                                                   repeat=1,
+                                                   other_file_data_directory_name=all_data_dir)
+    #val_ds = val_ds.cache()
 
     test_ds = create_n_way_dataset(data_directory_name=test_dir,
                                                          batch_size=batch_size,
                                                          anchor_decode_func=simple_decode,
                                                          n_way_count=32)
-    test_ds = test_ds.cache()
+    #test_ds = test_ds.cache()
 
     return train_ds, train_steps_per_epoch, val_ds, test_ds
 

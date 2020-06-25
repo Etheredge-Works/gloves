@@ -50,9 +50,6 @@ def reg():
     #return None
     return l2(2e-4)
 
-def create_model():
-    pass
-
 
 def glovesnet(
         dense_nodes,
@@ -238,6 +235,7 @@ from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
 def create_model(
         train_dir,
         test_dir,
+        all_data_dir,
         batch_size,
         dense_nodes,
         epochs,
@@ -255,6 +253,7 @@ def create_model(
     # TODO extract and pass in
     train_ds, steps_per_epoch, val_ds, test_ds = get_dataset_values(train_dir=train_dir,
                                                                     test_dir=test_dir,
+                                                                    all_data_dir=all_data_dir,
                                                                     batch_size=batch_size)
 
 
