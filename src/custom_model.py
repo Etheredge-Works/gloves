@@ -103,7 +103,7 @@ def glovesnet(
                       dtype='float32'),
                 #Dropout(0.2),  # TODO param
             ])
-        print(encoder_model.summary())
+        print(encoder_model.summary())  # TODO figure out some way to get glovesnet summary to show this information
         #encoder_input = (None, settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS)
 
         merge_layer = Lambda(euclidean_distance)([encoder_model(input1), encoder_model(input2)])  # ([self.dense1, self.dense2])
@@ -119,108 +119,6 @@ def glovesnet(
         network = Model(inputs=(input1, input2), outputs=prediction_layer)
         print(network.summary())
         return network
-
-
-class GlovesNet(tf.keras.Model):
-
-    #base_image = utils.simple_decode(tf.io.read_file("data\kitten_mittens.jpg"))  # TODO paramaterize
-    #self.base_image = utils.simple_decode(base_file)
-
-    def __init__(self,
-                 dense_nodes=settings.DENSE_NODES,
-                 should_transfer_learn=False):
-        super(GlovesNet, self).__init__()
-        if should_transfer_learn:
-            base_model = pre_trained_model(weights='imagenet', include_top=False, input_shape=input_shape)
-            for layer in base_model.layers:
-                layer.trainable = False
-            x = base_model.output
-            x = Flatten()(x)
-            x = Dense(512, activation='relu', dtype='float32',
-                      kernel_initializer=weight_init(),
-                      bias_initializer=bia_init(),
-                      kernel_regularizer=reg()
-                      )(x)
-            #x = Dropout(0.5)(x)
-            self.encoder_model = Model(base_model.inputs, x)
-        else:
-            self.encoder_model = tf.keras.Sequential([
-                Conv2D(filters=32, kernel_size=(13, 13), strides=7, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=2),
-                Conv2D(filters=64, kernel_size=(11, 11), strides=6, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=2),
-                Conv2D(filters=128, kernel_size=(9, 9), strides=5, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=2),
-                Conv2D(filters=256, kernel_size=(7, 7), strides=4, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=4),
-                Conv2D(filters=512, kernel_size=(5, 5), strides=3, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                Conv2D(filters=1024, kernel_size=(3, 3), strides=2, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=4),
-                #Conv2D(filters=256, kernel_size=(3, 3), strides=1, padding='valid', activation='relu',
-                       #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=2),
-                # Conv2D(filters=32, kernel_size=(8, 8), strides=4, padding='same', activation='relu', use_bias=False),
-                # Conv2D(filters=64, kernel_size=(6, 6), strides=3, padding='same', activation='relu', use_bias=False),
-                # Conv2D(filters=128, kernel_size=(4, 4), strides=2, padding='same', activation='relu', use_bias=False),
-                # Conv2D(filters=256, kernel_size=(3,3), strides=1, padding='same', activation='relu', use_bias=False),
-                # Conv2D(filters=128, kernel_size=(3,3), strides=1, padding='same', activation='relu', use_bias=False),
-                # Conv2D(filters=256, kernel_size=(3, 3), strides=2, padding='same', activation='relu', use_bias=False),
-                Flatten(),
-                Dense(128, activation='relu', kernel_initializer=weight_init(), bias_initializer=bia_init(),
-                      kernel_regularizer=reg(),
-                      dtype='float32'),
-                #Dropout(0.2),  # TODO param
-            ])
-        encoder_input = (None, settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS)
-        self.encoder_model.build(encoder_input)
-        print(self.encoder_model.summary())
-        #base_file = tf.io.read_file("kitten_mittens.jpg")  # TODO paramaterize
-        #self.base_image = utils.simple_decode(base_file)
-
-        #self.input1 = Input(input_shape)
-        #self.input2 = Input(input_shape)
-        #print(type(self.input1))
-        #print(type(self.encoder_model))
-
-        #self.dense1 = self.encoder_model(self.input1)
-        #self.dense2 = self.encoder_model(self.input2)
-        #$self.dense1 = self.encoder_model(self.input1)
-        #$self.dense2 = self.encoder_model(self.input2)
-
-        self.merge_layer = Lambda(euclidean_distance)  # ([self.dense1, self.dense2])
-        self.prediction_layer = Dense(1,
-                                      activation="sigmoid",
-                                      kernel_initializer=weight_init(),
-                                      bias_initializer=bia_init(),
-                                      kernel_regularizer=reg(),
-                                      dtype='float32')
-        #self.build(input_shape=(None, (encoder_input, encoder_input)))
-        #print(self.summary())
-        #model = Model(inputs=[input1, input2], outputs=dense_layer)
-
-    def call(self, inputs):
-        #tf.print(inputs)
-        x1, x2 = inputs
-        encoding1 = self.encoder_model(x1)
-        encoding2 = self.encoder_model(x2)
-        merged = self.merge_layer([encoding1, encoding2])
-        prediction = self.prediction_layer(merged)
-        return prediction
-        #self.add_loss()
-
-        #model.compile(loss = "binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), metrics=["accuracy"])
-        #model.compile(loss = "binary_crossentropy", optimizer='adam', metrics=["accuracy"])
-        #model.summary()
-
-    #def partial_predict(self, inputs: np.array, *args, **kwargs):
-        #model_input = (np.repeat(self.base_image, inputs.shape[0]), inputs)
-        #return self.predict(model_input, *args, **kwargs)
 
 
 #def contrastive_loss(vects):
@@ -308,7 +206,7 @@ def save_model(model):
     model.save("model")
 
 
-def get_model() -> GlovesNet:
+def get_model():
     net = glovesnet(should_transfer_learn=True)
     #net.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), metrics=["accuracy"])
     #return tf.keras.models.load_model("model")
