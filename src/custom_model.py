@@ -13,6 +13,7 @@ import numpy as np
 from wandb.keras import WandbCallback
 
 import settings
+import pathlib
 
 from utils import euclidean_distance, input_shape, get_dataset_values
 
@@ -179,7 +180,7 @@ def create_model(
         callbacks=[ReduceLROnPlateau(monitor='loss', factor=0.1, patience=20),
                    #NWayCallback(),
                    WandbCallback(),
-                   ModelCheckpoint(filepath='checkpoints\checkpoint',save_weights_only=True, monitor='val_accuracy',
+                   ModelCheckpoint(filepath=str(pathlib.Path('checkpoints/checkpoint')),save_weights_only=True, monitor='val_accuracy',
                                                       mode='max', save_best_only=True)]
     )
     '''
