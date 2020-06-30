@@ -1,6 +1,5 @@
-metrics.yaml
 model.h5
-wandb
+wandb/
 .idea
 checkpoint
 checkpoints/
@@ -9,3 +8,4 @@ src/__pycache__
 src/checkpoint*
 src/checkpoints
 
+.vscode/
