@@ -1,8 +1,8 @@
-md5: 7cdf97503c3db8882c946ba5b5da2a53
+md5: d2fb1613b276bd2718870b26a4886007
 cmd: python src/split_train_test.py data/cleaned_images 0.2 data/train data/test
 wdir: ..
 deps:
-- md5: 206c068356dd30078538d134f1863b0c
+- md5: c26daaf786144aedd333f59562eb2f30
   path: src/split_train_test.py
 - md5: 4cd0b23585aa4eaa63096ca693c28879.dir
   path: data/cleaned_images
