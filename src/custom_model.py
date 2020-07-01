@@ -208,11 +208,11 @@ def save_model(model):
 
 
 def get_model():
-    net = glovesnet(should_transfer_learn=True)
+    #net = glovesnet(should_transfer_learn=True)
     #net.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), metrics=["accuracy"])
-    #return tf.keras.models.load_model("model")
-    net.load_weights("model_weights")
-    return net
+    return tf.keras.models.load_model("model.h5")
+    #net.load_weights("model")
+    #return net
     # TODO make model name variable
 
 
