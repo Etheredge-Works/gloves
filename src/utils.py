@@ -332,7 +332,7 @@ def create_dataset(anchor_file_directory_name, batch_size, anchor_decode_func,
     step_per_epoch = file_count // batch_size
 
     ds = tf.data.Dataset.list_files(str(anchor_data_dir / '*.jpg'))
-    ds = ds.cache()
+    #ds = ds.cache()
 
     # Set `num_parallel_calls` so multiple images are loaded/processed in parallel.
     ds_labeled = ds.map(read_images(str(other_data_dir), anchor_decode_func, other_decode_func),

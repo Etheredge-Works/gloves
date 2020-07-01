@@ -1,5 +1,5 @@
-dense_nodes: 32
-epochs: 9
+dense_nodes: 1024
+epochs: 100
 batch_size: 32
 lr: 0.00003
 optimizer: 'adam'
