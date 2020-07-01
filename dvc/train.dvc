@@ -1,4 +1,4 @@
-md5: f4c143fb8d519bada51f26ea45829171
+md5: fe0e6920f686292f52962f2543dd625a
 cmd: python src/main.py
 wdir: ..
 deps:
@@ -17,18 +17,18 @@ deps:
 - path: params.yaml
   params:
     dense_nodes: 32
-    epochs: 1
+    epochs: 9
     batch_size: 32
-    lr: 0.0001
+    lr: 3e-05
     transfer_learning: true
     optimizer: adam
 outs:
-- md5: 8edf6e7dc78a278d400c76d0658c54df
+- md5: 010d418b86495cf33416b49ed382dfc5
   path: metrics.yaml
   cache: true
   metric: true
   persist: false
-- md5: 6bf2aedf78450f13960c48422d4f8205
+- md5: 47825302ec272d2475a3671cbc103582
   path: model.h5
   cache: true
   metric: false
