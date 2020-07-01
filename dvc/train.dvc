@@ -1,4 +1,4 @@
-md5: fe0e6920f686292f52962f2543dd625a
+md5: e94e88267f82464617f7aff6191cea99
 cmd: python src/main.py
 wdir: ..
 deps:
@@ -6,7 +6,7 @@ deps:
   path: src/main.py
 - md5: e1c06d85ae7b8b032bef47e42e4c08f9
   path: src/custom_data.py
-- md5: 4ceaa7027e8b5a748330c09cb2622d2a
+- md5: edd70b7e14a81b5e64f661a8fcf83c3a
   path: src/custom_model.py
 - md5: 53116771d400e15f487a9d67932551fe
   path: src/settings.py
@@ -17,18 +17,18 @@ deps:
 - path: params.yaml
   params:
     dense_nodes: 32
-    epochs: 9
+    epochs: 10
     batch_size: 32
     lr: 3e-05
-    transfer_learning: true
+    transfer_learning: false
     optimizer: adam
 outs:
-- md5: 010d418b86495cf33416b49ed382dfc5
+- md5: 0016e71a2853d3fb684350551fde5e91
   path: metrics.yaml
   cache: true
   metric: true
   persist: false
-- md5: 47825302ec272d2475a3671cbc103582
+- md5: 5e17d5c8aa4dc83c90a71fa6555c78fe
   path: model.h5
   cache: true
   metric: false
