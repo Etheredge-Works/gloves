@@ -79,6 +79,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""
     This script will train a siamese network
     """)
+    parser.add_argument("--train_dir", default='data/train', help="")
+    parser.add_argument("--test_dir", default='data/train', help="")
+    parser.add_argument("--all_dir", default='data/cleaned_images', help="")
     parser.add_argument("--dense_nodes", default=d['dense_nodes'], help="number of dense nodes for encoder")
     parser.add_argument("--epochs", default=d['epochs'], help="Number of epochs to run")
     parser.add_argument("--batch_size", default=d['batch_size'], help="None")
@@ -94,14 +97,17 @@ if __name__ == "__main__":
     lr = float(args.lr)
     optimizer = args.optimizer
     transfer_learning = args.transfer_learning
+    train_dir = pathlib.Path(args.train_dir)
+    test_dir = pathlib.Path(args.test_dir)
+    all_dir = pathlib.Path(args.all_dir)
 
 
     #custom_model.gridsearch()
     model, history = custom_model.create_model(
         #train_dir=pathlib.Path('data/images'),
-        train_dir=pathlib.Path('data/train'),
-        test_dir=pathlib.Path('data/test'),
-        all_data_dir=pathlib.Path('data/cleaned_images'),
+        train_dir=train_dir,
+        test_dir=test_dir,
+        all_data_dir=all_dir,
         dense_nodes=nodes, epochs=epochs, batch_size=batch_size, lr=lr,
         optimizer=optimizer, transfer_learning=transfer_learning)
 

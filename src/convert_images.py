@@ -7,14 +7,16 @@ import PIL
 import pathlib
 
 # https://github.com/tensorflow/models/issues/2194
-def main(argv):
-    path_images =pathlib.Path('data/images')
-    new_path = pathlib.Path('data/cleaned_images')
+def main(data_dir, cleaned_dir_name):
+    path_images =pathlib.Path(data_dir)
+    new_path = pathlib.Path(cleaned_dir_name)
     if not new_path.exists():
         new_path.mkdir()
+    count = 0
 
     filenames_src = tf.io.gfile.listdir(str(path_images))
     for filename_src in filenames_src:
+        count += 1 
         stem, extension = os.path.splitext(filename_src)
         if (extension.lower() != '.jpg'): continue
 
@@ -46,7 +48,19 @@ def main(argv):
             print('not jpg:{}'.format(filename_src))
         else:
             tf.io.gfile.copy(pathname_jpg, new_pathname_jpg, True)
+    assert count > 0
 
+import argparse
 
 if __name__ == "__main__":
-    sys.exit(int(main(sys.argv) or 0))
+    parser = argparse.ArgumentParser(description="""
+    This script will clean corrupted images
+    """)
+    parser.add_argument("--data_dir", help="")
+    parser.add_argument("--cleaned_dir_name", help="")
+
+    args = parser.parse_args()
+
+    data = pathlib.Path(args.data_dir)
+    clean = pathlib.Path(args.cleaned_dir_name)
+    sys.exit(int(main(data, clean) or 0))
