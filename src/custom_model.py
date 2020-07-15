@@ -141,6 +141,8 @@ def create_model(
         lr,
         optimizer, # not used
         transfer_learning,
+        metrics_file_name,
+        model_file_name,
         test_ratio: float = settings.TEST_RATIO,
         verbose=1) -> (tf.keras.Model, dict):
     #model = GlovesNet(should_transfer_learn=True, dense_nodes=dense_nodes)
