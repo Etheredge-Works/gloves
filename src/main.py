@@ -3,6 +3,9 @@ import os
 os.environ['PYTHONHASHSEED']=str(4)
 import wandb
 wandb.init(project="gloves", config={"hyper":"parameter"})
+import mlflow
+mlflow.set_experiment("my-experiment")
+from mlflow import pyfunc
 
 
 import settings
@@ -22,6 +25,8 @@ np.random.seed(4)
 #st.title("Mittens and Dave similarity analaysis")
 import tensorflow as tf
 tf.random.set_seed(4)
+import mlflow.tensorflow
+mlflow.tensorflow.autolog()
 #tf.config.threading.set_inter_op_parallelism_threads(1)
 #tf.config.threading.set_intra_op_parallelism_threads(1)
 import pathlib
@@ -88,6 +93,9 @@ if __name__ == "__main__":
     parser.add_argument("--lr", default=d['lr'], help="None")
     parser.add_argument("--optimizer", default=d['optimizer'], help="None")
     parser.add_argument("--transfer_learning", default=d['transfer_learning'], help="None")
+    parser.add_argument("--verbose", default='1', help="None")
+    parser.add_argument("--metrics_file_name", default='metrics.yaml', help="None")
+    parser.add_argument("--model_file_name", default='model.h5', help="None")
 
     args = parser.parse_args()
 
@@ -95,12 +103,16 @@ if __name__ == "__main__":
     epochs = int(args.epochs)
     batch_size = int(args.batch_size)
     lr = float(args.lr)
+
     optimizer = args.optimizer
     transfer_learning = args.transfer_learning
     train_dir = pathlib.Path(args.train_dir)
     test_dir = pathlib.Path(args.test_dir)
     all_dir = pathlib.Path(args.all_dir)
+    model_file_name = args.model_file_name
+    metrics_file_name = args.metrics_file_name
 
+    verbose = int(args.verbose)
 
     #custom_model.gridsearch()
     model, history = custom_model.create_model(
@@ -109,16 +121,19 @@ if __name__ == "__main__":
         test_dir=test_dir,
         all_data_dir=all_dir,
         dense_nodes=nodes, epochs=epochs, batch_size=batch_size, lr=lr,
-        optimizer=optimizer, transfer_learning=transfer_learning)
+        optimizer=optimizer, transfer_learning=transfer_learning,
+        verbose=verbose,
+        model_file_name=model_file_name,
+        metrics_file_name=metrics_file_name)
 
     history_dict = history.history
     history_dict = {key: float(value[-1]) for key, value in history_dict.items()}
-    with open('metrics.yaml', 'w') as f:
+    with open(metrics_file_name, 'w') as f:
         yaml.dump(history_dict, f, default_flow_style=False)
     print(history_dict)
 
     #model.save("model", save_format='tf')
-    model.save("model.h5")
+    model.save(model_file_name)
 
     #model, _ = create_model()
     #return model

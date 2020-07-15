@@ -1,0 +1,13 @@
+name: gloves_mlflow
+
+docker_env:
+        image: etheredgeb/gloves:latest
+        environment: ['WANDB_API_KEY']
+
+entry_points:
+        main:
+                parameters:
+                        train_dir: {default: 'data/train'}
+                        test_dir: {default: 'data/test'}
+                        all_dir: {default: 'data/cleaned_images'}
+                command: 'python src/main.py --train_dir {train_dir} --test_dir {test_dir} --all_dir {all_dir}'
