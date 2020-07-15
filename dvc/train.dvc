@@ -1,5 +1,5 @@
 md5: 1fd862b7b7c0fd2214db22fc5abe2e22
-cmd: python src/main.py
+cmd: python src/main.py --train_dir 'data/train' --test_dir 'data/test' --all_dir 'data/cleaned_images'
 wdir: ..
 deps:
 - md5: 0350683b83c2207fc9a1bee715bd7e3a

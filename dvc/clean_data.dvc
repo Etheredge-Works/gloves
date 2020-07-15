@@ -1,10 +1,10 @@
-md5: a4032abb8abd904dff6f47b5c1b115e5
-cmd: python src/convert_images.py
+md5: 03c97f798ca50caa6326cb975abd2f22
+cmd: python src/convert_images.py --data_dir 'data/images' --cleaned_dir_name 'data/cleaned_images'
 wdir: ..
 deps:
 - md5: dffdfebc9329f6864ade2e23805dcc68.dir
   path: data/images
-- md5: 3567648806183ae02c5de1a0776281e5
+- md5: 186654b12ed3b3d497ff91f91a99fbbe
   path: src/convert_images.py
 outs:
 - md5: 4cd0b23585aa4eaa63096ca693c28879.dir
