@@ -1,0 +1,19 @@
+name: Train Siemese Network
+description: TODO
+inputs: # List of input specs. Each input spec is a map.
+- {name: train_dir}
+- {name: test_dir}
+- {name: all_dir}
+#outputs:
+#- {name: cleaned_data_dir}
+implementation:
+  container:
+    image: etheredgeb/:gloves:latest
+    command: [
+      python, main.py, # Path of the program inside the container
+    ]
+    args: [
+      --train_dir, {inputPath: train_dir},
+      --test_dir, {inputPath: test_dir},
+      --all_dir, {inputPath: all_dir},
+    ]
