@@ -10,7 +10,7 @@ implementation:
   container:
     image: etheredgeb/gloves:latest
     command: [
-      python, main.py, # Path of the program inside the container
+      python, src/main.py, # Path of the program inside the container
     ]
     args: [
       --train_dir, {inputPath: train_dir},
