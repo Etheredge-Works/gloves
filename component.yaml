@@ -8,7 +8,7 @@ inputs: # List of input specs. Each input spec is a map.
 #- {name: cleaned_data_dir}
 implementation:
   container:
-    image: etheredgeb/:gloves:latest
+    image: etheredgeb/gloves:latest
     command: [
       python, main.py, # Path of the program inside the container
     ]
