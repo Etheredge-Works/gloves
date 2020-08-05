@@ -3,9 +3,16 @@ description: TODO
 inputs: # List of input specs. Each input spec is a map.
 - {name: train_dir}
 - {name: test_dir}
-- {name: all_dir}
-#outputs:
-#- {name: cleaned_data_dir}
+- {name: dense_nodes, default: '1024'}
+- {name: epochs, default: '100'}
+- {name: batch_size, default: '32'}
+- {name: lr, default: '0.00003'}
+- {name: optimizer, default: 'adam'}
+- {name: transfer_learning, default: 'True'} 
+- {name: verbose, default: "1"}
+outputs:
+- {name: metrics_file_name}
+- {name: model_file_name}
 implementation:
   container:
     image: etheredgeb/gloves:latest
@@ -16,4 +23,14 @@ implementation:
       --train_dir, {inputPath: train_dir},
       --test_dir, {inputPath: test_dir},
       --all_dir, {inputPath: all_dir},
+      --dense_nodes, {inputPath: dense_nodes},
+      --epochs, {inputPath: epochs},
+      --batch_size, {inputPath: batch_size},
+      --lr, {inputPath: lr},
+      --optimizer, {inputPath: optimizer},
+      --transfer_learning, {inputPath: transfer_learning},
+      --verbose, {inputPath: verbose},
+      --metrics_file_name, {outputPath: metrics_file_name},
+      --model_file_name, {outputPath: model_file_name},
+
     ]
