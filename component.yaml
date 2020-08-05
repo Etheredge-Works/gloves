@@ -3,6 +3,7 @@ description: TODO
 inputs: # List of input specs. Each input spec is a map.
 - {name: train_dir}
 - {name: test_dir}
+- {name: all_dir}
 - {name: dense_nodes, default: '1024'}
 - {name: epochs, default: '100'}
 - {name: batch_size, default: '32'}
