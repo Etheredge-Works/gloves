@@ -10,7 +10,7 @@ inputs: # List of input specs. Each input spec is a map.
 - {name: lr, default: '0.00003'}
 - {name: optimizer, default: 'adam'}
 - {name: transfer_learning, default: 'True'} 
-- {name: verbose, default: "1"}
+- {name: verbose, default: "2"}
 outputs:
 - {name: metrics_file_name}
 - {name: model_file_name}
