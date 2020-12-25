@@ -3,7 +3,7 @@ services:
   db:
     ports:
       - "0.0.0.0:6379:6379"
-    image: : "redis:alpine"
+    image: "redis:alpine"
 
   watcher:
     build:
