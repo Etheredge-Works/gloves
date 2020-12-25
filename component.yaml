@@ -37,5 +37,4 @@ implementation:
       --metrics_file_name, {inputValue: metrics_file_name},
       --model_dir, {outputPath: model_dir},
       --model_file_name, {inputValue: model_file_name},
-
     ]
