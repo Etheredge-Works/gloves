@@ -1,21 +1,21 @@
 name: Train Siemese Network
 description: TODO
 inputs: # List of input specs. Each input spec is a map.
-- {name: train_dir}
-- {name: test_dir}
-- {name: all_dir}
-- {name: dense_nodes, default: '1024'}
-- {name: epochs, default: '100'}
-- {name: batch_size, default: '32'}
-- {name: lr, default: '0.00003'}
-- {name: optimizer, default: 'adam'}
-- {name: transfer_learning, default: 'True'} 
-- {name: verbose, default: "2"}
-- {name: metrics_file_name}
-- {name: model_file_name}
+- {name: train_dir, type: String}
+- {name: test_dir, type: String}
+- {name: all_dir, type: String}
+- {name: dense_nodes, default: 1024, type: Integer}
+- {name: epochs, default: 100, type: Integer}
+- {name: batch_size, default: 32, type: Integer}
+- {name: lr, default: 0.00003, type: Float}
+- {name: optimizer, default: 'adam', type: String}
+- {name: transfer_learning, default: 'True', type: Boolean} 
+- {name: verbose, default: 2, type: Integer}
+- {name: metrics_file_name, type: String}
+- {name: model_file_name, type: String}
 outputs:
-- {name: metrics_dir}
-- {name: model_dir}
+- {name: metrics_dir, type: String}
+- {name: model_dir, type: String}
 implementation:
   container:
     image: etheredgeb/gloves:latest
