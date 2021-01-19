@@ -11,7 +11,7 @@ inputs: # List of input specs. Each input spec is a map.
 - {name: batch_size, default: 32, type: Integer}
 - {name: lr, type: Float}
 - {name: optimizer, default: adam, type: String}
-- {name: transfer_learning, default: 'True', type: Bool} 
+- {name: transfer_learning, default: 'True', type: Boolean} 
 - {name: verbose, default: 2, type: Integer}
 outputs:
 - {name: metrics_dir, type: LocalPath}
