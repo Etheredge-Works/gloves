@@ -9,7 +9,7 @@ inputs: # List of input specs. Each input spec is a map.
 - {name: dense_nodes, default: 1024, type: Integer}
 - {name: epochs, default: 100, type: Integer}
 - {name: batch_size, default: 32, type: Integer}
-- {name: lr, default: '0.00003', type: Float}
+- {name: lr, type: Float}
 - {name: optimizer, default: adam, type: String}
 - {name: transfer_learning, default: 'True', type: Bool} 
 - {name: verbose, default: 2, type: Integer}
