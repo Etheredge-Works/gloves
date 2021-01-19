@@ -8,8 +8,8 @@ inputs: # List of input specs. Each input spec is a map.
 - {name: epochs, default: 100, type: Integer}
 - {name: batch_size, default: 32, type: Integer}
 - {name: lr, default: 0.00003, type: Float}
-- {name: optimizer, default: 'adam', type: String}
-- {name: transfer_learning, default: 'True', type: Boolean} 
+- {name: optimizer, default: adam, type: String}
+- {name: transfer_learning, default: True, type: Bool} 
 - {name: verbose, default: 2, type: Integer}
 - {name: metrics_file_name, type: String}
 - {name: model_file_name, type: String}
