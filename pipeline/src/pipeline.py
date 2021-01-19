@@ -17,8 +17,15 @@ def load_local_component(dir_name):
     print(f"Loading {filename}")
     return kfp.components.load_component_from_url(filename)
 
+from kubernetes.client.models import V1EnvVar
+def add_envs(op, vars):
+    out_op = op
+    for var in vars:
+        out_op = add_env(out_op, var)
+    return out_op
+
 def add_env(op, var):
-    pass
+    return op.add_env_variable(V1EnvVar(name=var, value=os.getenv(var)))
 
 # Define a pipeline and create a task from a component:
 @kfp.dsl.pipeline(
@@ -72,9 +79,11 @@ def my_pipeline(
         #lr=lr,
         #optimizer=optimizer,
         #transfer_learning=transfer_learning,
-        #verbose=verbose,
-    #)
-    #.set_gpu_limit(1)
+    train_task = add_envs(train_task, [
+        'S3_ENDPOINT', 'MLFLOW_S3_ENDPOINT_URL', 'MLFLOW_TRACKING_URI',
+        'MLFLOW_TRACKING_USERNAME', 'MLFLOW_TRACKING_PASSWORD', 
+        'TF_FORCE_GPU_ALLOW_GROWTH', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'])
+        #os.environ['PYTHONHASHSEED']=str(4)
       
 
 # This pipeline can be compiled, uploaded and submitted for execution.
