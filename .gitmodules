@@ -1,0 +1,3 @@
+[submodule "pipeline_components"]
+	path = pipeline_components
+	url = https://github.com/Benjamin-Etheredge/pipeline_components.git
