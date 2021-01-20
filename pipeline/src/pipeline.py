@@ -32,17 +32,19 @@ def add_env(op, var):
     name='Exploring Reusability pipeline', 
     description='Pipeline to try out reusable components')
 def my_pipeline(
+    data_url="https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz",
     dense_nodes: int = 1024,
     epochs: int = 100,
     batch_size: int = 32,
-    #lr: float = 0.00003, # TODO why does this break pipeline?
+    lr: float = 0.0003, 
     optimizer: str = "adam",
     transfer_learning: bool = True,
-    verbose: int = 2
+    verbose: int = 2,
+    split_ratio=0.1
 ):
     get_data_op = load_component("wget_url")
     get_data_task = get_data_op(
-        data_url=r"https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz",
+        data_url=data_url
         #output=Path("data"),
     )
 
@@ -59,25 +61,25 @@ def my_pipeline(
     split_op = load_component("split_oxford_pet_data")
     split_task = split_op(
         data_dir=clean_data_task.outputs['cleaned_data_dir'],
-        split_ratio=0.1
+        split_ratio=split_ratio
     )
 
     # can't use files since it can't reach it later on...
-    #train_op = kfp.components.load_component_from_file("/pipeline/component.yaml")
-    #train_op = kfp.components.load_component_from_url(
-        #"https://raw.githubusercontent.com/Benjamin-Etheredge/Gloves/master/component.yaml")
-    #train_task = train_op(
-        #train_dir=split_task.outputs['train_dir'],
-        #test_dir=split_task.outputs['test_dir'],
-        #all_dir=clean_data_task.outputs['cleaned_data_dir'],
-        #metrics_file_name="metrics.yaml",
-        #model_file_name="model.h5"
+    train_op = kfp.components.load_component_from_file("/pipeline/component.yaml")
+    train_op = kfp.components.load_component_from_url(
+        "https://raw.githubusercontent.com/Benjamin-Etheredge/Gloves/master/component.yaml")
+    train_task = train_op(
+        train_dir=split_task.outputs['train_dir'],
+        test_dir=split_task.outputs['test_dir'],
+        all_dir=clean_data_task.outputs['cleaned_data_dir'],
+        metrics_file_name="metrics.yaml",
+        model_file_name="model.h5",
         # hypers
-        #dense_nodes=dense_nodes,
-        #epochs=epochs,
-        #batch_size=batch_size,
-        #lr=lr,
-        #optimizer=optimizer,
+        dense_nodes=dense_nodes,
+        epochs=epochs,
+        batch_size=batch_size,
+        lr=lr,
+        optimizer=optimizer,
         #transfer_learning=transfer_learning,
     train_task = add_envs(train_task, [
         'S3_ENDPOINT', 'MLFLOW_S3_ENDPOINT_URL', 'MLFLOW_TRACKING_URI',
