@@ -1,6 +1,44 @@
-dense_nodes: 1024
-epochs: 100
-batch_size: 32
-lr: 0.00003
-optimizer: 'adam'
-transfer_learning: True
+#out_dir: /nfs/data/gloves
+#- docker_cmd: docker run -v $(pwd)/outputs:/outputs
+out_dir: /nfs/data/gloves/outputs
+docker_out_dir: /outputs
+docker_cmd: docker run -v /nfs/data/gloves/outputs:/outputs
+
+wget:
+  img: etheredgeb/wget_url:latest
+  data_url: "https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz"
+  out_dir: wget
+
+untar:
+  img: etheredgeb/untar_data:latest
+  tar_args: xzvf
+  data_dir: untar
+  tar_file_name: images.tar.gz
+  
+clean:
+  img: etheredgeb/clean_oxford_pet_data:latest
+  out_dir: clean
+
+split: 
+  img: etheredgeb/split_oxford_pet_data:latest
+  train_dir: train
+  test_dir: test
+  ratio: 0.2
+
+train:
+  img: etheredgeb/clean
+
+  train_dir: train
+  test_dir: train
+  metrics_dir: metrics
+  model_dir: models
+
+  dense_nodes: 1024
+  epochs: 100
+  batch_size: 32
+  lr: 0.0003
+  optimizer: 'adam'
+  transfer_learning: 1
+  verbose: 2
+  metrics_file_name: 'metrics.yaml'
+  model_file_name: 'model.h5'

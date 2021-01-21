@@ -1,4 +1,10 @@
 [core]
     remote = nfs
+[feature]
+    parametrization = true
+[cache]
+    s3 = s3cache
 ['remote "nfs"']
     url = //192.168.1.21/mnt/user/home/data
+['remote "s3cache"']
+    url = s3://gloves/cache

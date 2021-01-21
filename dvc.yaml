@@ -1,0 +1,106 @@
+vars:
+- params.yaml
+  # TODO figure out how to paramaterize outputs here
+  #- docker_cmd: docker run -v $(pwd)/outputs:/outputs
+- aws_cp: aws s3 --endpoint-url https://minio.etheredge.co cp
+
+stages:
+  wget:
+    cmd: >
+      ${docker_cmd} ${wget.img}
+      ${wget.data_url} ${docker_out_dir}/${wget.out_dir}
+    params:
+    - wget
+    outs:
+    - ${out_dir}/${wget.out_dir}
+
+  #move_wget:
+    #cmd: ${aws_cp} ${out_dir}/${wget.out_dir} s3://gloves/${wget.out_dir}
+    #deps:
+      #- ${out_dir}/${wget.out_dir}
+    #outs:
+      #- s3://gloves/${wget.out_dir}
+
+  untar:
+    cmd: >
+      ${docker_cmd} ${untar.img}
+      ${untar.tar_args}  ${docker_out_dir}/${untar.data_dir}  ${docker_out_dir}/${wget.out_dir}
+      ${untar.tar_file_name}
+    deps:
+    - ${out_dir}/${wget.out_dir}
+    params:
+    - untar
+    - wget.out_dir
+    outs:
+    - ${out_dir}/${untar.data_dir}
+
+  clean:
+    cmd: >
+      ${docker_cmd} ${clean.img}
+      --data_dir ${docker_out_dir}/${untar.data_dir}
+      --cleaned_dir_name ${docker_out_dir}/${clean.out_dir}
+    deps:
+    - ${out_dir}/${untar.data_dir}
+    params:
+    - clean
+    - untar.data_dir
+    outs:
+    - ${out_dir}/${clean.out_dir}
+
+  split:
+    cmd: >
+      ${docker_cmd} ${split.img}
+      --data_dir ${docker_out_dir}/${clean.out_dir}
+      --train_dir ${docker_out_dir}/${split.train_dir}
+      --test_dir ${docker_out_dir}/${split.test_dir}
+      --ratio ${split.ratio}
+    deps:
+    - ${out_dir}/${clean.out_dir}
+    params:
+    - out_dir
+    - split
+    - clean.out_dir
+    outs:
+    - ${out_dir}/${split.train_dir}
+    - ${out_dir}/${split.test_dir}
+
+  train:
+    cmd: >
+      mlflow run 
+      -P all_dir=${out_dir}/${clean.out_dir}
+      -P train_dir=${out_dir}/${split.train_dir}
+      -P test_dir=${out_dir}/${split.test_dir}
+      -P metrics_dir=${out_dir}/${train.metrics_dir}
+      -P model_dir=${out_dir}/${train.model_dir}
+      -P dense_nodes=${train.dense_nodes}
+      -P epochs=${train.epochs}
+      -P batch_size=${train.batch_size}
+      -P lr=${train.lr}
+      -P optimizer=${train.optimizer}
+      -P transfer_learning=${train.transfer_learning}
+      -P verbose=${train.verbose}
+      -P metrics_file_name=${train.metrics_file_name}
+      -P model_file_name=${train.model_file_name}
+      .
+    params:
+      - out_dir
+      - train
+      - split.train_dir
+      - split.test_dir
+    deps:
+      - src/main.py
+      - src/custom_model.py
+      - src/utils.py
+      - MLproject
+      - ${out_dir}/${split.train_dir}
+      - ${out_dir}/${split.test_dir}
+      - ${out_dir}/${clean.out_dir}
+    outs:
+      # TODO figure out a way around this
+      # dvc deletes outputs before running
+      # mlflow expects these to exist....
+      - ${out_dir}/${train.metrics_dir}
+      - ${out_dir}/${train.model_dir}
+      
+
+
