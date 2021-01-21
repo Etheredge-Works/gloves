@@ -81,6 +81,7 @@ def my_pipeline(
         lr=lr,
         optimizer=optimizer,
         #transfer_learning=transfer_learning,
+    )
     train_task = add_envs(train_task, [
         'S3_ENDPOINT', 'MLFLOW_S3_ENDPOINT_URL', 'MLFLOW_TRACKING_URI',
         'MLFLOW_TRACKING_USERNAME', 'MLFLOW_TRACKING_PASSWORD', 
@@ -88,10 +89,10 @@ def my_pipeline(
         #os.environ['PYTHONHASHSEED']=str(4)
       
 
-# This pipeline can be compiled, uploaded and submitted for execution.
-#kfp.Client().create_run_from_pipeline_func(my_pipeline, arguments={})
-import kfp.compiler as compiler
-# TODO cleanup absolute path
-compiler.Compiler().compile(pipeline_func=my_pipeline, package_path="/pipeline/gloves_pipeline.tar.gz")
+if __name__ == "__main__":
+    # This pipeline can be compiled, uploaded and submitted for execution.
+    #kfp.Client().create_run_from_pipeline_func(my_pipeline, arguments={})
+    import kfp.compiler as compiler
+    # TODO cleanup absolute path
+    compiler.Compiler().compile(pipeline_func=my_pipeline, package_path="/pipeline/gloves_pipeline.tar.gz")
 
-# TODO auto upload pipeline
