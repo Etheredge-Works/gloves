@@ -1,0 +1,102 @@
+get_data:
+  cmd: "docker run -v $(pwd)/outputs:/outputs etheredgeb/wget_url:latest https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz\
+    \ /outputs/wget\n"
+  params:
+    params.yaml:
+      out_dir: outputs
+      wget:
+        data_url: https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
+        out_dir: wget
+  outs:
+  - path: outputs/wget
+    md5: dbd763779bfe15e4b6d824cfde1034e0.dir
+    size: 791918971
+    nfiles: 1
+untar:
+  cmd: "docker run -v /nfs/data/gloves/outputs:/outputs etheredgeb/untar_data:latest\
+    \ xzvf  /outputs/untar  /outputs/wget images.tar.gz\n"
+  deps:
+  - path: /nfs/data/gloves/outputs/wget
+    md5: dbd763779bfe15e4b6d824cfde1034e0.dir
+    size: 791918971
+    nfiles: 1
+  params:
+    params.yaml:
+      untar:
+        img: etheredgeb/untar_data:latest
+        tar_args: xzvf
+        data_dir: untar
+        tar_file_name: images.tar.gz
+      wget.out_dir: wget
+  outs:
+  - path: /nfs/data/gloves/outputs/untar
+    md5: 277f608c70d7bd7991e0cd5f5cc845c6.dir
+    size: 796502375
+    nfiles: 7393
+wget:
+  cmd: "docker run -v /nfs/data/gloves/outputs:/outputs etheredgeb/wget_url:latest\
+    \ https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz /outputs/wget\n"
+  params:
+    params.yaml:
+      out_dir: /nfs/data/gloves/outputs
+      wget:
+        img: etheredgeb/wget_url:latest
+        data_url: https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
+        out_dir: wget
+  outs:
+  - path: /nfs/data/gloves/outputs/wget
+    md5: dbd763779bfe15e4b6d824cfde1034e0.dir
+    size: 791918971
+    nfiles: 1
+clean:
+  cmd: "docker run -v /nfs/data/gloves/outputs:/outputs etheredgeb/clean_oxford_pet_data:latest\
+    \ --data_dir /outputs/untar --cleaned_dir_name /outputs/clean\n"
+  deps:
+  - path: /nfs/data/gloves/outputs/untar
+    md5: dffdfebc9329f6864ade2e23805dcc68.dir
+    size: 798382210
+    nfiles: 7405
+  params:
+    params.yaml:
+      clean:
+        img: etheredgeb/clean_oxford_pet_data:latest
+        out_dir: clean
+      untar.data_dir: untar
+  outs:
+  - path: /nfs/data/gloves/outputs/clean
+    md5: 4cd0b23585aa4eaa63096ca693c28879.dir
+    size: 790897339
+    nfiles: 7390
+split:
+  cmd: "docker run -v /nfs/data/gloves/outputs:/outputs etheredgeb/split_oxford_pet_data:latest\
+    \ --data_dir /outputs/clean --train_dir /outputs/train --test_dir /outputs/test\
+    \ --ratio 0.2\n"
+  deps:
+  - path: /nfs/data/gloves/outputs/clean
+    md5: 4cd0b23585aa4eaa63096ca693c28879.dir
+    size: 790897339
+    nfiles: 7390
+  params:
+    params.yaml:
+      clean.out_dir: clean
+      out_dir: /nfs/data/gloves/outputs
+      split:
+        img: etheredgeb/split_oxford_pet_data:latest
+        train_dir: train
+        test_dir: test
+        ratio: 0.2
+  outs:
+  - path: /nfs/data/gloves/outputs/test
+    md5: d956170b0d04a8f7940e9c6ad6457012.dir
+    size: 45660325
+    nfiles: 400
+  - path: /nfs/data/gloves/outputs/train
+    md5: 6b21d360872d1619dc616d0d983ecbd4.dir
+    size: 745237014
+    nfiles: 6990
+test:
+  cmd: touch /nfs/data/gloves/outputs/pls
+  outs:
+  - path: /nfs/data/gloves/outputs/pls
+    md5: d41d8cd98f00b204e9800998ecf8427e
+    size: 0
