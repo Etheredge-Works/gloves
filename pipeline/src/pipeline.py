@@ -65,7 +65,6 @@ def my_pipeline(
     )
 
     # can't use files since it can't reach it later on...
-    train_op = kfp.components.load_component_from_file("/pipeline/component.yaml")
     train_op = kfp.components.load_component_from_url(
         "https://raw.githubusercontent.com/Benjamin-Etheredge/Gloves/master/component.yaml")
     train_task = train_op(
