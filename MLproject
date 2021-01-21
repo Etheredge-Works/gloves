@@ -1,13 +1,53 @@
 name: gloves_mlflow
 
-docker_env:
-        image: etheredgeb/gloves:latest
-        environment: ['WANDB_API_KEY']
+#docker_env:
+  #image: betheredge/gloves:latest
+  #environment: [
+    #["TF_FORCE_GPU_ALLOW_GROWTH", "true"],
+    #["MLFLOW_EXPERIMENT_NAME", "animal"],
+    #"AWS_ACCESS_KEY_ID", 
+    #"AWS_SECRET_ACCESS_KEY", 
+    #"MLFLOW_S3_ENDPOINT_URL", 
+    #"MLFLOW_TRACKING_URI", 
+    #"MLFLOW_TRACKING_USERNAME", 
+    #"MLFLOW_TRACKING_PASSWORD",
+    #"S3_ENDPOINT" # for tensorflow
+    #]
+    
+conda_env: environment.yaml
 
 entry_points:
         main:
                 parameters:
-                        train_dir: {default: 'data/train'}
-                        test_dir: {default: 'data/test'}
-                        all_dir: {default: 'data/cleaned_images'}
-                command: 'python src/main.py --train_dir {train_dir} --test_dir {test_dir} --all_dir {all_dir}'
+                        train_dir: {type: path}
+                        test_dir: {type: path}
+                        all_dir: {type: path}
+                        metrics_dir: {type: string}
+                        model_dir: {type: string}
+                        dense_nodes: {type: int}
+                        epochs: {type: int}
+                        batch_size: {type: int}
+                        lr: {type: float}
+                        optimizer: {type: string}
+                        transfer_learning: {type: bool}
+                        verbose: {type: int}
+                        metrics_file_name: {type: string}
+                        model_file_name: {type: string}
+
+                command: >
+                        python src/main.py 
+                        --train_dir {train_dir} 
+                        --test_dir {test_dir} 
+                        --all_dir {all_dir}
+                        --metrics_dir {metrics_dir}
+                        --model_dir {model_dir}
+                        --dense_nodes {dense_nodes}
+                        --epochs {epochs}
+                        --batch_size {batch_size}
+                        --lr: {lr}
+                        --optimizer: {optimizer}
+                        --transfer_learning: {transfer_learning}
+                        --verbose: {verbose}
+                        --metrics_file_name: {metrics_file_name}
+                        --model_file_name: {model_file_name}
+
