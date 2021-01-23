@@ -1,21 +1,19 @@
 name: Train Siemese Network
 description: TODO
 inputs: # List of input specs. Each input spec is a map.
-- {name: train_dir, type: LocalPath}
-- {name: test_dir, type: LocalPath}
-- {name: all_dir, type: LocalPath}
-- {name: metrics_file_name, type: String}
-- {name: model_file_name, type: String}
-- {name: dense_nodes, default: 1024, type: Integer}
+- {name: train-dir, type: LocalPath}
+- {name: test-dir, type: LocalPath}
+- {name: all-dir, type: LocalPath}
+- {name: model-filename, type: String}
+- {name: dense-nodes, default: 1024, type: Integer}
 - {name: epochs, default: 100, type: Integer}
-- {name: batch_size, default: 32, type: Integer}
+- {name: batch-size, default: 32, type: Integer}
 - {name: lr, type: Float}
 - {name: optimizer, default: adam, type: String}
-- {name: transfer_learning, default: 'True', type: Boolean} 
+- {name: transfer-learning, default: 'True', type: Boolean} 
 - {name: verbose, default: 2, type: Integer}
 outputs:
-- {name: metrics_dir, type: LocalPath}
-- {name: model_dir, type: LocalPath}
+- {name: model-dir, type: LocalPath}
 implementation:
   container:
     image: etheredgeb/gloves:latest
@@ -23,18 +21,18 @@ implementation:
       python, src/main.py, # Path of the program inside the container
     ]
     args: [
-      --train_dir, {inputPath: train_dir},
-      --test_dir, {inputPath: test_dir},
-      --all_dir, {inputPath: all_dir},
-      --dense_nodes, {inputValue: dense_nodes},
+      --train-dir, {inputPath: train-dir},
+      --test-dir, {inputPath: test-dir},
+      --all-dir, {inputPath: all-dir},
+      --dense-nodes, {inputValue: dense-nodes},
       --epochs, {inputValue: epochs},
-      --batch_size, {inputValue: batch_size},
+      --batch-size, {inputValue: batch-size},
       --lr, {inputValue: lr},
       --optimizer, {inputValue: optimizer},
-      --transfer_learning, {inputValue: transfer_learning},
+      --transfer-learning, {inputValue: transfer-learning},
       --verbose, {inputValue: verbose},
-      --metrics_dir, {outputPath: metrics_dir},
-      --metrics_file_name, {inputValue: metrics_file_name},
-      --model_dir, {outputPath: model_dir},
-      --model_file_name, {inputValue: model_file_name},
+      --metrics-dir, {outputPath: metrics-dir},
+      --metrics-file-name, {inputValue: metrics-file-name},
+      --model-dir, {outputPath: model-dir},
+      --model-filename, {inputValue: model-filename},
     ]

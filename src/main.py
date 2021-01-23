@@ -1,11 +1,13 @@
 #! python
 import os
 os.environ['PYTHONHASHSEED']=str(4)
-import wandb
-wandb.init(project="gloves", config={"hyper":"parameter"})
+#import wandb
+#wandb.init(project="gloves", config={"hyper":"parameter"})
 import mlflow
 mlflow.set_experiment("my-experiment")
 from mlflow import pyfunc
+import click
+from pathlib import Path
 
 
 import settings
@@ -14,15 +16,9 @@ import yaml
 #import mlflow
 
 
-os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
-import streamlit as st
-#import random
-#random.seed(4)
 import numpy as np
 np.random.seed(4)
 
-#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-#st.title("Mittens and Dave similarity analaysis")
 import tensorflow as tf
 tf.random.set_seed(4)
 import mlflow.tensorflow
@@ -41,6 +37,7 @@ import custom_model
 
 # %%
 
+'''
 import time
 
 default_timeit_steps = 1000
@@ -58,6 +55,7 @@ def timeit(ds, steps=default_timeit_steps):
     duration = end - start
     st.write("{} batches: {} s".format(steps, duration))
     st.write("{:0.5f} Images/s".format(settings.BATCH_SIZE * steps / duration))
+'''
 
 
 # %%
@@ -76,65 +74,56 @@ def timeit(ds, steps=default_timeit_steps):
 
 import argparse
 
-if __name__ == "__main__":
-    with open('params.yaml', 'r') as f:
-        d = yaml.safe_load(f)
 
-
-    parser = argparse.ArgumentParser(description="""
-    This script will train a siamese network
-    """)
-    parser.add_argument("--train_dir", default='data/train', help="")
-    parser.add_argument("--test_dir", default='data/train', help="")
-    parser.add_argument("--all_dir", default='data/cleaned_images', help="")
-    parser.add_argument("--dense_nodes", default=d['dense_nodes'], help="number of dense nodes for encoder")
-    parser.add_argument("--epochs", default=d['epochs'], help="Number of epochs to run")
-    parser.add_argument("--batch_size", default=d['batch_size'], help="None")
-    parser.add_argument("--lr", default=d['lr'], help="None")
-    parser.add_argument("--optimizer", default=d['optimizer'], help="None")
-    parser.add_argument("--transfer_learning", default=d['transfer_learning'], help="None")
-    parser.add_argument("--verbose", default='1', help="None")
-    parser.add_argument("--metrics_file_name", default='metrics.yaml', help="None")
-    parser.add_argument("--model_file_name", default='model.h5', help="None")
-
-    args = parser.parse_args()
-
-    nodes = int(args.dense_nodes)
-    epochs = int(args.epochs)
-    batch_size = int(args.batch_size)
-    lr = float(args.lr)
-
-    optimizer = args.optimizer
-    transfer_learning = args.transfer_learning
-    train_dir = pathlib.Path(args.train_dir)
-    test_dir = pathlib.Path(args.test_dir)
-    all_dir = pathlib.Path(args.all_dir)
-    model_file_name = args.model_file_name
-    metrics_file_name = args.metrics_file_name
-
-    verbose = int(args.verbose)
-
+@click.command()
+@click.option('--train-dir', type=click.Path(exists=True), help='')
+@click.option('--test-dir', type=click.Path(exists=True), help='')
+@click.option('--all-dir', type=click.Path(exists=True), help='')
+@click.option('--model-dir', type=click.Path(exists=False), help='')
+@click.option('--dense-nodes', help='')
+@click.option('--epochs', help='')
+@click.option('--lr', help='')
+@click.option('--optimizer', help='')
+@click.option('--transfer-learning', help='')
+@click.option('--verbose', help='')
+@click.option('--model-filename', help='')
+def main(
+        train_dir: str, 
+        test_dir: str, 
+        all_dir: str, 
+        model_dir: str,
+        dense_nodes: int, 
+        epochs: int, 
+        batch_size: int, 
+        lr: float, 
+        optimizer: str,
+        transfer_learning: bool,
+        verbose: int,
+        model_filename: str
+        ):
     #custom_model.gridsearch()
     model, history = custom_model.create_model(
         #train_dir=pathlib.Path('data/images'),
         train_dir=train_dir,
         test_dir=test_dir,
         all_data_dir=all_dir,
-        dense_nodes=nodes, epochs=epochs, batch_size=batch_size, lr=lr,
+        dense_nodes=dense_nodes, epochs=epochs, batch_size=batch_size, lr=lr,
         optimizer=optimizer, transfer_learning=transfer_learning,
         verbose=verbose,
-        model_file_name=model_file_name,
-        metrics_file_name=metrics_file_name)
+        model_file_name=model_filename)
 
     history_dict = history.history
     history_dict = {key: float(value[-1]) for key, value in history_dict.items()}
-    with open(metrics_file_name, 'w') as f:
-        yaml.dump(history_dict, f, default_flow_style=False)
-    print(history_dict)
+    #with open(metrics_file_name, 'w') as f:
+        #yaml.dump(history_dict, f, default_flow_style=False)
+    #print(history_dict)
 
     #model.save("model", save_format='tf')
-    model.save(model_file_name)
+    model.save(str(Path(model_dir)/model_filename))
 
     #model, _ = create_model()
     #return model
 
+
+if __name__ == "__main__":
+    main()
