@@ -1,5 +1,5 @@
 #!/bin/bash -e
-image_name=etheredgeb/split_oxford_pet_data:latest
+image_name=etheredgeb/gloves
 image_tag=latest
 full_image_name=${image_name}:${image_tag}
 
