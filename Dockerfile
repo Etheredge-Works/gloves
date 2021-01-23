@@ -5,4 +5,3 @@ COPY requirements.txt params.yaml /app/
 COPY src /app/src
 WORKDIR /app
 RUN pip install -r requirements.txt
-
