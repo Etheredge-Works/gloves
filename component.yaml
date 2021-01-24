@@ -10,7 +10,7 @@ inputs: # List of input specs. Each input spec is a map.
 - {name: batch-size, default: 32, type: Integer}
 - {name: lr, type: Float}
 - {name: optimizer, default: adam, type: String}
-- {name: transfer-learning, default: 'True', type: Boolean} 
+- {name: should-transfer-learn, default: 'True', type: Boolean} 
 - {name: verbose, default: 2, type: Integer}
 outputs:
 - {name: model-dir, type: LocalPath}
@@ -29,7 +29,7 @@ implementation:
       --batch-size, {inputValue: batch-size},
       --lr, {inputValue: lr},
       --optimizer, {inputValue: optimizer},
-      --transfer-learning, {inputValue: transfer-learning},
+      --should-transfer-learn, {inputValue: should-transfer-learn},
       --verbose, {inputValue: verbose},
       --model-dir, {outputPath: model-dir},
       --model-filename, {inputValue: model-filename},
