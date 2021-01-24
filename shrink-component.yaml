@@ -1,0 +1,26 @@
+name: Train Siemese Network
+description: TODO
+inputs: # List of input specs. Each input spec is a map.
+- {name: train-dir, type: LocalPath}
+- {name: test-dir, type: LocalPath}
+- {name: all-dir, type: LocalPath}
+- {name: in-model-filename, type: String}
+- {name: in-model-dir, type: LocalPath}
+- {name: out-model-filename, type: String}
+outputs:
+- {name: out-model-dir, type: LocalPath}
+implementation:
+  container:
+    image: etheredgeb/gloves:latest
+    command: [
+      python, src/shrink.py, # Path of the program inside the container
+    ]
+    args: [
+      --train-dir, {inputPath: train-dir},
+      --test-dir, {inputPath: test-dir},
+      --all-dir, {inputPath: all-dir},
+      --in-model-dir, {outputPath: in-model-dir},
+      --in-model-filename, {inputValue: in-model-filename},
+      --out-model-dir, {outputPath: out-model-dir},
+      --out-model-filename, {inputValue: out-model-filename},
+    ]
