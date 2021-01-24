@@ -31,7 +31,6 @@ implementation:
       --optimizer, {inputValue: optimizer},
       --transfer-learning, {inputValue: transfer-learning},
       --verbose, {inputValue: verbose},
-      --metrics-dir, {outputPath: metrics-dir},
       --metrics-file-name, {inputValue: metrics-file-name},
       --model-dir, {outputPath: model-dir},
       --model-filename, {inputValue: model-filename},
