@@ -14,6 +14,7 @@ inputs: # List of input specs. Each input spec is a map.
 - {name: verbose, default: 2, type: Integer}
 outputs:
 - {name: model-dir, type: LocalPath}
+- {name: encoder-model, type: LocalPath}
 implementation:
   container:
     image: etheredgeb/gloves:latest
@@ -33,4 +34,5 @@ implementation:
       --verbose, {inputValue: verbose},
       --model-dir, {outputPath: model-dir},
       --model-filename, {inputValue: model-filename},
+      --encoder-model, {outputPath: encoder-model},
     ]
