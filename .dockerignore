@@ -1,6 +1,4 @@
 data
-.dvc/cache
-.dvc/tmp
 model
 wandb
 Jenkinsfile
@@ -8,3 +6,15 @@ model.h5
 metrics.yaml
 checkpoints
 src/wandb
+
+outputs
+dvc
+.dvc
+.devcontainer
+.vscode
+pipeline*
+test
+.git
+.cache
+*.md
+.env

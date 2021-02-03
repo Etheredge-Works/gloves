@@ -160,7 +160,7 @@ def decode_img(img):
 
     # img = tf.image.decode_jpeg(img)
     img = tf.image.decode_jpeg(img, channels=3)
-    img = tf.image.convert_image_dtype(img, tf.float32)
+    #img = tf.image.convert_image_dtype(img, tf.float32)
     img = tf.image.resize(img, [settings.IMG_WIDTH, settings.IMG_HEIGHT])
     # img = tf.image.decode_image(img)
     # img = tf.image.decode_jpeg(img)
@@ -300,6 +300,7 @@ def create_n_way_dataset(data_directory_name, batch_size, anchor_decode_func,
                          n_way_count):
     data_directory = pathlib.Path(data_directory_name)
     all_files = list(data_directory.glob('*.jpg'))
+    assert len(all_files) > 0, f"no files - dir: {data_directory} - {data_directory_name}"
     file_count = len(all_files)
     step_per_epoch = file_count * n_way_count
     ds = tf.data.Dataset.list_files(str(data_directory / '*.jpg'))
@@ -327,6 +328,8 @@ def create_dataset(anchor_file_directory_name, batch_size, anchor_decode_func,
     anchor_data_dir = pathlib.Path(anchor_file_directory_name)
     other_data_dir = pathlib.Path(other_file_data_directory_name)
     all_files = list(anchor_data_dir.glob('*.jpg'))
+    #assert(len(all_files) > 0)
+    assert len(all_files) > 0, f"no files - dir: {str(anchor_data_dir)}"
     file_count = len(all_files)
 
     step_per_epoch = file_count // batch_size

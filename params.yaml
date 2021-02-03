@@ -35,7 +35,7 @@ train:
 
   dense_nodes: 1024
   epochs: 100
-  batch_size: 32
+  batch_size: 4
   lr: 0.0003
   optimizer: 'adam'
   transfer_learning: 1

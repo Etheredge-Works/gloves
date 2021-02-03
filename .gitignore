@@ -13,3 +13,5 @@ mlruns/
 .vscode/
 /metrics.yaml
 __pycache__/
+pipeline/gloves_pipeline.tar.gz
+/outputs/*

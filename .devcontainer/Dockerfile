@@ -6,6 +6,6 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y wget git && \
     pip install -r requirements.txt
-RUN mkdir data && dvc repro dvc/split_data.dvc
+#RUN mkdir data && dvc repro dvc/split_data.dvc
 #RUN dvc repro dvc/split
 

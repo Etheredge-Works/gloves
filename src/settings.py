@@ -3,7 +3,7 @@ import tensorflow as tf
 IMG_WIDTH = 224
 IMG_HEIGHT = 224
 IMG_CHANNELS = 3
-BATCH_SIZE = 128
+BATCH_SIZE = 8
 TEST_RATIO = 0.2
 TRAIN_DIR = 'data/train'
 TEST_DIR = 'data/test'

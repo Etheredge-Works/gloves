@@ -10,7 +10,9 @@ from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
 import numpy as np
-from wandb.keras import WandbCallback
+#from wandb.keras import WandbCallback
+import mlflow
+mlflow.tensorflow.autolog(every_n_iter=1)
 
 import settings
 import pathlib
@@ -52,76 +54,6 @@ def reg():
     return l2(2e-4)
 
 
-def glovesnet(
-        dense_nodes,
-        should_transfer_learn):
-        input1 = tf.keras.Input(input_shape)
-        input2 = tf.keras.Input(input_shape)
-        if should_transfer_learn:
-            base_model = pre_trained_model(weights='imagenet', include_top=False, input_shape=input_shape)
-            for layer in base_model.layers:
-                layer.trainable = False
-            x = base_model.output
-            x = Flatten()(x)
-            x = Dense(dense_nodes, activation='relu', dtype='float32',
-                      kernel_initializer=weight_init(),
-                      bias_initializer=bia_init(),
-                      kernel_regularizer=reg()
-                      )(x)
-            #x = Dropout(0.5)(x)
-            encoder_model = Model(base_model.inputs, x)
-        else:
-            encoder_model = tf.keras.Sequential([
-                Conv2D(input_shape=input_shape, filters=32, kernel_size=(13, 13), strides=6, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=2),
-                Conv2D(filters=64, kernel_size=(11, 11), strides=5, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=2),
-                Conv2D(filters=128, kernel_size=(9, 9), strides=4, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=2),
-                Conv2D(filters=256, kernel_size=(7, 7), strides=3, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=4),
-                Conv2D(filters=512, kernel_size=(5, 5), strides=2, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                Conv2D(filters=1024, kernel_size=(3, 3), strides=1, padding='same', activation='relu',
-                       kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=4),
-                #Conv2D(filters=256, kernel_size=(3, 3), strides=1, padding='valid', activation='relu',
-                       #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-                #tf.keras.layers.MaxPool2D(pool_size=2),
-                # Conv2D(filters=32, kernel_size=(8, 8), strides=4, padding='same', activation='relu', use_bias=False),
-                # Conv2D(filters=64, kernel_size=(6, 6), strides=3, padding='same', activation='relu', use_bias=False),
-                # Conv2D(filters=128, kernel_size=(4, 4), strides=2, padding='same', activation='relu', use_bias=False),
-                # Conv2D(filters=256, kernel_size=(3,3), strides=1, padding='same', activation='relu', use_bias=False),
-                # Conv2D(filters=128, kernel_size=(3,3), strides=1, padding='same', activation='relu', use_bias=False),
-                # Conv2D(filters=256, kernel_size=(3, 3), strides=2, padding='same', activation='relu', use_bias=False),
-                Flatten(),
-                Dense(dense_nodes, activation='relu', kernel_initializer=weight_init(), bias_initializer=bia_init(),
-                      kernel_regularizer=reg(),
-                      dtype='float32'),
-                #Dropout(0.2),  # TODO param
-            ])
-        print(encoder_model.summary())  # TODO figure out some way to get glovesnet summary to show this information
-        #encoder_input = (None, settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS)
-
-        merge_layer = Lambda(euclidean_distance)([encoder_model(input1), encoder_model(input2)])  # ([self.dense1, self.dense2])
-        prediction_layer = Dense(1,
-                                activation="sigmoid",
-                                kernel_initializer=weight_init(),
-                                bias_initializer=bia_init(),
-                                kernel_regularizer=reg(),
-                                dtype='float32')(merge_layer)
-        #self.build(input_shape=(None, (encoder_input, encoder_input)))
-        #print(self.summary())
-        #model = Model(inputs=[input1, input2], outputs=dense_layer)
-        network = Model(inputs=(input1, input2), outputs=prediction_layer)
-        print(network.summary())
-        return network
-
-
 #def contrastive_loss(vects):
     #margin = 1
     #square_pred = K.square(y_pred)
@@ -130,79 +62,15 @@ def glovesnet(
 
 from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
 
-# TODO test set is being paired with itself. pair it with training maybe? maybe not
-def create_model(
-        train_dir,
-        test_dir,
-        all_data_dir,
-        batch_size,
-        dense_nodes,
-        epochs,
-        lr,
-        optimizer, # not used
-        transfer_learning,
-        metrics_file_name,
-        model_file_name,
-        test_ratio: float = settings.TEST_RATIO,
-        verbose=1) -> (tf.keras.Model, dict):
-    #model = GlovesNet(should_transfer_learn=True, dense_nodes=dense_nodes)
-    model = glovesnet(dense_nodes, should_transfer_learn=transfer_learning)
-    #print(model.summary())
-    model.compile(loss="binary_crossentropy",
-                  optimizer=tf.keras.optimizers.Adam(learning_rate=0.00003), metrics=["accuracy"])
-
-    # TODO extract and pass in
-    train_ds, steps_per_epoch, val_ds, test_ds = get_dataset_values(train_dir=train_dir,
-                                                                    test_dir=test_dir,
-                                                                    all_data_dir=all_data_dir,
-                                                                    batch_size=batch_size)
-
-
-    #wandb.init(project="siamese")
-    #model.fit([pairs_train[:,0], pairs_train[:,1]], labels_train[:], batch_size=128, epochs=20, callbacks=[WandbCallback()])
-
-    class NWayCallback(tf.keras.callbacks.Callback):
-        def on_epoch_end(self, epoch, logs=None):
-            if epoch % 100 == 0:
-                #predictions = [self.model.predict_on_batch(n_way_batch) for n_way_batch in test_ds]
-                predictions = model.predict(test_ds)
-                highest_predictions = [np.argmax(prediction) for prediction in predictions]
-                correct_predictions = [highest_prediction == 0 for highest_prediction in highest_predictions]
-                score = np.average(correct_predictions)
-                print(f"\n\nN-Way Accuracy: {score}\n")
-
-    train_hist = model.fit(
-        train_ds,
-        epochs=epochs,
-        validation_data=val_ds,
-        validation_freq=1,
-        #steps_per_epoch=steps_per_epoch,
-        verbose=verbose,
-        shuffle=False,  # TODO dataset should handle shuffling
-        callbacks=[ReduceLROnPlateau(monitor='loss', factor=0.1, patience=20),
-                   #NWayCallback(),
-                   WandbCallback(),
-                   ModelCheckpoint(filepath=str(pathlib.Path('checkpoints/checkpoint')),save_weights_only=True, monitor='val_accuracy',
-                                                      mode='max', save_best_only=True)]
-    )
-    '''
-    if epoch == 0:
-        print(model.summary())
-    if epoch % 10 == 0:
-        predictions = [model.predict_on_batch(n_way_batch) for n_way_batch in test_ds]
-        #predictions = model.predict(test_ds)
-        highest_predictions = [np.argmax(prediction) for prediction in predictions]
-        correct_predictions = [highest_prediction == 0 for highest_prediction in highest_predictions]
-        score = np.average(correct_predictions)
-        print(f"\nN-Way Accuracy: {score}\n")
-    '''
-
-
-    # model.save("model.h5")  # Cannot save subclassed model as it is "unsafe"
-    #model.save("model")
-    #score = model.evaluate(test_ds)
-
-    return model, train_hist
+class NWayCallback(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        if epoch % 100 == 0:
+            #predictions = [self.model.predict_on_batch(n_way_batch) for n_way_batch in test_ds]
+            predictions = model.predict(test_ds)
+            highest_predictions = [np.argmax(prediction) for prediction in predictions]
+            correct_predictions = [highest_prediction == 0 for highest_prediction in highest_predictions]
+            score = np.average(correct_predictions)
+            print(f"\n\nN-Way Accuracy: {score}\n")
 
 
 def save_model(model):
@@ -228,33 +96,144 @@ def run_model():
     return score
 
 
-'''
-def gridsearch():
-    batch_sizes = [4, 8, 16, 32, 64, 128, 256]
-    dense_nodes = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
-    epochs = [1, 2, 5, 8, 10, 15, 20, 25, 30]
-    batch_sizes.reverse()
-    dense_nodes.reverse()
+##############################################################################
+class DistanceLayer(tf.keras.layers.Layer):
+    def __init__(self, *args, **kwargs):
+        super(DistanceLayer, self).__init__(*args, **kwargs)
 
-    print("starting gridsearch")
-    best_model = None
-    best_score = float("-inf")
-    for batch_size in batch_sizes:
-        for dense_node in dense_nodes:
-            for epoch in epochs:
-                model, (loss, score) = create_model(dataset=utils.get_dataset(),
-                                                    batch_size=batch_size,
-                                                    test_ratio=0.2,
-                                                    dense_nodes=dense_node,
-                                                    epochs=epoch,
-                                                    verbose=0)
-                if score > best_score:
-                    best_model = model
-                    best_model.save("model")
-                    print(f"---------------------")
-                    best_score = score
-                print(f"best: {best_score}")
-                print(f"batch_size: {batch_size}")
-                print(f"dense_node: {dense_node}")
-                print(f"epoch: {epoch}")
-'''
+    def call(self, inputs):
+        return euclidean_distance(inputs)
+
+def log_model(func):
+    def wrapper(*args, **kwargs):
+        #model = func(*args, **kwargs)
+        model: tf.keras.Model = func(*args, **kwargs)
+        log_summary(model)
+        return model
+    return wrapper
+    
+def log_summary(model):
+    filename = model.name + ".txt"
+    with open(filename, "w") as f:
+        model.summary(print_fn=lambda x: f.write(x + '\n'))
+    mlflow.log_artifact(filename)
+@log_model
+def combine_models(base_model, head_model, name="no_name"):
+    #print(base_model.input_shape)
+    #print(base_model.output_shape)
+    #print(head_model.input_shape)
+    #print(head_model.output_shape)
+    encoder_inputs = tf.keras.Input(base_model.input_shape[1:]), tf.keras.Input(base_model.input_shape[1:])
+    encoder_outputs = head_model([base_model(encoder_inputs[0]), base_model(encoder_inputs[1])])
+    return Model(name=name, inputs=encoder_inputs, outputs=encoder_outputs)
+
+@log_model
+def distance_model(input_shape):
+    input1 = tf.keras.Input(input_shape)
+    input2 = tf.keras.Input(input_shape)
+    y_pred = DistanceLayer(dtype='float32')([input1, input2])
+    return Model(inputs=(input1, input2), outputs=y_pred, name='distance_model')
+
+@log_model
+def sigmoid_model(input_shape):
+    input1 = tf.keras.Input(input_shape)
+    input2 = tf.keras.Input(input_shape)
+    x = Concatenate(dtype='float32')([input1, input2])
+    y_pred = Dense(1, activation='sigmoid', 
+            dtype='float32',
+            kernel_initializer=weight_init(), 
+            bias_initializer=bia_init(), 
+            kernel_regularizer=reg(),
+    )(x)
+    return Model(inputs=(input1, input2), outputs=y_pred, name='sigmoid_model')
+
+
+@log_model
+def build_imagenet_encoder(input_shape, dense_layers, 
+            dense_nodes, latent_nodes, 
+            dropout_rate, activation, final_activation, pooling=None):
+    base_model = pre_trained_model(
+        weights='imagenet', include_top=False, pooling=pooling, input_shape=input_shape)
+    for layer in base_model.layers:
+        layer.trainable = False
+    x = base_model.output
+    x = Flatten()(x)
+    #x = Dense(dense_nodes, activation=activation)(x) # NOTE added to reduce dimensions for later use
+    
+    #x = Dropout(0.5)(x)
+
+    for _ in range(dense_layers):
+        x = Dense(dense_nodes, activation=activation,
+                    kernel_initializer=weight_init(),
+                    bias_initializer=bia_init(),
+                    kernel_regularizer=reg(),
+                    )(x)
+        x = Dropout(dropout_rate)(x)
+    x = Dense(latent_nodes, activation=final_activation, dtype='float32',
+            kernel_initializer=weight_init(), 
+            bias_initializer=bia_init(), 
+            kernel_regularizer=reg(),
+            )(x)
+    imagenet_encoder_model = Model(base_model.inputs, x, name='imagenet_encoder')
+    return imagenet_encoder_model
+    #log_summary(imagenet_encoder_model, 'imagenet_encoder.txt')
+    #conv_layers.append(imagenet_encoder_model.outputs)
+
+
+@log_model
+def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, activation, final_activation, dropout_rate, 
+                    padding='same', pooling='max'):
+    model = tf.keras.Sequential(name='custom_encoder', layers=[
+        Conv2D(input_shape=input_shape, filters=32, kernel_size=(9, 9), strides=1, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        Conv2D(filters=32, kernel_size=(9, 9), strides=2, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #tf.keras.layers.MaxPool2D(pool_size=2),
+        Conv2D(filters=32, kernel_size=(9, 9), strides=1, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        Conv2D(filters=32, kernel_size=(9, 9), strides=2, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #tf.keras.layers.MaxPool2D(pool_size=2),
+        Conv2D(filters=64, kernel_size=(7, 7), strides=1, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        Conv2D(filters=64, kernel_size=(7, 7), strides=2, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #tf.keras.layers.MaxPool2D(pool_size=2),
+        Conv2D(filters=128, kernel_size=(5, 5), strides=1, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        Conv2D(filters=128, kernel_size=(5, 5), strides=2, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        tf.keras.layers.MaxPool2D(pool_size=2),
+        Conv2D(filters=256, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        Conv2D(filters=256, kernel_size=(3, 3), strides=2, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #tf.keras.layers.MaxPool2D(pool_size=2),
+        Flatten(),
+    ])
+    for _ in range(dense_layers):
+        model.add(Dense(dense_nodes, activation=activation,
+                    kernel_initializer=weight_init(),
+                    bias_initializer=bia_init(),
+                    kernel_regularizer=reg(),
+                    ))
+        model.add(Dropout(dropout_rate))
+    model.add(Dense(latent_nodes, activation=final_activation, 
+            dtype='float32',
+            kernel_initializer=weight_init(), 
+            bias_initializer=bia_init(), 
+            kernel_regularizer=reg(),
+            ))
+    return model
+
+def build_model(should_transfer_learn, latent_nodes, input_shape, *args, **kwargs):
+    if should_transfer_learn:
+        base_model: tf.keras.Model = build_imagenet_encoder(*args, latent_nodes=latent_nodes, input_shape=input_shape, **kwargs)
+    else:
+        base_model: tf.keras.Model = build_custom_encoder(*args, latent_nodes=latent_nodes, input_shape=input_shape, **kwargs)
+    print(base_model.output_shape)
+    print(base_model.output_shape[-1])
+    assert base_model.output_shape[-1] == latent_nodes
+    head_model: tf.keras.Model = distance_model(base_model.output_shape[-1])
+    return combine_models(base_model=base_model, head_model=head_model, name='vanilla'), base_model, head_model
+##############################################################################

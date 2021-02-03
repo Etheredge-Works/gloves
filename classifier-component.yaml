@@ -1,0 +1,35 @@
+name: Classifier
+description: TODO
+inputs: # List of input specs. Each input spec is a map.
+- {name: train-dir, type: LocalPath}
+- {name: test-dir, type: LocalPath}
+- {name: dense-nodes, default: 1024, type: Integer}
+- {name: epochs, default: 100, type: Integer}
+- {name: batch-size, default: 32, type: Integer}
+- {name: lr, default: 0.0003, type: Float}
+- {name: optimizer, default: adam, type: String}
+- {name: verbose, default: 2, type: Integer}
+outputs:
+- {name: model-dir, type: LocalPath}
+- {name: encoder-model, type: LocalPath}
+implementation:
+  container:
+    image: etheredgeb/gloves:latest
+    command: [
+      python, src/main.py, # Path of the program inside the container
+    ]
+    args: [
+      --train-dir, {inputPath: train-dir},
+      --test-dir, {inputPath: test-dir},
+      --all-dir, {inputPath: all-dir},
+      --dense-nodes, {inputValue: dense-nodes},
+      --epochs, {inputValue: epochs},
+      --batch-size, {inputValue: batch-size},
+      --lr, {inputValue: lr},
+      --optimizer, {inputValue: optimizer},
+      --should-transfer-learn, {inputValue: should-transfer-learn},
+      --verbose, {inputValue: verbose},
+      --model-dir, {outputPath: model-dir},
+      --model-filename, {inputValue: model-filename},
+      --encoder-model, {outputPath: encoder-model},
+    ]
