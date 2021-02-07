@@ -1,4 +1,4 @@
-name: Train Siemese Network
+name: Score Siemese Network
 description: TODO
 inputs: # List of input specs. Each input spec is a map.
 - {name: test-dir, type: LocalPath}
