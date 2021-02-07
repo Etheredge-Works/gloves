@@ -1,7 +1,6 @@
 FROM python:3.7
-RUN pip install kfp jupyter python-dotenv
+RUN pip install kfp jupyter python-dotenv boto3
 COPY ./src /home/jovyan/src
-
 
 # Kubeflow stuff
 ENV NB_PREFIX /
