@@ -19,9 +19,6 @@ outputs:
 implementation:
   container:
     image: etheredgeb/gloves:latest
-    command: [
-      python, src/main.py, # Path of the program inside the container
-    ]
     args: [
       --train-dir, {inputPath: train-dir},
       --test-dir, {inputPath: test-dir},

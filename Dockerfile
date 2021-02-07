@@ -8,3 +8,4 @@ FROM tensorflow/tensorflow:latest-gpu
 RUN pip install mlflow wandb click tensorflow_addons boto3 siamese
 COPY src /app/src
 WORKDIR /app
+ENTRYPOINT ["python", "src/main.py"]
