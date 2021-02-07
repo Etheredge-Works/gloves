@@ -2,8 +2,9 @@ name: Train Siemese Network
 description: TODO
 inputs: # List of input specs. Each input spec is a map.
 - {name: train-dir, type: LocalPath}
+#- {name: extra-train-dir, type: LocalPath}
 - {name: test-dir, type: LocalPath}
-- {name: all-dir, type: LocalPath}
+#- {name: extra-test-dir, type: LocalPath}
 - {name: model-filename, type: String}
 - {name: dense-nodes, default: 1024, type: Integer}
 - {name: epochs, default: 100, type: Integer}
@@ -24,7 +25,6 @@ implementation:
     args: [
       --train-dir, {inputPath: train-dir},
       --test-dir, {inputPath: test-dir},
-      --all-dir, {inputPath: all-dir},
       --dense-nodes, {inputValue: dense-nodes},
       --epochs, {inputValue: epochs},
       --batch-size, {inputValue: batch-size},
