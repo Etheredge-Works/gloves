@@ -8,4 +8,4 @@ FROM tensorflow/tensorflow:nightly-gpu
 RUN pip install siamese==0.0.22 mlflow wandb click tensorflow_addons boto3 icecream
 COPY gloves /app
 WORKDIR /app
-ENTRYPOINT ["python", "src/main.py"]
+ENTRYPOINT ["python", "main.py"]
