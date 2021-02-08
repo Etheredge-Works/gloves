@@ -1,53 +1,91 @@
 name: gloves_mlflow
 
-#docker_env:
-  #image: betheredge/gloves:latest
-  #environment: [
-    #["TF_FORCE_GPU_ALLOW_GROWTH", "true"],
-    #["MLFLOW_EXPERIMENT_NAME", "animal"],
-    #"AWS_ACCESS_KEY_ID", 
-    #"AWS_SECRET_ACCESS_KEY", 
-    #"MLFLOW_S3_ENDPOINT_URL", 
-    #"MLFLOW_TRACKING_URI", 
-    #"MLFLOW_TRACKING_USERNAME", 
-    #"MLFLOW_TRACKING_PASSWORD",
-    #"S3_ENDPOINT" # for tensorflow
-    #]
-    
-conda_env: environment.yaml
+docker_env:
+  image: betheredge/gloves:latest
+  environment: [
+    ["TF_FORCE_GPU_ALLOW_GROWTH", "true"],
+    ["MLFLOW_EXPERIMENT_NAME", "animal"],
+    "AWS_ACCESS_KEY_ID", 
+    "AWS_SECRET_ACCESS_KEY", 
+    "MLFLOW_S3_ENDPOINT_URL", 
+    "MLFLOW_TRACKING_URI", 
+    "MLFLOW_TRACKING_USERNAME", 
+    "MLFLOW_TRACKING_PASSWORD",
+    "S3_ENDPOINT" # for tensorflow
+  ]
+
+#conda_env: environment.yaml
 
 entry_points:
-        main:
-                parameters:
-                        train_dir: {type: path}
-                        test_dir: {type: path}
-                        all_dir: {type: path}
-                        metrics_dir: {type: string}
-                        model_dir: {type: string}
-                        dense_nodes: {type: int}
-                        epochs: {type: int}
-                        batch_size: {type: int}
-                        lr: {type: float}
-                        optimizer: {type: string}
-                        transfer_learning: {type: bool}
-                        verbose: {type: int}
-                        metrics_file_name: {type: string}
-                        model_file_name: {type: string}
+  main:
+    parameters:
+      train-dir: {type: path}
+      #train_extra_dir: {type: path}
+      test-dir: {type: path}
+      #test-extra_dir: {type: path}
+      model-dir: {type: string}
+      model-filename: {default: 'model', type: string}
+      encoder-model: {default: 'encoder', type: string}
+      ############################################
+      height: {default: 224, type: int}
+      width: {default: 224, type: int}
+      depth: {default: 3, type: int}
+      mutate-other: {default: False, type: bool}
+      mutate-anchor: {default: False, type: bool}
+      ############################################
+      dense-layers: {default: 2, type: int}
+      dense-nodes: {default: 1024, type: int}
+      activation: {default: 'relu', type: string}
+      latent-nodes: {default: 128, type: int}
+      dropout-rate: {default: 0.5, type: float}
+      final-activation: {default: 'linear', type: string}
+      ############################################
+      loss-name: {default: 'contrastive_loss', type: string}
+      lr: {default: 0.00003, type: float}
+      optimizer: {default: 'adam', type: string}
+      epochs: {default: 1000, type: int}
+      batch-size: {default: 32, type: int}
+      verbose: {default: 2, type: int}
+      eval-freq: {default: 1, type: int}
+      reduce-lr-factor: {default: 0.8, type: float}
+      reduce-lr-patience: {default: 10, type: float}
+      early-stop-patience: {default: 10, type: float}
+      mixed-precision: {default: False, type: bool}
+      unfreeze: {default: 16, type: bool}
+      nway-freq: {default: 16, type: int}
+      nways: {default: 16, type: int}
 
-                command: >
-                        python src/main.py 
-                        --train_dir {train_dir} 
-                        --test_dir {test_dir} 
-                        --all_dir {all_dir}
-                        --metrics_dir {metrics_dir}
-                        --model_dir {model_dir}
-                        --dense_nodes {dense_nodes}
-                        --epochs {epochs}
-                        --batch_size {batch_size}
-                        --lr: {lr}
-                        --optimizer: {optimizer}
-                        --transfer_learning: {transfer_learning}
-                        --verbose: {verbose}
-                        --metrics_file_name: {metrics_file_name}
-                        --model_file_name: {model_file_name}
-
+    command: >
+        python src/main.py 
+        --train-dir {train-dir}
+        --test-dir {test-dir}
+        --model-dir {model-dir}
+        --model-filename {model-filename}
+        --encoder-model {encoder-model}
+        --height {height}
+        --width {width}
+        --depth {depth}
+        --mutate-other {mutate-oather}
+        --mutate-anchor {mutate-anchor}
+        ############################################
+        --dense-layers {dense-layers}
+        --dense-nodes {dense-nodes}
+        --activation {activation}
+        --latent-nodes {latent-nodes}
+        --dropout-rate {dropout-rate}
+        --final-activation {final-activation}
+        ############################################
+        --loss-name {loss-name}
+        --lr {lr}
+        --optimizer {optimizer}
+        --epochs {epochs}
+        --batch-size {batch-size}
+        --verbose {verbose}
+        --eval-freq {eval-freq}
+        --reduce-lr-factor {reduce-lr-factor}
+        --reduce-lr-patience {reduce-lr-patience}
+        --early-stop-patience {early-stop-patience}
+        --mixed-precision {mixed-precision}
+        --unfreeze {unfreeze}
+        --nway-freq {nway-freq}
+        --nways {nways}
