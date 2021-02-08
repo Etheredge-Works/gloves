@@ -1,7 +1,7 @@
 import base64
 import os
 import pathlib
-import settings
+from . import settings
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 import tensorflow as tf
 from tensorflow.keras.utils import get_file

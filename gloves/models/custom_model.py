@@ -1,7 +1,3 @@
-#from src import utils
-from . import utils
-utils.limit_gpu_memory_use()
-
 import tensorflow as tf
 from tensorflow.keras import Model
 #from tensorflow.keras.applications.resnet_v2 import ResNet50V2 as pre_trained_model
@@ -14,10 +10,11 @@ import numpy as np
 import mlflow
 mlflow.tensorflow.autolog(every_n_iter=1)
 
-import settings
+from utils import settings
 import pathlib
 
-from utils import euclidean_distance, input_shape, get_dataset_values
+from utils import euclidean_distance, input_shape, get_dataset_values, limit_gpu_memory_use
+limit_gpu_memory_use()
 
 
 class Encoder(tf.keras.Model):
@@ -180,11 +177,10 @@ def build_imagenet_encoder(input_shape, dense_layers,
     #conv_layers.append(imagenet_encoder_model.outputs)
 
 
-@log_model
-def build_custom_encoder(dense_layers, dense_nodes, latent_nodes, activation, final_activation, dropout_rate, 
+def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, activation, final_activation, dropout_rate, 
                     padding='same', pooling='max'):
     model = tf.keras.Sequential(name='custom_encoder', layers=[
-        Conv2D(filters=32, kernel_size=(9, 9), strides=1, padding=padding, activation=activation,
+        Conv2D(input_shape=input_shape, filters=32, kernel_size=(9, 9), strides=1, padding=padding, activation=activation,
                 kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
         Conv2D(filters=32, kernel_size=(9, 9), strides=2, padding=padding, activation=activation,
                 kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),

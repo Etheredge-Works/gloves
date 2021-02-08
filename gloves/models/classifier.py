@@ -1,7 +1,7 @@
 import click
 from pathlib import Path
 import tensorflow as tf
-import custom_model
+from . import custom_model
 import os
 
 @click.command()
