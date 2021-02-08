@@ -1,5 +1,5 @@
 #from src import utils
-import utils
+from . import utils
 utils.limit_gpu_memory_use()
 
 import tensorflow as tf

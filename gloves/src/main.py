@@ -1,7 +1,7 @@
 #! python
 from genericpath import exists
 import os
-from src.custom_model import build_custom_encoder
+from .custom_model import build_custom_encoder
 os.environ['PYTHONHASHSEED']=str(4)
 #import wandb
 #wandb.init(project="gloves", config={"hyper":"parameter"})
@@ -12,8 +12,8 @@ import click
 from pathlib import Path
 
 from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
-import utils
-from settings import MIXED_PRECISION
+from . import utils
+from .settings import MIXED_PRECISION
 import yaml
 import tensorflow_addons as tfa
 from icecream import ic

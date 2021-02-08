@@ -1,6 +1,6 @@
 import streamlit as st
-import utils
-import custom_model
+from gloves import utils
+from gloves import custom_model
 from PIL import Image
 import os
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"

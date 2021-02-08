@@ -1,6 +1,6 @@
 import os
 # Don't want to use GPUs for unit tests as this will cause various machine issues
-import src.utils
+from .. import utils
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
