@@ -1,8 +1,11 @@
 #out_dir: /nfs/data/gloves
 #- docker_cmd: docker run -v $(pwd)/outputs:/outputs
-out_dir: /nfs/data/gloves/outputs
+# TODO fix this absolute path
+#out_dir: /nfs/data/gloves/outputs
+out_dir: /var/lib/docker/volumes/gloves-outputs/_data
 docker_out_dir: /outputs
-docker_cmd: docker run -v /nfs/data/gloves/outputs:/outputs
+#docker_cmd: docker run -v /nfs/data/gloves/outputs:/outputs
+docker_cmd: docker run -v gloves-outputs:/outputs
 
 wget:
   img: etheredgeb/wget_url:latest
