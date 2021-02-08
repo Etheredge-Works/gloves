@@ -1,6 +1,8 @@
 #! python
 from genericpath import exists
 import os
+from . import utils
+from . import custom_model
 from .custom_model import build_custom_encoder
 os.environ['PYTHONHASHSEED']=str(4)
 #import wandb
@@ -12,7 +14,6 @@ import click
 from pathlib import Path
 
 from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
-from . import utils
 from .settings import MIXED_PRECISION
 import yaml
 import tensorflow_addons as tfa
