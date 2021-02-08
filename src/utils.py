@@ -51,6 +51,19 @@ ALL = [
     'american_pit_bull_terrier'
 ]
 
+def read_decode(file_path):
+    #img = tf.io.read_file(img)
+    #img = tf.image.decode_jpeg(img, channels=3)
+    #if autocrop:
+        #img = tf.convert_to_tensor(cropper.crop(str(img)))
+    #else:
+    # TODO assert jpg or test with other decoders
+    byte_data = tf.io.read_file(file_path)
+    img = tf.image.decode_jpeg(byte_data, channels=3)
+    img = tf.image.resize(img, [224, 224]) #TODO 
+    img = preprocess_input(img)  # NOTE: This does A TON for accuracy
+    return img
+
 # TODO could change to glob of jpgs
 #ALL_FILES = tf.io.gfile.listdir(str(DATA_DIR))
 #print(f"all_files: {ALL_FILES}")
