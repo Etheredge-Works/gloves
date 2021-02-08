@@ -86,11 +86,14 @@ stages:
       - ${out_dir}/${split.test_dir}
       - ${out_dir}/${clean.out_dir}
     outs:
+      - ${out_dir}/${train.model_dir}
+      #- ${out_dir}/${train.model_dir}/${train.model_filename}
+      #- ${out_dir}/${train.model_dir}/${train.encoder}
       # TODO figure out a way around this
       # dvc deletes outputs before running
       # mlflow expects these to exist....
-      - ${out_dir}/${train.metrics_dir}
-      - ${out_dir}/${train.model_dir}
+      #- ${out_dir}/${train.metrics_dir}
+      #- ${out_dir}/${train.model_dir}
       
 
 
