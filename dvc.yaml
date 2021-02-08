@@ -64,6 +64,15 @@ stages:
     - ${out_dir}/${split.train_dir}
     - ${out_dir}/${split.test_dir}
 
+  build_image:
+    cmd: ./build_image.sh && echo $(date) > last_build.log
+    deps:
+      - Dockerfile
+      - build_image.sh
+      - gloves/src
+    outs:
+      - last_build.log
+    
   train:
     cmd: >
       ${docker_cmd} ${train.docker_args} ${train.img} 
@@ -78,10 +87,7 @@ stages:
       - split.train_dir
       - split.test_dir
     deps:
-      - src/main.py
-      - src/custom_model.py
-      - src/utils.py
-      - MLproject
+      - last_build.log
       - ${out_dir}/${split.train_dir}
       - ${out_dir}/${split.test_dir}
       - ${out_dir}/${clean.out_dir}
