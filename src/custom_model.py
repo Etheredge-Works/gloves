@@ -181,10 +181,10 @@ def build_imagenet_encoder(input_shape, dense_layers,
 
 
 @log_model
-def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, activation, final_activation, dropout_rate, 
+def build_custom_encoder(dense_layers, dense_nodes, latent_nodes, activation, final_activation, dropout_rate, 
                     padding='same', pooling='max'):
     model = tf.keras.Sequential(name='custom_encoder', layers=[
-        Conv2D(input_shape=input_shape, filters=32, kernel_size=(9, 9), strides=1, padding=padding, activation=activation,
+        Conv2D(filters=32, kernel_size=(9, 9), strides=1, padding=padding, activation=activation,
                 kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
         Conv2D(filters=32, kernel_size=(9, 9), strides=2, padding=padding, activation=activation,
                 kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
