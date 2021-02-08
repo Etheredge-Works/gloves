@@ -29,6 +29,7 @@ split:
   ratio: 0.2
 
 train:
+  img: etheredgeb/gloves:latest
   docker_args: >-
         -e TF_FORCE_GPU_ALLOW_GROWTH=true 
         -e MLFLOW_EXPERIMENT_NAME=gloves
@@ -42,8 +43,10 @@ train:
 
   train_dir: train
   test_dir: train
-  metrics_dir: metrics
   model_dir: models
+  model_filename: model.h5
+  encoder: models/encoder
+  #metrics_dir: metrics
 
   dense_nodes: 1024
   epochs: 100
@@ -53,4 +56,3 @@ train:
   transfer_learning: 1
   verbose: 2
   metrics_file_name: 'metrics.yaml'
-  model_file_name: 'model.h5'
