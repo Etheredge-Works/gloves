@@ -66,22 +66,12 @@ stages:
 
   train:
     cmd: >
-      mlflow run 
-      -P all_dir=${out_dir}/${clean.out_dir}
-      -P train_dir=${out_dir}/${split.train_dir}
-      -P test_dir=${out_dir}/${split.test_dir}
-      -P metrics_dir=${out_dir}/${train.metrics_dir}
-      -P model_dir=${out_dir}/${train.model_dir}
-      -P dense_nodes=${train.dense_nodes}
-      -P epochs=${train.epochs}
-      -P batch_size=${train.batch_size}
-      -P lr=${train.lr}
-      -P optimizer=${train.optimizer}
-      -P transfer_learning=${train.transfer_learning}
-      -P verbose=${train.verbose}
-      -P metrics_file_name=${train.metrics_file_name}
-      -P model_file_name=${train.model_file_name}
-      .
+      ${docker_cmd} ${train.docker_args} ${train.img} 
+      --train-dir ${docker_out_dir}/${split.train_dir}
+      --test-dir ${docker_out_dir}/${split.test_dir}
+      --model-dir ${docker_out_dir}/${train.model_dir}
+      --model-filename ${train.model_filename}
+      --encoder-model ${train.encoder}
     params:
       - out_dir
       - train
