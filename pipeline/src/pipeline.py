@@ -13,7 +13,7 @@ from pathlib import Path
 ####################################################################################
 #component_root = "https://raw.githubusercontent.com/Benjamin-Etheredge/kubeflow_pipelines/master/components"
 # TODO why did changing the github name have no affect on this?
-component_root = "https://raw.githubusercontent.com/Benjamin-Etheredge/pipeline_components/master/components"
+component_root = "https://raw.githubusercontent.com/Benjamin-Etheredge/pipeline_components/master/pipeline/components"
 def load_component(dir_name):
     filename = os.path.join(component_root, dir_name, 'component.yaml')
     print(f"Loading {filename}")
@@ -251,7 +251,7 @@ def my_pipeline(
     
     # can't use files since it can't reach it later on...
     train_op = kfp.components.load_component_from_url(
-        "https://raw.githubusercontent.com/Benjamin-Etheredge/Gloves/master/component.yaml")
+        "https://raw.githubusercontent.com/Benjamin-Etheredge/Gloves/master/pipeline/component/component.yaml")
     data_sets = [
         [
             join_task.outputs['out_dir'],
