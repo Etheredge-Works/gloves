@@ -6,6 +6,6 @@ FROM tensorflow/tensorflow:nightly-gpu
 #COPY requirements.txt params.yaml /app/
 #RUN pip install -r /app/requirements.txt
 RUN pip install siamese==0.0.22 mlflow wandb click tensorflow_addons boto3 icecream
-COPY src /app/src
+COPY gloves/src /app/src
 WORKDIR /app
 ENTRYPOINT ["python", "src/main.py"]
