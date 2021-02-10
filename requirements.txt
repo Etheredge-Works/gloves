@@ -25,7 +25,7 @@ cloudpickle==1.6.0
 colorama==0.4.4
 commonmark==0.9.1
 configobj==5.0.6
-cryptography==3.3.1
+cryptography==3.3.2
 databricks-cli==0.14.1
 dataclasses==0.7
 decorator==4.4.2
