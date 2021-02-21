@@ -5,7 +5,9 @@ Jenkinsfile
 model.h5
 metrics.yaml
 checkpoints
-src/wandb
+**/wandb
+**/test/
+**/test*
 
 outputs
 dvc
@@ -13,7 +15,6 @@ dvc
 .devcontainer
 .vscode
 pipeline*
-test
 .git
 .cache
 *.md

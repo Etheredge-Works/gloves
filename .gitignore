@@ -15,3 +15,4 @@ mlruns/
 __pycache__/
 pipeline/gloves_pipeline.tar.gz
 /outputs/*
+/last_build.log
