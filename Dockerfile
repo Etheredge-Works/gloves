@@ -1,6 +1,8 @@
 #FROM python:3.7
 # Starting from tf docker image is the easiest way to get tf >2.1 and gpu libraries
-FROM tensorflow/tensorflow:nightly-gpu
+#FROM tensorflow/tensorflow:2.4.1-gpu
+FROM tensorflow/tensorflow:2.2.2-gpu
+# TODO why does 2.4 break printing metrics from fit
 
 # for now, I just want the latest images
 #COPY requirements.txt params.yaml /app/
