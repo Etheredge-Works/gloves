@@ -12,4 +12,4 @@ RUN pip install mlflow wandb click tensorflow_addons==0.11.0 boto3 icecream scik
 RUN pip install siamese==0.0.33 
 COPY gloves /app
 WORKDIR /app
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python"]
