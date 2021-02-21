@@ -1,6 +1,8 @@
 #!/bin/bash -e
+#registry=registry.etheredge.co
 image_name=etheredgeb/gloves
 image_tag=latest
+#full_image_name=$registry/${image_name}:${image_tag}
 full_image_name=${image_name}:${image_tag}
 
 cd "$(dirname "$0")" 
