@@ -31,6 +31,7 @@ split:
 train:
   img: etheredgeb/gloves:latest
   docker_args: >-
+        --gpus all
         -e TF_FORCE_GPU_ALLOW_GROWTH=true 
         -e MLFLOW_EXPERIMENT_NAME=gloves
         -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
