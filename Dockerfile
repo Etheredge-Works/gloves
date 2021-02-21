@@ -4,6 +4,7 @@
 FROM tensorflow/tensorflow:2.2.2-gpu
 # TODO why does 2.4 break printing metrics from fit
 
+ENV TF_FORCE_GPU_ALLOW_GROWTH=true
 # for now, I just want the latest images
 #COPY requirements.txt params.yaml /app/
 #RUN pip install -r /app/requirements.txt
