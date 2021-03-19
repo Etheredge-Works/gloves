@@ -157,7 +157,7 @@ traitlets==4.3.3
 typeguard==2.10.0
 typing-extensions==3.7.4.3
 tzlocal==2.1
-urllib3==1.26.2
+urllib3==1.26.3
 validators==0.18.2
 voluptuous==0.12.1
 watchdog==1.0.2
