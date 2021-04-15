@@ -12,6 +12,8 @@ import os
 from icecream import ic
 from sklearn import preprocessing
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
+import mlflow
+mlflow.set_experiment("gloves-classifier")
 import mlflow.tensorflow
 mlflow.tensorflow.autolog(every_n_iter=1)
 from models import build_imagenet_encoder
@@ -25,7 +27,7 @@ import numpy as np
 @click.option('--batch-size', default=32, type=click.INT, help='')
 @click.option('--height', default=224, type=click.INT, help='')
 @click.option('--width', default=224, type=click.INT, help='')
-@click.option('--epochs', default=1000, type=click.INT, help='')
+@click.option('--epochs', default=10, type=click.INT, help='')
 @click.option('--verbose', default=1, type=click.INT, help='')
 @click.option('--model-path', type=click.Path(exists=False), help='')
 @click.option('--mixed-precision', default=True, type=click.BOOL, help='')
@@ -65,11 +67,14 @@ def main(
 
     ds = tf.data.Dataset.zip((data_ds, label_ds))
     val_ds = ds.take(int(label_count*0.2))
+
     ds = ds.skip(int(label_count*0.2))
-    ds = ds.cache()
+    #ds = ds.cache()
     ds = ds.shuffle(buffer_size=len(train_labels), reshuffle_each_iteration=True)
-    ds = ds.prefetch(-1)
     ds = ds.batch(batch_size)
+    ds = ds.prefetch(-1)
+
+    val_ds = val_ds.batch(batch_size)
     
     # Seup models
     base_model = tf.keras.models.load_model(encoder_model_path)
@@ -94,7 +99,7 @@ def main(
     #head = softmax_model((np.prod(imagenet.output_shape[1:]),), label_count, dense_nodes=[512, 512])
     classifier.summary()
     '''
-    head = softmax_model((np.prod(base_model.output_shape[1:]),), label_count, dense_nodes=[1024], dropout_rate=0.0)
+    head = softmax_model(base_model.output_shape[1:], label_count, dense_nodes=[1024], dropout_rate=0.0)
     classifier = tf.keras.Model(inputs=base_model.inputs, outputs=head(base_model.outputs))
 
 
