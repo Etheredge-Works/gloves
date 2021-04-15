@@ -51,6 +51,13 @@ ALL = [
     'american_pit_bull_terrier'
 ]
 
+def random_read_decode(file_path):
+    byte_data = tf.io.read_file(file_path)
+    img = tf.image.decode_jpeg(byte_data, channels=3)
+    img = tf.image.resize(img, [224, 224]) #TODO 
+    img = preprocess_input(img)  # NOTE: This does A TON for accuracy
+    return img
+
 def read_decode(file_path):
     #img = tf.io.read_file(img)
     #img = tf.image.decode_jpeg(img, channels=3)
@@ -60,7 +67,11 @@ def read_decode(file_path):
     # TODO assert jpg or test with other decoders
     byte_data = tf.io.read_file(file_path)
     img = tf.image.decode_jpeg(byte_data, channels=3)
+    img = tf.image.random_flip_left_right(img)
     img = tf.image.resize(img, [224, 224]) #TODO 
+
+    # Use one or there other (preprocess_input converts to float32 range)
+    #img = tf.image.convert_image_dtype(img, tf.float16)  # NOTE: Must do this before other operations or can mangle img
     img = preprocess_input(img)  # NOTE: This does A TON for accuracy
     return img
 
