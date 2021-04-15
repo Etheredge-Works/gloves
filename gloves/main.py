@@ -65,9 +65,133 @@ import pathlib
 def log_metric(key, value, step=None):
     mlflow.log_metric(key=key, value=value, step=step)
 
-from siamese.models import Encoder, SiameseModel
-from siamese.layers import NormDistanceLayer
-from siamese.data import create_dataset, get_labels_from_filenames
+from siamese.models import Encoder, SiameseModel, create_siamese_model
+#from siamese.layers import NormDistanceLayer
+from siamese.data import create_dataset, get_labels_from_filenames, create_n_way_dataset
+
+class NormDistanceLayer(tf.keras.layers.Layer):
+   def __init__(self, **kwargs):
+      super(NormDistanceLayer, self).__init__(**kwargs)
+
+   def call(self, inputs):
+      x, y = inputs
+      return tf.norm(x-y, axis=-1, keepdims=True)
+
+class AbsDistanceLayer(tf.keras.layers.Layer):
+   def __init__(self, **kwargs):
+      super(AbsDistanceLayer, self).__init__(**kwargs)
+
+   def call(self, inputs):
+      x, y = inputs
+
+      return tf.abs(tf.math.subtract(x,y))
+
+class EuclideanDistanceLayer(tf.keras.layers.Layer):
+   def __init__(self, **kwargs):
+      super(AbsDistanceLayer, self).__init__(**kwargs)
+
+   def call(self, inputs):
+      x, y = inputs
+
+      return tf.sqrt(tf.reduce_sum(tf.math.pow(tf.math.subtract(x,y), 2), axis=-1, keepdims=True))
+
+
+from copy import deepcopy
+def mlflow_log_wrapper(func):
+    def inner(*args, **kwargs):
+        params = deepcopy(kwargs)
+        #for arg in args:
+            #arg_name = f'{arg=}'.split('=')[0]
+            #params[arg_name] = arg
+
+        mlflow.log_params(params)
+        return func(*args, **kwargs)
+    return inner
+
+def log_summary(model):
+    filename = model.name + ".txt"
+    with open(filename, "w") as f:
+        model.summary(print_fn=lambda x: f.write(x + '\n'))
+    mlflow.log_artifact(filename)
+
+import tensorflow as tf
+import numpy as np
+
+
+
+class NWayCallback(tf.keras.callbacks.Callback):
+    def __init__(
+            self, 
+            encoder: tf.keras.Model, 
+            head: tf.keras.Model, 
+            nway_ds: tf.data.Dataset, 
+            freq: int, 
+            prefix_name: str = "",
+            batch_size: int = 32,
+            *args, **kwargs):
+        super(NWayCallback, self).__init__(*args, **kwargs)
+        self.encoder = encoder # storing for faster comparisons
+        self.head = head 
+        # TODO layout structure of nway_ds
+        self.freq = freq
+        self.prefix_name = prefix_name
+
+        batch, _ = next(iter(nway_ds))
+        self.size = len(list(iter(nway_ds)))
+        self.nways = len(batch)
+        self.batch_size = batch_size
+
+        self.nway_ds = nway_ds.unbatch().batch(batch_size).cache()
+
+    # TODO pull out some of this logic
+    def on_epoch_end(self, epoch, logs=None):
+        if epoch % self.freq == 0:
+            # TODO move to predict from comprehension
+            all_encodings = np.reshape(self.encoder.predict(self.nway_ds), (self.size, self.nways, -1))
+            ic(all_encodings.shape)
+            #all_encodings = [self.encoder.predict_on_batch(item) for item, _ in self.nway_ds]
+            #assert(len(all_encodings) > 1)
+            predictions = []
+            avg_distances = []
+            variances = []
+            anchors = all_encodings[:, 0, :]
+            anchors = [anchors for _ in range(self.nways-1)]
+            others = all_encodings[:, 1:, :]
+            distances = self.head.predict((anchors, others))
+            ic(len(distances))
+            ic(len(distances[0]))
+            for encodings in all_encodings:
+                #assert(len(encodings) > 1)
+                anchor = encodings[0]
+                anchors = tf.convert_to_tensor([anchor for _ in encodings[1:]])
+
+                # Move expected match to prevent 100% accuracy spike when all distances are equal
+                #encodings[1], encodings[2] = encodings[2], encodings[1] # TODO why does this duplicate entry?
+                temp = deepcopy(encodings[2])
+                encodings[2] = deepcopy(encodings[1])
+                encodings[1] = temp
+
+                distances = self.head.predict_on_batch((anchors, tf.convert_to_tensor(encodings[1:])))
+                #ic(distances)
+                #distances = np.array([self.head((anchor, encoding)) for encoding in encodings[1:]]).flatten()
+                #assert(len(distances) > 1)
+                # TODO move expected value to last item since all values could be zero causing 100% accuracy due to first item being min
+                
+                predictions.append(np.argmin(distances))
+                avg_distances.append(np.average(distances))
+                variances.append(np.var(distances))
+
+            correct_predictions = [prediction == 1 for prediction in predictions]
+            score = np.average(correct_predictions)
+            logs[f'{self.prefix_name}nway_acc'] = score
+
+            avg_distance = np.average(avg_distances)
+            logs[f'{self.prefix_name}nway_avg_dist'] = avg_distance
+
+            avg_variance = np.average(variances)
+            logs[f'{self.prefix_name}nway_avg_var'] = avg_variance
+
+from siamese.callbacks import NWayCallback
 
 @click.command()
 # File stuff
