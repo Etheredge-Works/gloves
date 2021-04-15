@@ -1,20 +1,44 @@
 #! python
 from genericpath import exists
 import os
-from . import utils
-from . import custom_model
-from .custom_model import build_custom_encoder
+from numpy.lib import ufunclike
+from tensorflow.keras.layers import Dense
+#os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
+#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+from collections import Counter
+
+import tensorflow as tf
+print(tf.version.GIT_VERSION, tf.version.VERSION)
+def limit_gpu_memory_use():
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+      # Restrict TensorFlow to only use the first GPU
+      try:
+        tf.config.experimental.set_visible_devices(gpus[0], 'GPU')
+        logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
+      except RuntimeError as e:
+        # Visible devices must be set before GPUs have been initialized
+        print(e)
+
+
+limit_gpu_memory_use()
+
+from utils import read_decode
+from models import build_custom_encoder
 os.environ['PYTHONHASHSEED']=str(4)
 #import wandb
 #wandb.init(project="gloves", config={"hyper":"parameter"})
 import mlflow
-mlflow.set_experiment("gloves")
+mlflow.set_experiment("gloves-siamese")
 from mlflow import pyfunc
 import click
 from pathlib import Path
 
-from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
-from .settings import MIXED_PRECISION
+from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping, ModelCheckpoint
+#from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping, TensorBoard
+# TODO test tensorboard for profiling
 import yaml
 import tensorflow_addons as tfa
 from icecream import ic
@@ -24,18 +48,13 @@ from icecream import ic
 import numpy as np
 np.random.seed(4)
 
-import tensorflow as tf
 tf.random.set_seed(4)
 import mlflow.tensorflow
-mlflow.tensorflow.autolog()
+mlflow.tensorflow.autolog(every_n_iter=1)
 #tf.config.threading.set_inter_op_parallelism_threads(1)
 #tf.config.threading.set_intra_op_parallelism_threads(1)
 import pathlib
 
-if MIXED_PRECISION:
-    from tensorflow.keras.mixed_precision import experimental as mixed_precision
-    policy = mixed_precision.Policy('mixed_float16')
-    mixed_precision.set_policy(policy)
 
 #print('Compute dtype: %s' % policy.compute_dtype)
 #print('Variable dtype: %s' % policy.variable_dtype)
