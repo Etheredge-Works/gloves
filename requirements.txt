@@ -3,7 +3,7 @@ kubernetes==11.0.0
 kfp
 botocore==1.19.57
 streamlit==0.74.1
-tensorflow==2.2.0
+tensorflow==2.4.0
 tensorflow_addons==0.10.0
 click==7.1.2
 siamese==0.0.33
