@@ -12,7 +12,11 @@ from pathlib import Path
 
 #model = custom_model.get_model()
 
-st.title("This is a demo site for my Siamese Network experiment in image comparisons.")
+st.title("""
+Pet Bread Similarity
+
+This is a demo site for my Siamese Network experiment in image comparisons.
+""")
 
 client = mlflow.tracking.MlflowClient()
 MODEL_NAME='gloves'
@@ -23,9 +27,7 @@ model_version = client.get_latest_versions(name=MODEL_NAME, stages=[MODEL_STAGE]
 model_artifact = client.download_artifacts(model_version.run_id, 'model', dst_path='/tmp/')
 model = tf.keras.models.load_model('/tmp/model')
 
-import os
-#st.write(os.listdir('/tmp/model'))
-
+st.cache()
 anchor_file = st.file_uploader("Input an Image", type="jpg",)
 if anchor_file is not None:
    st.image(anchor_file, caption="Uploaded Anchor Image.", use_column_width=True)

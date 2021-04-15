@@ -1,3 +1,6 @@
+import sys
+sys.path.append('gloves')
+sys.path.append('.')
 import streamlit as st
 from gloves import utils
 from gloves.main import NormDistanceLayer
