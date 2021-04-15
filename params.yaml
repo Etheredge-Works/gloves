@@ -5,7 +5,7 @@
 out_dir: /var/lib/docker/volumes/gloves-outputs/_data
 docker_out_dir: /outputs
 #docker_cmd: docker run -v /nfs/data/gloves/outputs:/outputs
-docker_cmd: docker run -v gloves-outputs:/outputs
+docker_cmd: docker run -v /tmp/checkpoints:/tmp/checkpoints -v gloves-outputs:/outputs
 
 wget:
   img: etheredgeb/wget_url:latest
