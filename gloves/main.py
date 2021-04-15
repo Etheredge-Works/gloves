@@ -199,7 +199,7 @@ from siamese.callbacks import NWayCallback
 @click.option('--train-extra-dir', default=None, type=click.Path(exists=True), help='')
 @click.option('--test-dir', type=click.Path(exists=True), help='')
 @click.option('--test-extra-dir',  default=None, type=click.Path(exists=True), help='')
-@click.option('--model-dir', type=click.Path(exists=False), help='')
+@click.option('--model-dir', type=click.Path(exists=None), help='')
 @click.option('--model-filename', type=click.STRING, help='')
 #@click.option('--encoder-dir', type=click.Path(exists=False), help='')
 @click.option('--encoder-model', type=click.Path(exists=False), help='')
@@ -212,30 +212,33 @@ from siamese.callbacks import NWayCallback
 @click.option("--mutate-other", default=False, type=bool)
 ###############################################################################
 # Model Stuff
-@click.option('--dense-layers', default=2, type=click.INT, help='')
+@click.option('--dense-layers', default=0, type=click.INT, help='')
 @click.option('--dense-nodes', default=512, type=click.INT, help='')
 @click.option("--activation", default='relu', type=str)
-@click.option("--latent-nodes", default=128, type=int)
-@click.option("--dropout-rate", default=0.5, type=float)
+@click.option("--latent-nodes", default=256, type=int)
+@click.option("--dropout-rate", default=0.0, type=float) # TODO why does dropout cripple this when it helped before?
 @click.option("--final-activation", default='linear', type=str)
-@click.option('--should-transfer-learn', type=click.BOOL, help='')
+@click.option('--should-transfer-learn', default=False, type=click.BOOL, help='')
 ###############################################################################
 # Training Stuff
-@click.option('--loss_name', default='contrastive_loss', type=click.STRING, help='')
-@click.option('--lr', default=0.00003, type=click.FLOAT, help='')
+#@click.option('--loss_name', default='contrastive_loss', type=click.STRING, help='')
+@click.option('--lr', default=0.0001, type=click.FLOAT, help='')
 @click.option('--optimizer', default='adam', type=click.STRING, help='')
-@click.option('--epochs', default=1000, type=click.INT, help='')
+@click.option('--epochs', default=4000, type=click.INT, help='')
 @click.option('--batch-size', default=32, type=click.INT, help='')
 @click.option('--verbose', default=1, type=click.INT, help='')
 #@click.option("--validation-ratio", default=0.3, type=float)
-@click.option("--eval-freq", default=1, type=int)
-@click.option("--reduce-lr-factor", default=0.8, type=float)
-@click.option("--reduce-lr-patience", default=10, type=int)
-@click.option("--early-stop-patience", default=10, type=int)
+@click.option("--eval-freq", default=5, type=int)
+@click.option("--reduce-lr-factor", default=0.1, type=float)
+@click.option("--reduce-lr-patience", default=15, type=int) # need realativily high pateiences due to high variance in ds items
+@click.option("--early-stop-patience", default=50, type=int)
 @click.option("--mixed-precision", default=False, type=bool)
 @click.option("--unfreeze", default=0, type=int)
-@click.option("--nway_freq", default=5, type=int)
-@click.option("--nways", default=16, type=int)
+@click.option("--nway_freq", default=10, type=int)
+@click.option("--nways", default=32, type=int)
+@click.option("--sigmoid", default=False, type=int)
+@click.option("--checkpoint-dir", default="/tmp/checkpoints", type=click.Path())
+@mlflow_log_wrapper
 def main(
         train_dir: str, 
         train_extra_dir: str, 
@@ -259,7 +262,6 @@ def main(
         final_activation: str,
         should_transfer_learn: bool,
         ########################
-        loss_name: str,
         lr: float, 
         optimizer: str,
         epochs: int, 
@@ -273,29 +275,13 @@ def main(
         unfreeze: bool,
         nway_freq,
         nways,
+        sigmoid,
+        checkpoint_dir,
         ):
     print(type(batch_size))
     assert(type(batch_size) == int)
 
-    params = {
-        'train_dir': train_dir, 
-        'train_extra_dir': train_extra_dir, 
-        'test_dir': test_dir, 
-        'test_extra_dir': test_extra_dir, 
-        'model_dir': model_dir,
-        'dense_nodes': dense_nodes,
-        'epochs': epochs, 
-        'batch_size': batch_size, 
-        'lr': lr, 
-        'optmizer': optimizer, 
-        'should_transfer_learn': should_transfer_learn, 
-        'verbose': verbose, 
-        'model_filename': model_filename,
-    }
-    #ic(params)
-    mlflow.log_params(params)
-    
-    if mixed_precision != 0:
+    if True:
       policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
       tf.keras.mixed_precision.experimental.set_policy(policy)
 
