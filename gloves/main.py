@@ -61,7 +61,6 @@ import pathlib
 
 # TODO make sure test set is not mutated
 # TODO make sure test set is not in trianing set
-
 def log_metric(key, value, step=None):
     mlflow.log_metric(key=key, value=value, step=step)
 
@@ -285,56 +284,65 @@ def main(
       policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
       tf.keras.mixed_precision.experimental.set_policy(policy)
 
-    encoder = Encoder(
-        conv_activation=activation,
-        dense_layers_count=dense_layers,
+    encoder = build_custom_encoder(
+        input_shape=(height, width, depth),
+        dense_layers=dense_layers,
         dense_nodes=dense_nodes,
         latent_nodes=latent_nodes,
         activation=activation,
-        final_activation=final_activation)
+        final_activation=final_activation,
+        dropout_rate=dropout_rate,
+    )
 
-    model = SiameseModel(encoder, NormDistanceLayer())
+    input1 = tf.keras.Input(latent_nodes)
+    input2 = tf.keras.Input(latent_nodes)
+    #input3 = tf.keras.Input()
+    #input4 = tf.keras.Input()
+    #outputs = NormDistanceLayer(dtype='float32')((input1, input2))
+
+    if sigmoid:
+        outputs = Dense(1, activation='sigmoid', dtype='float32')(AbsDistanceLayer(dtype='float32')((input1, input2)))
+        #outputs = Dense(1, activation='sigmoid')(Dense(dense_nodes, activation='relu')(tf.keras.backend.abs(input1 - input2)))
+        head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='AbsDistance')
+        loss = 'binary_crossentropy'
+    else:
+        outputs = NormDistanceLayer(dtype='float32')((input1, input2))
+        head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='NormDistance')
+        loss = tfa.losses.ContrastiveLoss()
+
+
+    #model = tf.keras.Model(inputs=(input3, input4), outputs=head([encoder(input3), encoder(input4)]))
+    #model = tf.keras.Model(inputs=(input3, input4), outputs=NormDistanceLayer(dtype='float32')([encoder(input3), encoder(input4)]))
+
+    #head = NormDistanceLayer(dtype='float32')
+    model = create_siamese_model(encoder, head)
+    #model = SiameseModel(encoder, head)
+    log_summary(encoder)
+    log_summary(model)
+    log_summary(head)
     
+    from tensorflow.keras.optimizers import Adam
     optimizer_switch = {
-        'adam': tf.keras.optimizers.Adam
+        'adam': Adam
     }
     optimizer = optimizer_switch[optimizer]
 
-    loss_switch = {
-        'contrastive_loss': tfa.losses.ContrastiveLoss(),
-        'mse': 'mse'
-    }
-    loss = loss_switch[loss_name]
-
     #encoder = build_custom_encoder(den)
-    model.compile(loss=tfa.losses.ContrastiveLoss(), optimizer=optimizer(lr=lr))
-    #model.compile(loss=loss, optimizer=optimizer(lr=lr))
+    model.compile(loss=loss, optimizer=optimizer(lr=lr))
 
     # TODO extract and pass in
-    train_files_tf = tf.io.gfile.glob(str(Path(train_dir)/'**.jpg'))
-    train_labels = get_labels_from_filenames(train_files_tf)
-    ic(train_labels)
-    ic(len(train_labels))
-    #ic(tf.size(train_files_tf))
-    #ic(train_files_tf)
-    #ic(tf.size(train_labels))
-    #ic(train_labels)
+    train_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(train_dir)/'**.jpg')))
+    train_labels = tf.convert_to_tensor(get_labels_from_filenames(train_files_tf))
     assert len(train_files_tf) == len(train_labels)
     assert tf.size(train_files_tf) > 0, "no train files found"
     extra_train_files = tf.io.gfile.glob(str(Path(train_extra_dir)/'**.jpg')) \
         if train_extra_dir \
         else None
 
-
-    test_files_tf = tf.io.gfile.glob(str(Path(test_dir)/'**.jpg'))
-    ic(tf.size(test_files_tf))
-    ic(len(test_files_tf))
-    test_labels = get_labels_from_filenames(test_files_tf)
-    ic(test_labels)
-    ic(len(test_labels))
+    test_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(test_dir)/'**.jpg')))
+    test_labels = tf.convert_to_tensor(get_labels_from_filenames(test_files_tf))
     assert len(test_files_tf) == len(test_labels)
     assert tf.size(test_files_tf) > 0, "no test files found"
-    #ic(test_labels)
     extra_test_files = tf.io.gfile.glob(str(Path(test_extra_dir)/'**.jpg')) \
         if test_extra_dir \
         else None
@@ -343,36 +351,53 @@ def main(
     ds = create_dataset(
         anchor_items=train_files_tf,
         anchor_labels=train_labels,
-        anchor_decode_func=utils.read_decode,
+        anchor_decode_func=read_decode,
         #other_items=extra_train_files,
         #other_labels=get_labels_from_files_path(extra_train_files),
-    )
+        #repeat=1,
+    ).batch(batch_size).prefetch(-1)
+
+    # NOTE can just take from ds here to remove those items from the training set but leave the files available
+    #ds = ds.take(1000)
     #ds = ds.map(lambda anchor, other, label: prepr)
     val_ds = create_dataset(
         anchor_items=test_files_tf,
         anchor_labels=test_labels,
         #anchor_items=train_files_tf,
         #anchor_labels=train_labels,
-        anchor_decode_func=utils.read_decode,
+        anchor_decode_func=read_decode,
         #other_items=train_files_tf, # needed since test set won't have many items
         #other_labels=train_labels
-    )
+    ).batch(batch_size).prefetch(-1).cache()
 
+    test_nway_ds = create_n_way_dataset(
+        items=test_files_tf, 
+        labels=test_labels,
+        ratio=0.4, 
+        anchor_decode_func=read_decode, 
+        n_way_count=nways)
+
+    nway_ds = create_n_way_dataset(
+        items=train_files_tf, 
+        labels=train_labels,
+        ratio=0.05, 
+        anchor_decode_func=read_decode, 
+        n_way_count=nways)
+    
     mlflow.log_param("dataset_size", len(list(ds)))
     mlflow.log_param("validation_dataset_size", len(list(val_ds)))
 
     #wandb.init(project="siamese")
-    #model.fit([pairs_train[:,0], pairs_train[:,1]], labels_train[:], batch_size=128, epochs=20, callbacks=[WandbCallback()])
-    #ic(ds.take(2))
-    #for (i, j), k in ds.take(1):
-        #ic(i,j,k)
-    #anchor, other, label = ds.take(1)[0]
-    #ic(anchor, other, label)
-    ds = ds.batch(batch_size)
-    val_ds = val_ds.batch(batch_size)
-    val_ds = val_ds.cache() # want a consistent val_ds
-    #model.predict(ds.take(3))
+    # TODO how can I use preprocessing layers? Dataset requires images to be the same size for batching...
+    callbacks=[
+        ReduceLROnPlateau(monitor='loss', factor=reduce_lr_factor, patience=reduce_lr_patience),
+        NWayCallback(encoder=encoder, head=head, nway_ds=nway_ds, freq=nway_freq, prefix_name="train_"),
+        NWayCallback(encoder=encoder, head=head, nway_ds=test_nway_ds, freq=nway_freq, prefix_name="test_"),
+        EarlyStopping(monitor='loss', min_delta=0, patience=early_stop_patience, verbose=1, restore_best_weights=True),
+        #ModelCheckpoint(checkpoint_dir, monitor="loss"),
 
+    ]
+    # TODO remove model from here and have it submit a post request to locally running rest api
     train_hist = model.fit(
         ds,
         epochs=epochs,
@@ -380,19 +405,10 @@ def main(
         validation_data=val_ds,
         validation_freq=eval_freq,
         #steps_per_epoch=steps_per_epoch,
-        verbose=verbose,
+        #verbose=verbose,
         shuffle=False,  # TODO dataset should handle shuffling
-        callbacks=[
-            ReduceLROnPlateau(monitor='loss', factor=reduce_lr_factor, patience=reduce_lr_patience),
-            EarlyStopping(monitor='val_loss', min_delta=0, patience=early_stop_patience, verbose=1, restore_best_weights=True),
-            #NWayCallback(),
-            #WandbCallback(),
-            #ModelCheckpoint(filepath=str(pathlib.Path('checkpoints/checkpoint')),save_weights_only=True, monitor='val_accuracy',
-                                                #mode='max', save_best_only=True)
-        ]
+        callbacks=callbacks
     )
-    model.summary()
-    encoder.summary()
 
     history_dict = train_hist.history
     history_dict = {key: float(value[-1]) for key, value in history_dict.items()}
@@ -402,12 +418,15 @@ def main(
     #print(history_dict)
 
     #model.save("model", save_format='tf')
-    Path(model_dir).mkdir(parents=True)
-    model.save(str(Path(str(model_dir))/model_filename))
+    #model = tf.keras.Model(inputs=model.inputs, )
+    Path(model_dir).mkdir(parents=True, exist_ok=True)
+    model.save(str(Path(str(model_dir))/model_filename), save_format='tf')
+    mlflow.log_artifact(str(Path(str(model_dir))/model_filename))
     #trainable.save(str(Path(str(model_dir))/encoder_model))
     encoder_path = Path(str(encoder_model))
     encoder_path.parent.mkdir(parents=True, exist_ok=True)
-    encoder.save(str(encoder_path), save_format='h5')
+    encoder.save(str(encoder_path), save_format='tf')
+    mlflow.log_artifact(str(encoder_path))
 
     #mlflow.log_metrics(history_dict)
 
@@ -416,4 +435,5 @@ def main(
 
 
 if __name__ == "__main__":
+    limit_gpu_memory_use()
     main()
