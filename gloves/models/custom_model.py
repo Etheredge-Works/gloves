@@ -178,36 +178,189 @@ def build_imagenet_encoder(input_shape, dense_layers,
     #conv_layers.append(imagenet_encoder_model.outputs)
 
 
+from tensorflow import Tensor
+# https://towardsdatascience.com/building-a-resnet-in-keras-e8f1322a49ba
+def block(x: Tensor, downsample: bool, filters: int, kerneal_size: int = 3) -> Tensor:
+    y = Conv2D(kernel_size=kerneal_size,
+                strides=(1 if not downsample else 2),
+                filters=filters,
+                kernel_regularizer=reg(1e-2),
+                use_bias=False,
+                padding="same")(x)
+    y = ReLU()(BatchNormalization()(y))
+    y = Conv2D(kernel_size=kerneal_size,
+                strides=1,
+                filters=filters,
+                kernel_regularizer=reg(1e-2),
+                use_bias=False,
+                padding="same")(y)
+
+    try:
+        out = Add()([x,y])
+    except ValueError:
+        # Sizes don't align
+        # https://github.com/raghakot/keras-resnet/blob/master/resnet.py
+        input_shape = K.int_shape(x)
+        residual_shape = K.int_shape(y)
+        stride_width = int(round(input_shape[1] / residual_shape[1]))
+        stride_height = int(round(input_shape[2] / residual_shape[2]))
         ic(stride_width)
         ic(stride_height)
+        x = Conv2D(filters=residual_shape[3],
+                          kernel_size=(1, 1),
+                          strides=(stride_width, stride_height),
+                          padding="valid",
+                          kernel_regularizer=reg(1e-2))(x)
+        out = Add()([x,y])
+    out = ReLU()(BatchNormalization()(out))
+    return out
+    
+
+from tensorflow.keras.layers.experimental import preprocessing
 def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, activation, final_activation, dropout_rate, 
                     padding='same', pooling='max'):
-    model = tf.keras.Sequential(name='custom_encoder', layers=[
-        Conv2D(input_shape=input_shape, filters=32, kernel_size=(9, 9), strides=1, padding=padding, activation=activation,
-                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-        Conv2D(filters=32, kernel_size=(9, 9), strides=2, padding=padding, activation=activation,
-                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+
+    input = tf.keras.Input(input_shape)
+    x = input
+    # semi from resnet https://arxiv.org/pdf/1512.03385.pdf
+    x = Conv2D(kernel_size=7,
+               strides=2,
+               filters=64,
+               kernel_regularizer=reg(1e-2),
+               use_bias=False,
+               padding="same")(x)
+    x = ReLU()(BatchNormalization()(x))
+    x = MaxPool2D(pool_size=3, strides=2, padding='same')(x)
+    x = block(x, False, 64)
+    #x = block(x, False, 64)
+    #x = block(x, False, 64)
+
+    x = block(x, True, 128)
+    x = block(x, False, 128)
+    #x = block(x, False, 128)
+
+    x = block(x, True, 256)
+    x = block(x, False, 256)
+    #x = block(x, False, 256)
+
+    x = block(x, True, 512)
+    x = block(x, False, 512)
+    #x = block(x, False, 512)
+
+    x = AvgPool2D(7)(x)
+    x = Flatten()(x)
+
+    for _ in range(dense_layers):
+        x = Dense(
+            dense_nodes, activation=activation,
+            kernel_initializer=weight_init(),
+            bias_initializer=bia_init(),
+            kernel_regularizer=reg(1e-2),
+            )(x)
+        #model.add(Dropout(dropout_rate))
+    x = Dense(latent_nodes, activation=final_activation, 
+            dtype='float32',
+            kernel_initializer=weight_init(), 
+            bias_initializer=bia_init(), 
+            kernel_regularizer=reg(1e-2),
+            )(x)
+    model = tf.keras.Model(inputs=input, outputs=x)
+    return model
+
+    model_old = tf.keras.Sequential(name='custom_encoder', layers=[
+        tf.keras.layers.InputLayer(input_shape),
+
+        # Using stem from https://arxiv.org/pdf/2102.06171.pdf
+        Conv2D(filters=16, kernel_size=(3, 3), strides=2, padding='valid', activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        Conv2D(filters=32, kernel_size=(3, 3), strides=1, padding='same', activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        Conv2D(filters=64, kernel_size=(3, 3), strides=1, padding='same', activation='linear', use_bias=False,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        BatchNormalization(axis=-1),
+        ReLU(),
+
+        #preprocessing.Resizing(height=input_shape[0], width=input_shape[1]),
+        #preprocessing.Rescaling(1./255.),
+        #Conv2D(filters=32, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #Conv2D(input_shape=input_shape, filters=64, kernel_size=(11, 11), strides=2, padding=padding, activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        #tf.keras.layers.MaxPool2D(),
+
+        #Conv2D(filters=64, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #Conv2D(filters=64, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        Conv2D(filters=96, kernel_size=(3, 3), strides=2, padding='valid', activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        Conv2D(filters=128, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        Conv2D(filters=160, kernel_size=(3, 3), strides=1, padding=padding, activation='linear', use_bias=False,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        BatchNormalization(axis=-1),
+        ReLU(),
+        #BatchNormalization(),
+        #tf.keras.layers.MaxPool2D(),
+        #tf.keras.layers.AvgPool2D(pool_size=2),
+
         #tf.keras.layers.MaxPool2D(pool_size=2),
-        Conv2D(filters=32, kernel_size=(9, 9), strides=1, padding=padding, activation=activation,
-                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-        Conv2D(filters=32, kernel_size=(9, 9), strides=2, padding=padding, activation=activation,
-                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #Conv2D(filters=128, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #Conv2D(filters=128, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #Conv2D(filters=128, kernel_size=(5, 5), strides=2, padding='valid', activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-2)),
+        Conv2D(filters=160, kernel_size=(3, 3), strides=2, padding='valid', activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        Conv2D(filters=192, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        Conv2D(filters=224, kernel_size=(3, 3), strides=1, padding=padding, activation='linear', use_bias=False,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        BatchNormalization(axis=-1),
+        ReLU(),
+        #BatchNormalization(),
+        #tf.keras.layers.MaxPool2D(),
+        #tf.keras.layers.AvgPool2D(pool_size=2),
         #tf.keras.layers.MaxPool2D(pool_size=2),
-        Conv2D(filters=64, kernel_size=(7, 7), strides=1, padding=padding, activation=activation,
-                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-        Conv2D(filters=64, kernel_size=(7, 7), strides=2, padding=padding, activation=activation,
-                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #Conv2D(filters=256, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #Conv2D(filters=256, kernel_size=(5, 5), strides=2, padding='valid', activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-2)),
+        
+        #tf.keras.layers.MaxPool2D(),
         #tf.keras.layers.MaxPool2D(pool_size=2),
-        Conv2D(filters=128, kernel_size=(5, 5), strides=1, padding=padding, activation=activation,
-                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-        Conv2D(filters=128, kernel_size=(5, 5), strides=2, padding=padding, activation=activation,
-                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-        tf.keras.layers.MaxPool2D(pool_size=2),
+        #Conv2D(filters=384, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        Conv2D(filters=224, kernel_size=(3, 3), strides=2, padding='valid', activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-2)),
         Conv2D(filters=256, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
-                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-        Conv2D(filters=256, kernel_size=(3, 3), strides=2, padding=padding, activation=activation,
-                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
-        #tf.keras.layers.MaxPool2D(pool_size=2),
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        Conv2D(filters=256, kernel_size=(3, 3), strides=1, padding=padding, activation='linear', use_bias=False,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-1)),
+        BatchNormalization(axis=-1),
+        ReLU(),
+        #BatchNormalization(),
+        #tf.keras.layers.MaxPool2D(),
+
+        Conv2D(filters=256, kernel_size=(3, 3), strides=2, padding='valid', activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-3)),
+        #tf.keras.layers.MaxPool2D(),
+        Conv2D(filters=384, kernel_size=(3, 3), strides=1, padding=padding, activation=activation,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-3)),
+        Conv2D(filters=384, kernel_size=(3, 3), strides=1, padding=padding, activation='linear', use_bias=False,
+                kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg(1e-3)),
+        BatchNormalization(axis=-1),
+        ReLU(),
+        #BatchNormalization(),
+        #tf.keras.layers.MaxPool2D(),
+        #if pooling: tf.keras.layers.MaxPool2D(pool_size=2),
+        #Conv2D(filters=1024, kernel_size=(3, 3), strides=2, padding=padding, activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        #tf.keras.layers.AvgPool2D(pool_size=7),
+        #Conv2D(filters=1024, kernel_size=(14, 14), strides=7, padding=padding, activation=activation,
+                #kernel_initializer=weight_init(), bias_initializer=bia_init(), kernel_regularizer=reg()),
+        tf.keras.layers.AvgPool2D(pool_size=2),
         Flatten(),
     ])
     for _ in range(dense_layers):
