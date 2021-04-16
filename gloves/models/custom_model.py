@@ -9,6 +9,7 @@ import numpy as np
 #from wandb.keras import WandbCallback
 import mlflow
 mlflow.tensorflow.autolog(every_n_iter=1)
+from icecream import ic
 
 from utils import settings
 import pathlib
@@ -177,6 +178,8 @@ def build_imagenet_encoder(input_shape, dense_layers,
     #conv_layers.append(imagenet_encoder_model.outputs)
 
 
+        ic(stride_width)
+        ic(stride_height)
 def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, activation, final_activation, dropout_rate, 
                     padding='same', pooling='max'):
     model = tf.keras.Sequential(name='custom_encoder', layers=[
