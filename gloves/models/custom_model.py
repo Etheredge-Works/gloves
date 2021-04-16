@@ -40,12 +40,15 @@ def build_model(should_transfer_learn=False):
     pass
 
 
-def weight_init():
-    return tf.random_normal_initializer(mean=0, stddev=0.01)
+# TODO why were these making the model default all it's predictions to the same thing?
+def weight_init(mean=0, stddev=0.01):
+    return 'glorot_uniform' #TODO investigate
+    return tf.random_normal_initializer(mean=mean, stddev=stddev)
 
 
-def bia_init():
-    return tf.random_normal_initializer(mean=0.5, stddev=0.01)
+def bia_init(mean=0.5, stddev=0.01):
+    return 'zeros'
+    return tf.random_normal_initializer(mean=mean, stddev=stddev)
 
 def reg(rate=2e-4):
     #return None
