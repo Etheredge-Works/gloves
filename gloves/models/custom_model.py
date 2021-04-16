@@ -119,7 +119,7 @@ def log_summary(model):
     with open(filename, "w") as f:
         model.summary(print_fn=lambda x: f.write(x + '\n'))
     mlflow.log_artifact(filename)
-@log_model
+#@log_model
 def combine_models(base_model, head_model, name="no_name"):
     #print(base_model.input_shape)
     #print(base_model.output_shape)
@@ -129,14 +129,16 @@ def combine_models(base_model, head_model, name="no_name"):
     encoder_outputs = head_model([base_model(encoder_inputs[0]), base_model(encoder_inputs[1])])
     return Model(name=name, inputs=encoder_inputs, outputs=encoder_outputs)
 
-@log_model
+
+#@log_model
 def distance_model(input_shape):
     input1 = tf.keras.Input(input_shape)
     input2 = tf.keras.Input(input_shape)
     y_pred = DistanceLayer(dtype='float32')([input1, input2])
     return Model(inputs=(input1, input2), outputs=y_pred, name='distance_model')
 
-@log_model
+
+#@log_model
 def sigmoid_model(input_shape):
     input1 = tf.keras.Input(input_shape)
     input2 = tf.keras.Input(input_shape)
