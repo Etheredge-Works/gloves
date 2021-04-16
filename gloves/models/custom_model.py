@@ -2,12 +2,13 @@ import tensorflow as tf
 from tensorflow.keras import Model
 #from tensorflow.keras.applications.resnet_v2 import ResNet50V2 as pre_trained_model
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2 as pre_trained_model
-from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda
+from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda, BatchNormalization, ReLU, Add
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
 import numpy as np
 #from wandb.keras import WandbCallback
 import mlflow
+from tensorflow.python.keras.layers.pooling import AvgPool2D, MaxPool2D
 mlflow.tensorflow.autolog(every_n_iter=1)
 from icecream import ic
 
