@@ -145,8 +145,26 @@ def sigmoid_model(input_shape):
     )(x)
     return Model(inputs=(input1, input2), outputs=y_pred, name='sigmoid_model')
 
-
 @log_model
+def softmax_model(input_shape, label_count, 
+            dense_nodes: list = [],
+            activation='relu',
+            dropout_rate=0.0):
+    input1 = tf.keras.Input(input_shape)
+    # TODO add dense here?
+    x = input1
+    for node_count in dense_nodes:
+        x = Dense(node_count, activation=activation)(x)
+        x = Dropout(dropout_rate)(x)
+    y_pred = Dense(label_count, activation='softmax', 
+            dtype='float32',
+            #kernel_initializer=weight_init(), 
+            #bias_initializer=bia_init(), 
+            #kernel_regularizer=reg(),
+    )(x)
+    return Model(inputs=input1, outputs=y_pred, name='softmax_model')
+
+#@log_model
 def build_imagenet_encoder(input_shape, dense_layers, 
             dense_nodes, latent_nodes, 
             dropout_rate, activation, final_activation, pooling=None):
