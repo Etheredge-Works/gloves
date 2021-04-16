@@ -47,9 +47,9 @@ def weight_init():
 def bia_init():
     return tf.random_normal_initializer(mean=0.5, stddev=0.01)
 
-def reg():
+def reg(rate=2e-4):
     #return None
-    return l2(2e-4)
+    return l2(rate)
 
 
 #def contrastive_loss(vects):
@@ -198,18 +198,23 @@ def build_imagenet_encoder(input_shape, dense_layers,
 
 from tensorflow import Tensor
 # https://towardsdatascience.com/building-a-resnet-in-keras-e8f1322a49ba
-def block(x: Tensor, downsample: bool, filters: int, kerneal_size: int = 3) -> Tensor:
+def block(
+        x: Tensor, 
+        downsample: bool, 
+        filters: int, 
+        kerneal_size: int = 3,
+        reg_rate=0.01) -> Tensor:
     y = Conv2D(kernel_size=kerneal_size,
                 strides=(1 if not downsample else 2),
                 filters=filters,
-                kernel_regularizer=reg(1e-2),
+                kernel_regularizer=reg(reg_rate),
                 use_bias=False,
                 padding="same")(x)
     y = ReLU()(BatchNormalization()(y))
     y = Conv2D(kernel_size=kerneal_size,
                 strides=1,
                 filters=filters,
-                kernel_regularizer=reg(1e-2),
+                kernel_regularizer=reg(reg_rate),
                 use_bias=False,
                 padding="same")(y)
 
@@ -228,7 +233,7 @@ def block(x: Tensor, downsample: bool, filters: int, kerneal_size: int = 3) -> T
                           kernel_size=(1, 1),
                           strides=(stride_width, stride_height),
                           padding="valid",
-                          kernel_regularizer=reg(1e-2))(x)
+                          kernel_regularizer=reg(reg_rate))(x)
         out = Add()([x,y])
     out = ReLU()(BatchNormalization()(out))
     return out
@@ -236,7 +241,7 @@ def block(x: Tensor, downsample: bool, filters: int, kerneal_size: int = 3) -> T
 
 from tensorflow.keras.layers.experimental import preprocessing
 def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, activation, final_activation, dropout_rate, 
-                    padding='same', pooling='max'):
+                    padding='same', pooling='max', conv_reg_rate=0.01, dense_reg_rate=0.1):
 
     input = tf.keras.Input(input_shape)
     x = input
@@ -244,25 +249,25 @@ def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, a
     x = Conv2D(kernel_size=7,
                strides=2,
                filters=64,
-               kernel_regularizer=reg(1e-2),
+               kernel_regularizer=reg(conv_reg_rate),
                use_bias=False,
                padding="same")(x)
     x = ReLU()(BatchNormalization()(x))
     x = MaxPool2D(pool_size=3, strides=2, padding='same')(x)
-    x = block(x, False, 64)
+    x = block(x, False, 64, reg_rate=conv_reg_rate)
     #x = block(x, False, 64)
     #x = block(x, False, 64)
 
-    x = block(x, True, 128)
-    x = block(x, False, 128)
+    x = block(x, True, 128, reg_rate=conv_reg_rate)
+    x = block(x, False, 128, reg_rate=conv_reg_rate)
     #x = block(x, False, 128)
 
-    x = block(x, True, 256)
-    x = block(x, False, 256)
+    x = block(x, True, 256, reg_rate=conv_reg_rate)
+    x = block(x, False, 256, reg_rate=conv_reg_rate)
     #x = block(x, False, 256)
 
-    x = block(x, True, 512)
-    x = block(x, False, 512)
+    x = block(x, True, 512, reg_rate=conv_reg_rate)
+    x = block(x, False, 512, reg_rate=conv_reg_rate)
     #x = block(x, False, 512)
 
     x = AvgPool2D(7)(x)
@@ -273,14 +278,14 @@ def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, a
             dense_nodes, activation=activation,
             kernel_initializer=weight_init(),
             bias_initializer=bia_init(),
-            kernel_regularizer=reg(1e-2),
+            kernel_regularizer=reg(dense_reg_rate),
             )(x)
         #model.add(Dropout(dropout_rate))
     x = Dense(latent_nodes, activation=final_activation, 
             dtype='float32',
             kernel_initializer=weight_init(), 
             bias_initializer=bia_init(), 
-            kernel_regularizer=reg(1e-2),
+            kernel_regularizer=reg(dense_reg_rate),
             )(x)
     model = tf.keras.Model(inputs=input, outputs=x)
     return model

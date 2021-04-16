@@ -213,6 +213,8 @@ from siamese.callbacks import NWayCallback
 # Model Stuff
 @click.option('--dense-layers', default=0, type=click.INT, help='')
 @click.option('--dense-nodes', default=512, type=click.INT, help='')
+@click.option("--dense-reg-rate", default=0.1, type=float)
+@click.option("--conv-reg-rate", default=0.1, type=float)
 @click.option("--activation", default='relu', type=str)
 @click.option("--latent-nodes", default=256, type=int)
 @click.option("--dropout-rate", default=0.0, type=float) # TODO why does dropout cripple this when it helped before?
@@ -255,6 +257,8 @@ def main(
         ########################
         dense_layers: int, 
         dense_nodes: int, 
+        dense_reg_rate: float,
+        conv_reg_rate: float,
         activation: str,
         latent_nodes: int,
         dropout_rate: float,
@@ -292,6 +296,8 @@ def main(
         activation=activation,
         final_activation=final_activation,
         dropout_rate=dropout_rate,
+        dense_reg_rate=dense_reg_rate,
+        conv_reg_rate=conv_reg_rate,
     )
 
     input1 = tf.keras.Input(latent_nodes)
