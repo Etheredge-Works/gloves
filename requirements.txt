@@ -16,4 +16,3 @@ pytest==6.2.3
 PyYAML==5.4.1
 redis==3.5.3
 scikit_learn==0.24.1
-tensorflow==2.4.1
