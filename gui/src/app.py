@@ -21,6 +21,8 @@ Pet Breed Similarity
 This is a demo site for my Siamese Network experiment in image comparisons.
 """)
 
+import os
+st.write(os.environ.get('MLFLOW_TRACKING_URI'))
 client = mlflow.tracking.MlflowClient()
 MODEL_NAME='gloves'
 MODEL_STAGE='Production'
