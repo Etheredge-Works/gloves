@@ -16,7 +16,7 @@ from pathlib import Path
 #model = custom_model.get_model()
 
 st.title("""
-Pet Bread Similarity
+Pet Breed Similarity
 
 This is a demo site for my Siamese Network experiment in image comparisons.
 """)
@@ -30,7 +30,6 @@ model_version = client.get_latest_versions(name=MODEL_NAME, stages=[MODEL_STAGE]
 model_artifact = client.download_artifacts(model_version.run_id, 'model', dst_path='/tmp/')
 model = tf.keras.models.load_model('/tmp/model')
 
-st.cache()
 anchor_file = st.file_uploader("Input an Image", type="jpg",)
 if anchor_file is not None:
    st.image(anchor_file, caption="Uploaded Anchor Image.", use_column_width=True)
@@ -70,14 +69,14 @@ if anchor_file and other_file_1 and other_file_2:
       #st.image([anchor_file, other_file_2], caption=['Anchor', 'Other'], use_column_width=True)
       other_file = other_file_2
 
-   col1.image(anchor_file, caption='Anchor')
-   col2.image(other_file_1, caption='Match')
+   col1.image(anchor_file, caption='Anchor', use_column_width=True)
+   col2.image(other_file, caption='Other', use_column_width=True)
    #col3.image(other_file_2, caption='Other 2')
    #if prediction_value < 0.5:
       #st.write("These are NOT the same animal.")
    #else:
       #st.write("These are the same animal.")
-   st.write(f"Prediction value_1: {prediction_value_2}")
+   st.write(f"Prediction value_1: {prediction_value_1}")
    st.write(f"Prediction value_2: {prediction_value_2}")
    
    #prediction_value.text(model.predict([np.expand_dims(cleaned_anchor, axis=0), np.expand_dims(cleaned_other, axis=0)]))
