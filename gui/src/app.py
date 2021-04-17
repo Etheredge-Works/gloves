@@ -24,10 +24,6 @@ This is a demo site for my Siamese Network experiment in image comparisons.
 import os
 print("test debug. Please ignore.")
 st.write(os.environ.get('MLFLOW_TRACKING_URI'))
-for key, _ in os.environ.items():
-   #st.write(os.environ.keys())
-   print(key)
-   st.write(key)
 
 client = mlflow.tracking.MlflowClient()
 MODEL_NAME='gloves'
