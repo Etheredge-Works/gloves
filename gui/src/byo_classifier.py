@@ -31,7 +31,12 @@ Input 1 or more other images to see predicting distances.
 """)
 
 import os
-#st.write(os.environ.get('MLFLOW_TRACKING_URI'))
+if not os.environ.get('MLFLOW_TRACKING_URI'):
+   st.write('checking st secrets for stuff')
+   #os.environ['MLFLOW_TRACKING_URI'] = st.secrets["db_username"]
+   st.write(st.secrets["MLFLOW_TRACKING_URI"])
+
+
 
 @st.cache(allow_output_mutation=True)
 def load_model(mlflow_model_name='gloves', mlflow_model_stage='Production'):
