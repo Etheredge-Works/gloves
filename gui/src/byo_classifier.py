@@ -31,11 +31,13 @@ Input 1 or more other images to see predicting distances.
 """)
 
 import os
-if not os.environ.get('MLFLOW_TRACKING_URI'):
-   st.write('checking st secrets for stuff')
+#if not os.environ.get('MLFLOW_TRACKING_URI'):
+   #st.write('checking st secrets for stuff')
    #os.environ['MLFLOW_TRACKING_URI'] = st.secrets["db_username"]
-   st.write(st.secrets["MLFLOW_TRACKING_URI"])
+   #st.write(st.secrets["MLFLOW_TRACKING_URI"])
 
+st.write(st.secrets["MLFLOW_TRACKING_URI"])
+st.write(os.environ["MLFLOW_TRACKING_URI"])
 
 
 @st.cache(allow_output_mutation=True)
