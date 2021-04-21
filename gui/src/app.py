@@ -22,7 +22,6 @@ This is a demo site for my Siamese Network experiment in image comparisons.
 """)
 
 import os
-st.write(os.environ.get('MLFLOW_TRACKING_URI'))
 
 
 @st.cache(allow_output_mutation=True)
