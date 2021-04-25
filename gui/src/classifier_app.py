@@ -26,6 +26,7 @@ Pet Breed Classifier
 This is a demo site for my Siamese Network experiments in image comparisons.
 This page demonstrates the effectiveness of the current siamese network encoder applied to feature extraction for pet breed classifiction on the Oxford pet dataset. 
 Process: 
+
 1. A siamese network is trained on the Oxford pet dataset to generate encodings that are close in distance for similar breeds.
 2. The encoder is ripped out and used as feature extractor with a dense network tacke don the end.
 3. This is compared to two other models. 
