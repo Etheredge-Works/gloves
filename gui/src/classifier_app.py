@@ -85,7 +85,7 @@ if image is not None:
       #cols[idx].write(f"{name}\n\n{predictions[:n]}")
       df = pd.DataFrame({
          "Breed": predictions[:n],
-         "Confidence": y_hat[sorted_predictions[n]]})
+         "Confidence": y_hat[sorted_predictions[:n]]})
       
       #df.set_index('Breed', inplace=True)
 
