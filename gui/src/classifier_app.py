@@ -71,7 +71,7 @@ models = [(model_name, load_models(model_name)) for model_name in model_names]
 image = st.file_uploader("Input Image to classify", type="jpg")
 if image is not None:
    st.image(image, caption="Uploaded Image.", use_column_width=True)
-n = st.number_input("Top Labels to get", value=5, max_value=32, step=1)
+n = st.number_input("Top Labels to get", value=5, max_value=34, step=1)
 
 cols = st.beta_columns(2)
 
