@@ -53,7 +53,7 @@ def load_models(model_name, mlflow_model_stage='Production'):
    label_encoder_path = client.download_artifacts(model_version.run_id, 'label_encoder', dst_path='/tmp/')
    label_encoder = joblib.load(label_encoder_path)
    
-   return model, label_encoder, model_version
+   return model, label_encoder, model_version, rundata
 
 
 #def predict(model, anchor, other):
@@ -78,7 +78,7 @@ cols = st.beta_columns(2)
 st.write("# Apendix")
 if image is not None:
    data = utils.simple_decode(image.read())
-   for idx, (name, (model, le, model_version)) in enumerate(models):
+   for idx, (name, (model, le, model_version, rundata)) in enumerate(models):
       y_hat = model.predict([np.expand_dims(data, axis=0)])[0]
       sorted_predictions = np.argsort(y_hat)[::-1]
       predictions = le.inverse_transform(sorted_predictions)
@@ -91,13 +91,15 @@ if image is not None:
 
       cols[idx%2].write(name)
       cols[idx%2].dataframe(df)
+
       with st.beta_expander(f"{name} model info"):
          st.write(f"""
             | Model Creation Date |  Model Version |
             | :-------: | :---: |
             | {datetime.datetime.fromtimestamp(float(model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {model_version.version} |
-            ## Summary
          """)
+         st.write(rundata.data.metrics)
+         st.write("## Summary")
          model.summary(print_fn=st.text)
 
 st.write("""
