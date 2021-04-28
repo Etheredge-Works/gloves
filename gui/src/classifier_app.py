@@ -92,15 +92,16 @@ if image is not None:
       cols[idx%2].write(name)
       cols[idx%2].dataframe(df)
 
-      with st.beta_expander(f"{name} model info"):
-         st.write(f"""
-            | Model Creation Date |  Model Version |
-            | :-------: | :---: |
-            | {datetime.datetime.fromtimestamp(float(model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {model_version.version} |
-         """)
-         st.write(rundata.data.metrics)
-         st.write("## Summary")
-         model.summary(print_fn=st.text)
+for idx, (name, (model, le, model_version, rundata)) in enumerate(models):
+   with st.beta_expander(f"{name} model info"):
+      st.write(f"""
+         | Model Creation Date |  Model Version |
+         | :-------: | :---: |
+         | {datetime.datetime.fromtimestamp(float(model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {model_version.version} |
+      """)
+      st.write(rundata.data.metrics)
+      st.write("## Summary")
+      model.summary(print_fn=st.text)
 
 st.write("""
 # General Notes/TODOs
