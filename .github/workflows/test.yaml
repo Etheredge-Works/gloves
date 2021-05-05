@@ -1,0 +1,23 @@
+name: testing
+on: [push]
+jobs:
+  run:
+    runs-on: [self-hosted]
+    # container: docker://dvcorg/cml-py3:latest
+    steps:
+      - uses: actions/checkout@v2
+      # may need to setup NodeJS & Python3 on e.g. self-hosted
+      # - uses: actions/setup-node@v2
+      #   with:
+      #     node-version: '12'
+      #- uses: actions/setup-python@v2
+      #  with:
+      #    python-version: '3.8'
+      - uses: iterative/setup-cml@v1
+      - name: Test
+        run: |
+          CODEBLOCK="\`\`\`"
+          echo $CODEBLOCK > report.md
+          nvidia-smi >> report.md
+          echo $CODEBLOCK >> report.md
+          cml-send-comment report.md
