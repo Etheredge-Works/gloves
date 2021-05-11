@@ -9,7 +9,7 @@ ENV TF_FORCE_GPU_ALLOW_GROWTH=true
 #COPY requirements.txt params.yaml /app/
 #RUN pip install -r /app/requirements.txt
 RUN pip install mlflow wandb click tensorflow_addons==0.11.0 boto3 icecream scikit-learn
-RUN pip install siamese==0.0.33 
-COPY gloves /app
-WORKDIR /app
+RUN pip install siamese==0.0.34 
+COPY gloves /app/gloves
+WORKDIR /app/gloves
 ENTRYPOINT ["python"]
