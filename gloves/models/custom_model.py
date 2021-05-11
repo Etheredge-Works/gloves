@@ -206,22 +206,25 @@ from tensorflow import Tensor
 # https://towardsdatascience.com/building-a-resnet-in-keras-e8f1322a49ba
 def block(
         x: Tensor, 
-        downsample: bool, 
         filters: int, 
+        downsample: bool = False, 
         kerneal_size: int = 3,
-        reg_rate=0.01) -> Tensor:
+        reg_rate=0.01,
+        use_batch_norm=True) -> Tensor:
     y = Conv2D(kernel_size=kerneal_size,
                 strides=(1 if not downsample else 2),
                 filters=filters,
                 kernel_regularizer=reg(reg_rate),
-                use_bias=False,
+                use_bias=not use_batch_norm, # Don't use bias if using batch norm
                 padding="same")(x)
-    y = ReLU()(BatchNormalization()(y))
+    if use_batch_norm: 
+        y = BatchNormalization()(y)
+    y = ReLU()(y)
     y = Conv2D(kernel_size=kerneal_size,
                 strides=1,
                 filters=filters,
                 kernel_regularizer=reg(reg_rate),
-                use_bias=False,
+                use_bias=not use_batch_norm,
                 padding="same")(y)
 
     try:
@@ -233,24 +236,28 @@ def block(
         residual_shape = K.int_shape(y)
         stride_width = int(round(input_shape[1] / residual_shape[1]))
         stride_height = int(round(input_shape[2] / residual_shape[2]))
-        ic(stride_width)
-        ic(stride_height)
         x = Conv2D(filters=residual_shape[3],
                           kernel_size=(1, 1),
                           strides=(stride_width, stride_height),
                           padding="valid",
                           kernel_regularizer=reg(reg_rate))(x)
         out = Add()([x,y])
-    out = ReLU()(BatchNormalization()(out))
+    if use_batch_norm: 
+        out = BatchNormalization()(out)
+    out = ReLU()(out)
     return out
     
 
 from tensorflow.keras.layers.experimental import preprocessing
 def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, activation, final_activation, dropout_rate, 
-                    padding='same', pooling='max', conv_reg_rate=0.01, dense_reg_rate=0.1):
+                    padding='same', pooling='max', conv_reg_rate=0.01, dense_reg_rate=0.1, use_batch_norm=True,
+                    latent_dense=False):
+    # TODO pass activation as none and assign. str value so constructs in block.
+    # TODO maybe linear final layer
 
     input = tf.keras.Input(input_shape)
     x = input
+
     # semi from resnet https://arxiv.org/pdf/1512.03385.pdf
     x = Conv2D(kernel_size=7,
                strides=2,
@@ -260,20 +267,40 @@ def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, a
                padding="same")(x)
     x = ReLU()(BatchNormalization()(x))
     x = MaxPool2D(pool_size=3, strides=2, padding='same')(x)
-    x = block(x, False, 64, reg_rate=conv_reg_rate)
+    #x = block(x, 64, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 64, downsample=False, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+
     #x = block(x, False, 64)
     #x = block(x, False, 64)
 
-    x = block(x, True, 128, reg_rate=conv_reg_rate)
-    x = block(x, False, 128, reg_rate=conv_reg_rate)
-    #x = block(x, False, 128)
+    #x = block(x, 64, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
-    x = block(x, True, 256, reg_rate=conv_reg_rate)
-    x = block(x, False, 256, reg_rate=conv_reg_rate)
+    x = block(x, 128, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    x = block(x, 128, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    x = block(x, 128, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 128, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+
+    x = block(x, 256, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    x = block(x, 256, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    x = block(x, 256, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 256, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 256, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 256, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+
+    x = block(x, 512, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    x = block(x, 512, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 512, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+
+    #x = block(x, True, 1024, reg_rate=conv_reg_rate)
+    #x = block(x, False, 1024, reg_rate=conv_reg_rate)
+    #x = block(x, False, 256, reg_rate=conv_reg_rate)
     #x = block(x, False, 256)
 
-    x = block(x, True, 512, reg_rate=conv_reg_rate)
-    x = block(x, False, 512, reg_rate=conv_reg_rate)
+    #x = block(x, False, 512, reg_rate=conv_reg_rate)
     #x = block(x, False, 512)
 
     # TODO why didn't this work well? lack of sigmoid? not expressive enough?
