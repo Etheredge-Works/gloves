@@ -77,6 +77,7 @@ stages:
     
   train_siamese:
     cmd: >
+      ./build_image.sh && 
       ${docker_cmd} ${train.docker_args} ${train.img} 
       main.py
       --train-dir ${docker_out_dir}/${split.train_dir}
@@ -90,7 +91,6 @@ stages:
       - split.train_dir
       - split.test_dir
     deps:
-      - last_build.log
       - ${out_dir}/${split.train_dir}
       - ${out_dir}/${split.test_dir}
     outs:
@@ -100,6 +100,7 @@ stages:
 
   classifier:
     cmd: >
+      ./build_image.sh && 
       ${docker_cmd} ${train.docker_args} 
       ${train.img} classifier.py
       --encoder-model-path ${docker_out_dir}/${train.encoder}
@@ -114,7 +115,6 @@ stages:
       - train.encoder
       - split.train_dir
     deps:
-      - last_build.log
       - ${out_dir}/${train.encoder}
       - ${out_dir}/${split.train_dir}
       - ${out_dir}/${split.test_dir}
