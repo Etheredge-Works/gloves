@@ -31,7 +31,7 @@ os.environ['PYTHONHASHSEED']=str(4)
 #import wandb
 #wandb.init(project="gloves", config={"hyper":"parameter"})
 import mlflow
-mlflow.set_experiment("gloves-siamese")
+mlflow.set_experiment("siamese-distance")
 from mlflow import pyfunc
 import click
 from pathlib import Path
