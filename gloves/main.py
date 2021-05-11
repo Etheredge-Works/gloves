@@ -25,8 +25,8 @@ def limit_gpu_memory_use():
 
 limit_gpu_memory_use()
 
-from utils import read_decode
-from models import build_custom_encoder
+from utils import read_decode, random_read_decode
+from models import build_custom_encoder, sigmoid_model
 os.environ['PYTHONHASHSEED']=str(4)
 #import wandb
 #wandb.init(project="gloves", config={"hyper":"parameter"})
@@ -207,8 +207,8 @@ from siamese.callbacks import NWayCallback
 @click.option("--height", default=224, type=int)
 @click.option("--width", default=224, type=int)
 @click.option("--depth", default=3, type=int)
-@click.option("--mutate-anchor", default=False, type=bool)
-@click.option("--mutate-other", default=False, type=bool)
+@click.option("--mutate-anchor", default=True, type=bool)
+@click.option("--mutate-other", default=True, type=bool)
 ###############################################################################
 # Model Stuff
 @click.option('--dense-layers', default=0, type=click.INT, help='')
