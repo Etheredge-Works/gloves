@@ -75,14 +75,15 @@ stages:
     outs:
       - last_build.log
     
-  train:
+  train_siamese:
     cmd: >
       ${docker_cmd} ${train.docker_args} ${train.img} 
+      main.py
       --train-dir ${docker_out_dir}/${split.train_dir}
       --test-dir ${docker_out_dir}/${split.test_dir}
       --model-dir ${docker_out_dir}/${train.model_dir}
       --model-filename ${train.model_filename}
-      --encoder-model ${train.encoder}
+      --encoder-model ${docker_out_dir}/${train.encoder}
     params:
       - out_dir
       - train
@@ -92,16 +93,31 @@ stages:
       - last_build.log
       - ${out_dir}/${split.train_dir}
       - ${out_dir}/${split.test_dir}
-      - ${out_dir}/${clean.out_dir}
     outs:
-      - ${out_dir}/${train.model_dir}
-      #- ${out_dir}/${train.model_dir}/${train.model_filename}
-      #- ${out_dir}/${train.model_dir}/${train.encoder}
-      # TODO figure out a way around this
-      # dvc deletes outputs before running
-      # mlflow expects these to exist....
-      #- ${out_dir}/${train.metrics_dir}
-      #- ${out_dir}/${train.model_dir}
-      
+      - ${out_dir}/${train.model_dir}/${train.model_filename}
+      - ${out_dir}/${train.encoder}
 
+
+  classifier:
+    cmd: >
+      ${docker_cmd} ${train.docker_args} 
+      ${train.img} classifier.py
+      --encoder-model-path ${docker_out_dir}/${train.encoder}
+      --train-dir ${docker_out_dir}/${split.train_dir}
+      --test-dir ${docker_out_dir}/${split.test_dir}
+      --model-path ${docker_out_dir}/${classifier.model_dir}
+      --label-encoder-path ${docker_out_dir}/${classifier.label_encoder}
+    params:
+      - classifier
+      - train.img
+      - train.docker_args
+      - train.encoder
+      - split.train_dir
+    deps:
+      - last_build.log
+      - ${out_dir}/${train.encoder}
+      - ${out_dir}/${split.train_dir}
+      - ${out_dir}/${split.test_dir}
+    outs:
+      - ${out_dir}/${classifier.model_dir}
 
