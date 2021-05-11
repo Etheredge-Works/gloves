@@ -54,6 +54,7 @@ stages:
       --train-dir ${docker_out_dir}/${split.train_dir}
       --test-dir ${docker_out_dir}/${split.test_dir}
       --ratio ${split.ratio}
+      --by-label False
     deps:
     - ${out_dir}/${clean.out_dir}
     params:
