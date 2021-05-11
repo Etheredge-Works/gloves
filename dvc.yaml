@@ -70,7 +70,8 @@ stages:
     deps:
       - Dockerfile
       - build_image.sh
-      - gloves/src
+      - requirements.txt
+      - gloves/
     outs:
       - last_build.log
     
