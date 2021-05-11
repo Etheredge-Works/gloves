@@ -64,29 +64,6 @@ def reg(rate=2e-4):
 
 from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
 
-class NWayCallback(tf.keras.callbacks.Callback):
-    def on_epoch_end(self, epoch, logs=None):
-        if epoch % 100 == 0:
-            #predictions = [self.model.predict_on_batch(n_way_batch) for n_way_batch in test_ds]
-            predictions = model.predict(test_ds)
-            highest_predictions = [np.argmax(prediction) for prediction in predictions]
-            correct_predictions = [highest_prediction == 0 for highest_prediction in highest_predictions]
-            score = np.average(correct_predictions)
-            print(f"\n\nN-Way Accuracy: {score}\n")
-
-
-def save_model(model):
-    model.save("model")
-
-
-def get_model():
-    #net = glovesnet(should_transfer_learn=True)
-    #net.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), metrics=["accuracy"])
-    return tf.keras.models.load_model("model.h5")
-    #net.load_weights("model")
-    #return net
-    # TODO make model name variable
-
 
 def run_model():
     model = tf.keras.models.load_model("model")
