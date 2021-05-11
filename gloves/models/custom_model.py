@@ -276,23 +276,32 @@ def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, a
     x = block(x, False, 512, reg_rate=conv_reg_rate)
     #x = block(x, False, 512)
 
-    x = AvgPool2D(7)(x)
-    x = Flatten()(x)
+    # TODO why didn't this work well? lack of sigmoid? not expressive enough?
+    #x = block(x, latent_nodes, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    if not latent_dense:
+        x = block(x, latent_nodes, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
-    for _ in range(dense_layers):
-        x = Dense(
-            dense_nodes, activation=activation,
-            kernel_initializer=weight_init(),
-            bias_initializer=bia_init(),
-            kernel_regularizer=reg(dense_reg_rate),
-            )(x)
-        #model.add(Dropout(dropout_rate))
-    x = Dense(latent_nodes, activation=final_activation, 
-            dtype='float32',
-            kernel_initializer=weight_init(), 
-            bias_initializer=bia_init(), 
-            kernel_regularizer=reg(dense_reg_rate),
-            )(x)
+    # TODO not using sigmoid here?...
+    x = AvgPool2D(7, dtype='float32')(x)
+    x = Flatten(dtype='float32')(x)
+
+    # https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf
+    # They use sigmoid here
+    #for _ in range(dense_layers):
+        #x = Dense(
+            #dense_nodes, activation=activation,
+            #kernel_initializer=weight_init(),
+            #bias_initializer=bia_init(),
+            #kernel_regularizer=reg(dense_reg_rate),
+            #)(x)
+        #x = Dropout(dropout_rate)(x)
+    if latent_dense:
+        x = Dense(latent_nodes, activation=final_activation, 
+                dtype='float32',
+                kernel_initializer=weight_init(), 
+                bias_initializer=bia_init(), 
+                kernel_regularizer=reg(dense_reg_rate),
+                )(x)
     model = tf.keras.Model(inputs=input, outputs=x)
     return model
 
