@@ -44,6 +44,8 @@ def build_model(should_transfer_learn=False):
 # TODO why were these making the model default all it's predictions to the same thing?
 def weight_init(mean=0, stddev=0.01):
     return 'glorot_uniform' #TODO investigate
+    values = np.rng.normal(loc=0,scale=1e-2,size=shape)
+    return K.variable(values,name=name)
     return tf.random_normal_initializer(mean=mean, stddev=stddev)
 
 
