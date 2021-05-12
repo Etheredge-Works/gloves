@@ -2,10 +2,10 @@
 #- docker_cmd: docker run -v $(pwd)/outputs:/outputs
 # TODO fix this absolute path
 #out_dir: /nfs/data/gloves/outputs
-out_dir: /var/lib/docker/volumes/gloves-outputs/_data
+out_dir: artifacts
 docker_out_dir: /outputs
 #docker_cmd: docker run -v /nfs/data/gloves/outputs:/outputs
-docker_cmd: docker run -v /tmp/checkpoints:/tmp/checkpoints -v gloves-outputs:/outputs
+docker_cmd: docker run -v /tmp/checkpoints:/tmp/checkpoints -v ${PWD}/artifacts:/outputs
 
 wget:
   img: etheredgeb/wget_url:latest
