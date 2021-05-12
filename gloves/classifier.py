@@ -6,7 +6,7 @@ from tensorflow.python.framework import auto_control_deps
 from tensorflow.python.keras.engine.training import Model
 from tensorflow.keras.layers import Flatten, Dense
 from models import softmax_model
-from utils import read_decode
+from utils import read_decode, random_read_decode
 from siamese.data import get_labels_from_filenames
 #from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2 as pre_trained_model
 from tensorflow.keras.applications.resnet_v2 import ResNet50V2 as pre_trained_model
@@ -22,7 +22,7 @@ import numpy as np
 import joblib
 
 
-def setup_ds(train_dir, batch_size, label_encoder=None):
+def setup_ds(train_dir, batch_size, label_encoder=None, decode=random_read_decode):
     # TODO pass labels?
     train_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(train_dir)/'**.jpg')))
     item_count = int(tf.size(train_files_tf))
@@ -37,7 +37,7 @@ def setup_ds(train_dir, batch_size, label_encoder=None):
 
     data_ds = tf.data.Dataset.from_tensor_slices(train_files_tf)
 
-    data_ds = data_ds.map(random_read_decode)
+    data_ds = data_ds.map(decode)
 
     label_ds = tf.data.Dataset.from_tensor_slices(train_labels)
 
@@ -114,13 +114,13 @@ def main(
       policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
       tf.keras.mixed_precision.experimental.set_policy(policy)
 
-    ds, label_count, label_encoder = setup_ds(train_dir, batch_size)
+    ds, label_count, label_encoder = setup_ds(train_dir, batch_size, decode=random_read_decode)
     #with open(label_encoder_path, 'w') as f:
         #joblib.dump(label_encoder, f)
     joblib.dump(label_encoder, label_encoder_path)
 
 
-    val_ds, val_label_count, _ = setup_ds(test_dir, batch_size, label_encoder)
+    val_ds, val_label_count, _ = setup_ds(test_dir, batch_size, label_encoder, decode=read_decode)
 
     # Setup models
     encoder_model_frozen, encoder_model_unfrozen, imagenet_model_frozen, imagenet_model_unfrozen = setup_models(encoder_model_path)
