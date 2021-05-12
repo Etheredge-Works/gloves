@@ -5,8 +5,7 @@ from . import settings
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 import tensorflow as tf
 from tensorflow.keras.utils import get_file
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-#from tensorflow.keras.applications.resnet_v2 import preprocess_input
+from tensorflow.keras.applications.resnet_v2 import preprocess_input
 from tensorflow.keras import backend as K
 import pathlib
 import os

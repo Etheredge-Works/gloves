@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import Model
-#from tensorflow.keras.applications.resnet_v2 import ResNet50V2 as pre_trained_model
-from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2 as pre_trained_model
+from tensorflow.keras.applications.resnet_v2 import ResNet50V2 as pre_trained_model
 from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda, BatchNormalization, ReLU, Add
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
