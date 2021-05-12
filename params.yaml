@@ -51,4 +51,5 @@ classifier:
   test_dir: train
   model_dir: classifier_models
   model_filename: model
+  label_encoder: label_encoder
   encoder: models/encoder
