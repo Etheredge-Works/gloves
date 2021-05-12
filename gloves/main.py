@@ -50,7 +50,6 @@ np.random.seed(4)
 
 tf.random.set_seed(4)
 import mlflow.tensorflow
-mlflow.tensorflow.autolog(every_n_iter=1)
 #tf.config.threading.set_inter_op_parallelism_threads(1)
 #tf.config.threading.set_intra_op_parallelism_threads(1)
 import pathlib
@@ -212,13 +211,13 @@ from siamese.callbacks import NWayCallback
 ###############################################################################
 # Model Stuff
 @click.option('--dense-layers', default=0, type=click.INT, help='')
-@click.option('--dense-nodes', default=512, type=click.INT, help='')
-@click.option("--dense-reg-rate", default=0.1, type=float)
-@click.option("--conv-reg-rate", default=0.1, type=float)
-@click.option("--activation", default='relu', type=str)
-@click.option("--latent-nodes", default=256, type=int)
+@click.option('--dense-nodes', default=1024, type=click.INT, help='')
+@click.option("--dense-reg-rate", default=0.001, type=float)
+@click.option("--conv-reg-rate", default=0.0001, type=float)
+@click.option("--activation", default='sigmoid', type=str)
+@click.option("--latent-nodes", default=32, type=int)
 @click.option("--dropout-rate", default=0.0, type=float) # TODO why does dropout cripple this when it helped before?
-@click.option("--final-activation", default='linear', type=str)
+@click.option("--final-activation", default='sigmoid', type=str)
 @click.option('--should-transfer-learn', default=False, type=click.BOOL, help='')
 ###############################################################################
 # Training Stuff
@@ -229,15 +228,16 @@ from siamese.callbacks import NWayCallback
 @click.option('--batch-size', default=32, type=click.INT, help='')
 @click.option('--verbose', default=1, type=click.INT, help='')
 #@click.option("--validation-ratio", default=0.3, type=float)
-@click.option("--eval-freq", default=5, type=int)
+@click.option("--eval-freq", default=1, type=int)
 @click.option("--reduce-lr-factor", default=0.1, type=float)
-@click.option("--reduce-lr-patience", default=15, type=int) # need realativily high pateiences due to high variance in ds items
+@click.option("--reduce-lr-patience", default=20, type=int) # need realativily high pateiences due to high variance in ds items
 @click.option("--early-stop-patience", default=50, type=int)
-@click.option("--mixed-precision", default=False, type=bool)
-@click.option("--unfreeze", default=0, type=int)
+@click.option("--mixed-precision", default=True, type=bool)
+@click.option("--unfreeze", default=False, type=bool)
 @click.option("--nway_freq", default=10, type=int)
 @click.option("--nways", default=32, type=int)
-@click.option("--sigmoid", default=False, type=int)
+@click.option("--sigmoid", default=False, type=bool)
+@click.option("--use-batch-norm", default=True, type=bool)
 @click.option("--checkpoint-dir", default="/tmp/checkpoints", type=click.Path())
 @mlflow_log_wrapper
 def main(
@@ -279,12 +279,18 @@ def main(
         nway_freq,
         nways,
         sigmoid,
+        use_batch_norm,
         checkpoint_dir,
         ):
     print(type(batch_size))
     assert(type(batch_size) == int)
+    if sigmoid:
+        mlflow.set_experiment("siamese-distance")
+    else:
+        mlflow.set_experiment("siamese-sigmoid")
+    mlflow.tensorflow.autolog(every_n_iter=1)
 
-    if True:
+    if mixed_precision:
       policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
       tf.keras.mixed_precision.experimental.set_policy(policy)
 
@@ -298,23 +304,30 @@ def main(
         dropout_rate=dropout_rate,
         dense_reg_rate=dense_reg_rate,
         conv_reg_rate=conv_reg_rate,
+        use_batch_norm=use_batch_norm,
     )
 
-    input1 = tf.keras.Input(latent_nodes)
-    input2 = tf.keras.Input(latent_nodes)
+    input1 = tf.keras.Input(encoder.output_shape[-1])
+    input2 = tf.keras.Input(encoder.output_shape[-1])
     #input3 = tf.keras.Input()
     #input4 = tf.keras.Input()
     #outputs = NormDistanceLayer(dtype='float32')((input1, input2))
 
     if sigmoid:
+        #head = sigmoid_model(encoder.output_shape[-1])
         outputs = Dense(1, activation='sigmoid', dtype='float32')(AbsDistanceLayer(dtype='float32')((input1, input2)))
-        #outputs = Dense(1, activation='sigmoid')(Dense(dense_nodes, activation='relu')(tf.keras.backend.abs(input1 - input2)))
-        head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='AbsDistance')
+        head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='Distance')
         loss = 'binary_crossentropy'
+        nway_comparator = 'max'
+        metrics=['acc']
+        monitor_metric = 'val_loss'
     else:
         outputs = NormDistanceLayer(dtype='float32')((input1, input2))
         head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='NormDistance')
         loss = tfa.losses.ContrastiveLoss()
+        nway_comparator = 'min'
+        metrics=None
+        monitor_metric = 'loss'
 
 
     #model = tf.keras.Model(inputs=(input3, input4), outputs=head([encoder(input3), encoder(input4)]))
@@ -334,7 +347,7 @@ def main(
     optimizer = optimizer_switch[optimizer]
 
     #encoder = build_custom_encoder(den)
-    model.compile(loss=loss, optimizer=optimizer(lr=lr))
+    model.compile(loss=loss, optimizer=optimizer(lr=lr), metrics=metrics)
 
     # TODO extract and pass in
     train_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(train_dir)/'**.jpg')))
@@ -357,7 +370,8 @@ def main(
     ds = create_dataset(
         anchor_items=train_files_tf,
         anchor_labels=train_labels,
-        anchor_decode_func=read_decode,
+        anchor_decode_func=random_read_decode if mutate_anchor else read_decode,
+        other_decode_func=random_read_decode if mutate_other else read_decode,
         #other_items=extra_train_files,
         #other_labels=get_labels_from_files_path(extra_train_files),
         #repeat=1,
@@ -374,12 +388,13 @@ def main(
         anchor_decode_func=read_decode,
         #other_items=train_files_tf, # needed since test set won't have many items
         #other_labels=train_labels
-    ).batch(batch_size).prefetch(-1).cache()
+    ).batch(batch_size).prefetch(-1)
+    # TODO should val_ds be cached? or should it change?
 
     test_nway_ds = create_n_way_dataset(
         items=test_files_tf, 
         labels=test_labels,
-        ratio=0.4, 
+        ratio=1.0, 
         anchor_decode_func=read_decode, 
         n_way_count=nways)
 
@@ -390,16 +405,16 @@ def main(
         anchor_decode_func=read_decode, 
         n_way_count=nways)
     
-    mlflow.log_param("dataset_size", len(list(ds)))
-    mlflow.log_param("validation_dataset_size", len(list(val_ds)))
+    mlflow.log_param("dataset_size", len(list(ds))*batch_size)
+    mlflow.log_param("validation_dataset_size", len(list(val_ds))*batch_size)
 
     #wandb.init(project="siamese")
     # TODO how can I use preprocessing layers? Dataset requires images to be the same size for batching...
     callbacks=[
-        ReduceLROnPlateau(monitor='loss', factor=reduce_lr_factor, patience=reduce_lr_patience),
-        NWayCallback(encoder=encoder, head=head, nway_ds=nway_ds, freq=nway_freq, prefix_name="train_"),
-        NWayCallback(encoder=encoder, head=head, nway_ds=test_nway_ds, freq=nway_freq, prefix_name="test_"),
-        EarlyStopping(monitor='loss', min_delta=0, patience=early_stop_patience, verbose=1, restore_best_weights=True),
+        ReduceLROnPlateau(monitor=monitor_metric, factor=reduce_lr_factor, patience=reduce_lr_patience),
+        NWayCallback(encoder=encoder, head=head, nway_ds=nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="train_"),
+        NWayCallback(encoder=encoder, head=head, nway_ds=test_nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="test_"),
+        EarlyStopping(monitor=monitor_metric, min_delta=0, patience=early_stop_patience, verbose=1, restore_best_weights=True),
         #ModelCheckpoint(checkpoint_dir, monitor="loss"),
 
     ]
