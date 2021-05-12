@@ -26,7 +26,7 @@ split:
   img: etheredgeb/split_oxford_pet_data:latest
   train_dir: train
   test_dir: test
-  ratio: 0.3
+  ratio: 0.1
 
 train:
   img: etheredgeb/gloves:latest
