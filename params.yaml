@@ -45,6 +45,8 @@ train:
   model_dir: models
   model_filename: model
   encoder: models/encoder
+  # hypers
+  epochs: 1
 
 classifier:
   train_dir: train
@@ -53,3 +55,5 @@ classifier:
   model_filename: model
   label_encoder: label_encoder
   encoder: models/encoder
+  # hypers
+  epochs: 1
