@@ -4,13 +4,11 @@
     parametrization = true
 [cache]
     s3 = s3cache
-
+    shared = group
 ['remote "miniodvc"']
     url = s3://dvc
     endpointurl = https://minio.etheredge.co
-    
 ['remote "s3"']
     url = remote://miniodvc/gloves
 ['remote "s3cache"']
     url = remote://miniodvc/cache/gloves
-
