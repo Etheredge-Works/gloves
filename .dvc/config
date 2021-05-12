@@ -1,10 +1,16 @@
 [core]
-    remote = nfs
+    remote = s3
 [feature]
     parametrization = true
 [cache]
     s3 = s3cache
-['remote "nfs"']
-    url = //192.168.1.21/mnt/user/home/data
+
+['remote "miniodvc"']
+    url = s3://dvc
+    endpointurl = https://minio.etheredge.co
+    
+['remote "s3"']
+    url = remote://miniodvc/gloves
 ['remote "s3cache"']
-    url = s3://gloves/cache
+    url = remote://miniodvc/cache/gloves
+
