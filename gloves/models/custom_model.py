@@ -129,7 +129,7 @@ def sigmoid_model(input_shape):
     )(x)
     return Model(inputs=(input1, input2), outputs=y_pred, name='sigmoid_model')
 
-@log_model
+#@log_model
 def softmax_model(input_shape, label_count, 
             dense_nodes: list = [],
             activation='relu',
