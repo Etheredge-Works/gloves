@@ -434,6 +434,7 @@ def main(
         shuffle=False,  # TODO dataset should handle shuffling
         callbacks=callbacks
     )
+    # TODO remove nway from sigmoid training
 
     history_dict = train_hist.history
     history_dict = {key: float(value[-1]) for key, value in history_dict.items()}
