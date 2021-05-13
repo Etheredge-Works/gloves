@@ -35,18 +35,18 @@ Process:
 """)
 
 
-@st.cache(allow_output_mutation=True)
-def load_models(model_name, mlflow_model_stage='Production'):
+def load_model(*args, **kwargs):
    client = mlflow.tracking.MlflowClient()
    model_version = client.get_latest_versions(name=f"gloves_{model_name}", stages=[mlflow_model_stage])[0]
+   rundata = client.get_run(model_version.run_id)
 
 
-   #st.write(client.get_run(model_version.run_id.mlflow.parentRunId))
-   ic('--------------')
+@st.cache(allow_output_mutation=True)
+def load_model(model_name, mlflow_model_stage='Production'):
+   client = mlflow.tracking.MlflowClient()
+   model_version = client.get_latest_versions(name=f"gloves_{model_name}", stages=[mlflow_model_stage])[0]
    rundata = client.get_run(model_version.run_id)
    parent_id = rundata.data.tags['mlflow.parentRunId']
-   parentrundata = client.get_run(parent_id)
-   ic(parentrundata)
    model_path = client.download_artifacts(model_version.run_id, model_name, dst_path='/tmp/')
    model = tf.keras.models.load_model(f"{model_path}/data/model.h5")
 
@@ -64,7 +64,7 @@ model_names = [
    "imagenet_frozen",
    "imagenet_unfrozen",
 ]
-models = [(model_name, load_models(model_name)) for model_name in model_names]
+models = [(model_name, load_model(model_name)) for model_name in model_names]
 
 
 #model, le = load_models()
@@ -75,7 +75,7 @@ n = st.number_input("Top Labels to get", value=5, max_value=34, step=1)
 
 cols = st.beta_columns(2)
 
-st.write("# Apendix")
+st.write("# Appendix")
 if image is not None:
    data = utils.simple_decode(image.read())
    for idx, (name, (model, le, model_version, rundata)) in enumerate(models):
@@ -107,7 +107,9 @@ st.write("""
 # General Notes/TODOs
 - Validation accuracy isn't perfect as there's a chance validation samples were leaked during training of siamese network
 - K fold (or another variant) of cross-validation is needed. Currently that's non-trivial to implement using tf.data.Dataset.
-   - maybe don't use tf.data.Datase.
+   - maybe don't use tf.data.Dataset.
+- Could auto-update models periodically, but that might mess with storage and streamlit caching. 
+   - Currently setting for just getting the latest model every reboot
 
 """)
 
