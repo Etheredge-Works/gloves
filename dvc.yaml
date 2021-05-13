@@ -94,7 +94,7 @@ stages:
       - ${out_dir}/${split.train_dir}
       - ${out_dir}/${split.test_dir}
     outs:
-      - ${out_dir}/${train.model_dir}/${train.model_filename}
+      - ${out_dir}/${train.model_dir}
       - ${out_dir}/${train.encoder}
 
 
