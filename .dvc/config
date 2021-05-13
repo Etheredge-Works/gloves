@@ -1,7 +1,5 @@
 [core]
     remote = s3
-[feature]
-    parametrization = true
 [cache]
     s3 = s3cache
     shared = group
