@@ -5,7 +5,7 @@ numpy==1.19.5
 tensorflow_addons==0.10.0
 tensorflow_gpu==2.4.1
 kfp==1.4.0
-siamese==0.0.33
+siamese==0.0.34
 boto3==1.16.57
 click==7.1.2
 kubernetes==11.0.0
