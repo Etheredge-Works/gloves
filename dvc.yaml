@@ -120,11 +120,13 @@ stages:
       - ${out_dir}/${split.test_dir}
     outs:
       - ${out_dir}/${classifier.model_dir}
+      - ${out_dir}/${classifier.label_encoder}
 
   hydra:
     cmd: >
       ${docker_cmd} ${train.docker_args} 
       ${train.img} hydra.py
+      --epochs 1
     params:
       - train.img
       - train.docker_args

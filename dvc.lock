@@ -1,285 +1,213 @@
-get_data:
-  cmd: "docker run -v $(pwd)/outputs:/outputs etheredgeb/wget_url:latest https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz\
-    \ /outputs/wget\n"
-  params:
-    params.yaml:
-      out_dir: outputs
-      wget:
-        data_url: https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
-        out_dir: wget
-  outs:
-  - path: outputs/wget
-    md5: dbd763779bfe15e4b6d824cfde1034e0.dir
-    size: 791918971
-    nfiles: 1
-untar:
-  cmd: "docker run -v /tmp/checkpoints:/tmp/checkpoints -v ${PWD}/artifacts:/outputs\
-    \ etheredgeb/untar_data:latest xzvf  /outputs/untar  /outputs/wget images.tar.gz\n"
-  deps:
-  - path: artifacts/wget
-    md5: dbd763779bfe15e4b6d824cfde1034e0.dir
-    size: 791918971
-    nfiles: 1
-  params:
-    params.yaml:
-      untar:
-        img: etheredgeb/untar_data:latest
-        tar_args: xzvf
-        data_dir: untar
-        tar_file_name: images.tar.gz
-      wget.out_dir: wget
-  outs:
-  - path: artifacts/untar
-    md5: 277f608c70d7bd7991e0cd5f5cc845c6.dir
-    size: 796502375
-    nfiles: 7393
-wget:
-  cmd: "docker run -v /tmp/checkpoints:/tmp/checkpoints -v ${PWD}/artifacts:/outputs\
-    \ etheredgeb/wget_url:latest https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz\
-    \ /outputs/wget\n"
-  params:
-    params.yaml:
-      wget:
-        img: etheredgeb/wget_url:latest
-        data_url: https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
-        out_dir: wget
-  outs:
-  - path: artifacts/wget
-    md5: dbd763779bfe15e4b6d824cfde1034e0.dir
-    size: 791918971
-    nfiles: 1
-clean:
-  cmd: "docker run -v /tmp/checkpoints:/tmp/checkpoints -v ${PWD}/artifacts:/outputs\
-    \ etheredgeb/clean_oxford_pet_data:latest --data_dir /outputs/untar --cleaned_dir_name\
-    \ /outputs/clean\n"
-  deps:
-  - path: artifacts/untar
-    md5: 277f608c70d7bd7991e0cd5f5cc845c6.dir
-    size: 796502375
-    nfiles: 7393
-  params:
-    params.yaml:
-      clean:
-        img: etheredgeb/clean_oxford_pet_data:latest
-        out_dir: clean
-      untar.data_dir: untar
-  outs:
-  - path: artifacts/clean
-    md5: 4cd0b23585aa4eaa63096ca693c28879.dir
-    size: 790897339
-    nfiles: 7390
-split:
-  cmd: "docker run -v /tmp/checkpoints:/tmp/checkpoints -v ${PWD}/artifacts:/outputs\
-    \ etheredgeb/split_oxford_pet_data:latest --data-dir /outputs/clean --train-dir\
-    \ /outputs/train --test-dir /outputs/test --ratio 0.1 --by-label False\n"
-  deps:
-  - path: artifacts/clean
-    md5: 4cd0b23585aa4eaa63096ca693c28879.dir
-    size: 790897339
-    nfiles: 7390
-  params:
-    params.yaml:
-      clean.out_dir: clean
-      out_dir: artifacts
-      split:
-        img: etheredgeb/split_oxford_pet_data:latest
-        train_dir: train
-        test_dir: test
-        ratio: 0.1
-  outs:
-  - path: artifacts/test
-    md5: 92f0dc0d05f6883cc689c01d6fad3fd0.dir
-    size: 80336647
-    nfiles: 739
-  - path: artifacts/train
-    md5: ef91b679633b12a4fed3fdfe5f2091dc.dir
-    size: 710560692
-    nfiles: 6651
-test:
-  cmd: touch /nfs/data/gloves/outputs/pls
-  outs:
-  - path: /nfs/data/gloves/outputs/pls
-    md5: d41d8cd98f00b204e9800998ecf8427e
-    size: 0
-build_image:
-  cmd: ./build_image.sh && echo $(date) > last_build.log
-  deps:
-  - path: Dockerfile
-    md5: ef359ccd22b22e2094017110b17e1e7d
-    size: 575
-  - path: build_image.sh
-    md5: e8817aee860bb869e5b9fc89c63f7c11
-    size: 428
-  - path: gloves/
-    md5: 2d0a29e19a99d44cf91dbd7352844f96.dir
-    size: 134373
-    nfiles: 40
-  - path: requirements.txt
-    md5: 1132d4d7551cf713ad3d022e9010a456
-    size: 298
-  outs:
-  - path: last_build.log
-    md5: 2b9bfc4b88596f50d84d28597af6ef7d
-    size: 32
-train:
-  cmd: "docker run -v gloves-outputs:/outputs --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true\
-    \  -e MLFLOW_EXPERIMENT_NAME=gloves -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e\
-    \ AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL\
-    \ -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME\
-    \ -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD -e S3_ENDPOINT=$S3_ENDPOINT\
-    \ etheredgeb/gloves:latest  --train-dir /outputs/train --test-dir /outputs/test\
-    \ --model-dir /outputs/models --model-filename model --encoder-model models/encoder\n"
-  deps:
-  - path: /var/lib/docker/volumes/gloves-outputs/_data/clean
-    md5: 4cd0b23585aa4eaa63096ca693c28879.dir
-    size: 790897339
-    nfiles: 7390
-  - path: /var/lib/docker/volumes/gloves-outputs/_data/test
-    md5: a2ec9f7aefe4a17bda339d38ff255527.dir
-    size: 157632522
-    nfiles: 1478
-  - path: /var/lib/docker/volumes/gloves-outputs/_data/train
-    md5: 6714a1b6b0f7504ac1549ef3eead4d63.dir
-    size: 633264817
-    nfiles: 5912
-  - path: last_build.log
-    md5: 55abf926019da201e369dbf29b6ee67f
-    size: 32
-  params:
-    params.yaml:
-      out_dir: /var/lib/docker/volumes/gloves-outputs/_data
-      split.test_dir: test
-      split.train_dir: train
-      train:
-        img: etheredgeb/gloves:latest
-        docker_args: --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves
+schema: '2.0'
+stages:
+  build_image:
+    cmd: ./build_image.sh && echo $(date) > last_build.log
+    deps:
+    - path: Dockerfile
+      md5: ef359ccd22b22e2094017110b17e1e7d
+      size: 575
+    - path: build_image.sh
+      md5: e8817aee860bb869e5b9fc89c63f7c11
+      size: 428
+    - path: gloves/
+      md5: 60665a9830e5382c508b8c76ff805a2a.dir
+      size: 68626
+      nfiles: 21
+    - path: requirements.txt
+      md5: 1132d4d7551cf713ad3d022e9010a456
+      size: 298
+    outs:
+    - path: last_build.log
+      md5: 7c81aa75afd9d82c24d344d0c226ae7b
+      size: 32
+  wget:
+    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 etheredgeb/wget_url:latest\
+      \ https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz /outputs/wget\n"
+    params:
+      params.yaml:
+        wget:
+          img: etheredgeb/wget_url:latest
+          data_url: https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
+          out_dir: wget
+    outs:
+    - path: artifacts/wget
+      md5: dbd763779bfe15e4b6d824cfde1034e0.dir
+      size: 791918971
+      nfiles: 1
+  untar:
+    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 etheredgeb/untar_data:latest\
+      \ xzvf  /outputs/untar  /outputs/wget images.tar.gz\n"
+    deps:
+    - path: artifacts/wget
+      md5: dbd763779bfe15e4b6d824cfde1034e0.dir
+      size: 791918971
+      nfiles: 1
+    params:
+      params.yaml:
+        untar:
+          img: etheredgeb/untar_data:latest
+          tar_args: xzvf
+          data_dir: untar
+          tar_file_name: images.tar.gz
+        wget.out_dir: wget
+    outs:
+    - path: artifacts/untar
+      md5: 277f608c70d7bd7991e0cd5f5cc845c6.dir
+      size: 796502375
+      nfiles: 7393
+  clean:
+    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 etheredgeb/clean_oxford_pet_data:latest\
+      \ --data_dir /outputs/untar --cleaned_dir_name /outputs/clean\n"
+    deps:
+    - path: artifacts/untar
+      md5: 277f608c70d7bd7991e0cd5f5cc845c6.dir
+      size: 796502375
+      nfiles: 7393
+    params:
+      params.yaml:
+        clean:
+          img: etheredgeb/clean_oxford_pet_data:latest
+          out_dir: clean
+        untar.data_dir: untar
+    outs:
+    - path: artifacts/clean
+      md5: 4cd0b23585aa4eaa63096ca693c28879.dir
+      size: 790897339
+      nfiles: 7390
+  split:
+    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 etheredgeb/split_oxford_pet_data:latest\
+      \ --data-dir /outputs/clean --train-dir /outputs/train --test-dir /outputs/test\
+      \ --ratio 0.1 --by-label False\n"
+    deps:
+    - path: artifacts/clean
+      md5: 4cd0b23585aa4eaa63096ca693c28879.dir
+      size: 790897339
+      nfiles: 7390
+    params:
+      params.yaml:
+        clean.out_dir: clean
+        out_dir: artifacts
+        split:
+          img: etheredgeb/split_oxford_pet_data:latest
+          train_dir: train
+          test_dir: test
+          ratio: 0.1
+    outs:
+    - path: artifacts/test
+      md5: 35a4b9d9848b3bedef794260c774b7e1.dir
+      size: 80716512
+      nfiles: 739
+    - path: artifacts/train
+      md5: af59cf990b0c79f19b8dca4fee88cc53.dir
+      size: 710180827
+      nfiles: 6651
+  hydra:
+    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true\
+      \  -e MLFLOW_EXPERIMENT_NAME=gloves -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID\
+      \ -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL\
+      \ -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME\
+      \ -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD -e S3_ENDPOINT=$S3_ENDPOINT\
+      \  etheredgeb/gloves:latest hydra.py --epochs 1\n"
+    deps:
+    - path: last_build.log
+      md5: 7c81aa75afd9d82c24d344d0c226ae7b
+      size: 32
+    params:
+      params.yaml:
+        train.docker_args: --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves
           -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
           -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI
           -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD
           -e S3_ENDPOINT=$S3_ENDPOINT
-        train_dir: train
-        test_dir: train
-        model_dir: models
-        model_filename: model
-        encoder: models/encoder
-        dense_nodes: 1024
-        epochs: 100
-        batch_size: 4
-        lr: 0.0003
-        optimizer: adam
-        transfer_learning: 1
-        verbose: 2
-        metrics_file_name: metrics.yaml
-  outs:
-  - path: /var/lib/docker/volumes/gloves-outputs/_data/models
-    md5: 2be8d9309bb1fd3687a0521db22ff241.dir
-    size: 14741751
-    nfiles: 4
-train_siamese:
-  cmd: "docker run -v /tmp/checkpoints:/tmp/checkpoints -v ${PWD}/artifacts:/outputs\
-    \ --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves\
-    \ -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY\
-    \ -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI\
-    \ -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD\
-    \ -e S3_ENDPOINT=$S3_ENDPOINT etheredgeb/gloves:latest  main.py --train-dir /outputs/train\
-    \ --test-dir /outputs/test --model-dir /outputs/models --model-filename model\
-    \ --encoder-model /outputs/models/encoder --epochs 1\n"
-  deps:
-  - path: artifacts/test
-    md5: 92f0dc0d05f6883cc689c01d6fad3fd0.dir
-    size: 80336647
-    nfiles: 739
-  - path: artifacts/train
-    md5: ef91b679633b12a4fed3fdfe5f2091dc.dir
-    size: 710560692
-    nfiles: 6651
-  params:
-    params.yaml:
-      out_dir: artifacts
-      split.test_dir: test
-      split.train_dir: train
-      train:
-        img: etheredgeb/gloves:latest
-        docker_args: --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves
+        train.img: etheredgeb/gloves:latest
+  train_siamese:
+    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true\
+      \  -e MLFLOW_EXPERIMENT_NAME=gloves -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID\
+      \ -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL\
+      \ -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME\
+      \ -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD -e S3_ENDPOINT=$S3_ENDPOINT\
+      \ etheredgeb/gloves:latest  main.py --train-dir /outputs/train --test-dir /outputs/test\
+      \ --model-dir /outputs/models --model-filename model --encoder-model /outputs/models/encoder\
+      \ --epochs 1\n"
+    deps:
+    - path: artifacts/test
+      md5: 35a4b9d9848b3bedef794260c774b7e1.dir
+      size: 80716512
+      nfiles: 739
+    - path: artifacts/train
+      md5: af59cf990b0c79f19b8dca4fee88cc53.dir
+      size: 710180827
+      nfiles: 6651
+    params:
+      params.yaml:
+        out_dir: artifacts
+        split.test_dir: test
+        split.train_dir: train
+        train:
+          img: etheredgeb/gloves:latest
+          docker_args: --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves
+            -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+            -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI
+            -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD
+            -e S3_ENDPOINT=$S3_ENDPOINT
+          model_dir: models
+          model_filename: model
+          encoder: models/encoder
+          epochs: 1
+    outs:
+    - path: artifacts/models/encoder
+      md5: d25f30bff42a42439a1d0c2f7e12372c.dir
+      size: 53660665
+      nfiles: 4
+    - path: artifacts/models/model
+      md5: 32c1304d4481158d47d8cc8c3b929ff1.dir
+      size: 157568990
+      nfiles: 4
+  classifier:
+    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true\
+      \  -e MLFLOW_EXPERIMENT_NAME=gloves -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID\
+      \ -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL\
+      \ -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME\
+      \ -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD -e S3_ENDPOINT=$S3_ENDPOINT\
+      \  etheredgeb/gloves:latest classifier.py --encoder-model-path /outputs/models/encoder\
+      \ --train-dir /outputs/train --test-dir /outputs/test --model-path /outputs/classifier_models\
+      \ --label-encoder-path /outputs/label_encoder --epochs 1\n"
+    deps:
+    - path: artifacts/models/encoder
+      md5: d25f30bff42a42439a1d0c2f7e12372c.dir
+      size: 53660665
+      nfiles: 4
+    - path: artifacts/test
+      md5: 35a4b9d9848b3bedef794260c774b7e1.dir
+      size: 80716512
+      nfiles: 739
+    - path: artifacts/train
+      md5: af59cf990b0c79f19b8dca4fee88cc53.dir
+      size: 710180827
+      nfiles: 6651
+    params:
+      params.yaml:
+        classifier:
+          train_dir: train
+          test_dir: train
+          model_dir: classifier_models
+          model_filename: model
+          label_encoder: label_encoder
+          encoder: models/encoder
+          epochs: 1
+        split.train_dir: train
+        train.docker_args: --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves
           -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
           -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI
           -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD
           -e S3_ENDPOINT=$S3_ENDPOINT
-        model_dir: models
-        model_filename: model
-        encoder: models/encoder
-        epochs: 1
-  outs:
-  - path: artifacts/models/encoder
-    md5: c6c2c6ee8a29de353b4401d55c8ac904.dir
-    size: 53660665
-    nfiles: 4
-  - path: artifacts/models/model
-    md5: f6be56b39330b41b8e12a239b66140e9.dir
-    size: 157559533
-    nfiles: 4
-classifier:
-  cmd: "docker run -v /tmp/checkpoints:/tmp/checkpoints -v ${PWD}/artifacts:/outputs\
-    \ --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves\
-    \ -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY\
-    \ -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI\
-    \ -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD\
-    \ -e S3_ENDPOINT=$S3_ENDPOINT  etheredgeb/gloves:latest classifier.py --encoder-model-path\
-    \ /outputs/models/encoder --train-dir /outputs/train --test-dir /outputs/test\
-    \ --model-path /outputs/classifier_models --label-encoder-path /outputs/label_encoder\
-    \ --epochs 1\n"
-  deps:
-  - path: artifacts/models/encoder
-    md5: c6c2c6ee8a29de353b4401d55c8ac904.dir
-    size: 53660665
-    nfiles: 4
-  - path: artifacts/test
-    md5: 92f0dc0d05f6883cc689c01d6fad3fd0.dir
-    size: 80336647
-    nfiles: 739
-  - path: artifacts/train
-    md5: ef91b679633b12a4fed3fdfe5f2091dc.dir
-    size: 710560692
-    nfiles: 6651
-  params:
-    params.yaml:
-      classifier:
-        train_dir: train
-        test_dir: train
-        model_dir: classifier_models
-        model_filename: model
-        label_encoder: label_encoder
-        encoder: models/encoder
-        epochs: 1
-      split.train_dir: train
-      train.docker_args: --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves
-        -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-        -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI
-        -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD
-        -e S3_ENDPOINT=$S3_ENDPOINT
-      train.encoder: models/encoder
-      train.img: etheredgeb/gloves:latest
-  outs:
-  - path: artifacts/classifier_models
-    md5: 4c6fe20fe48a2881df39688760444d57.dir
-    size: 648438230
-    nfiles: 16
-hydra:
-  cmd: "docker run -v /tmp/checkpoints:/tmp/checkpoints -v gloves-outputs:/outputs\
-    \ --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves\
-    \ -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY\
-    \ -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI\
-    \ -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD\
-    \ -e S3_ENDPOINT=$S3_ENDPOINT  etheredgeb/gloves:latest hydra.py\n"
-  deps:
-  - path: last_build.log
-    md5: bb32df142ba3b7cbe78e609f7fdc3c25
-    size: 32
-  params:
-    params.yaml:
-      train.docker_args: --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves
-        -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-        -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI
-        -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD
-        -e S3_ENDPOINT=$S3_ENDPOINT
-      train.img: etheredgeb/gloves:latest
+        train.encoder: models/encoder
+        train.img: etheredgeb/gloves:latest
+    outs:
+    - path: artifacts/classifier_models
+      md5: b99defd4035e6cf04754e9763fb6976b.dir
+      size: 648440093
+      nfiles: 16
+    - path: artifacts/label_encoder
+      md5: 76527479bb35f266178120e1f15ffaf0
+      size: 1370
