@@ -106,8 +106,12 @@ def mlflow_log_wrapper(func):
         return func(*args, **kwargs)
     return inner
 
-def log_summary(model):
-    filename = model.name + ".txt"
+def log_summary(model, dir=None):
+
+    if dir:
+        dir = dir + "/"
+    filename = f"{dir}{model.name}.txt"
+
     with open(filename, "w") as f:
         model.summary(print_fn=lambda x: f.write(x + '\n'))
     mlflow.log_artifact(filename)
@@ -336,9 +340,9 @@ def main(
     #head = NormDistanceLayer(dtype='float32')
     model = create_siamese_model(encoder, head)
     #model = SiameseModel(encoder, head)
-    log_summary(encoder)
-    log_summary(model)
-    log_summary(head)
+    #log_summary(encoder, dir=model_dir)
+    #log_summary(model, dir=model_dir)
+    #log_summary(head, dir=model_dir)
     
     from tensorflow.keras.optimizers import Adam
     optimizer_switch = {
