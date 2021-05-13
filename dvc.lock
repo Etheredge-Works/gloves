@@ -18,7 +18,7 @@ stages:
       size: 298
     outs:
     - path: last_build.log
-      md5: 7c81aa75afd9d82c24d344d0c226ae7b
+      md5: 1867ba7e77dd51e70aa5ae4b7333d0d0
       size: 32
   wget:
     cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 etheredgeb/wget_url:latest\
@@ -94,12 +94,12 @@ stages:
           ratio: 0.1
     outs:
     - path: artifacts/test
-      md5: 35a4b9d9848b3bedef794260c774b7e1.dir
-      size: 80716512
+      md5: bcc44998a09d95416e1e613254d9d3b2.dir
+      size: 79362026
       nfiles: 739
     - path: artifacts/train
-      md5: af59cf990b0c79f19b8dca4fee88cc53.dir
-      size: 710180827
+      md5: 763b827559ea0fe42d62463927e5def4.dir
+      size: 711535313
       nfiles: 6651
   hydra:
     cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true\
@@ -110,7 +110,7 @@ stages:
       \  etheredgeb/gloves:latest hydra.py --epochs 1\n"
     deps:
     - path: last_build.log
-      md5: 7c81aa75afd9d82c24d344d0c226ae7b
+      md5: 1867ba7e77dd51e70aa5ae4b7333d0d0
       size: 32
     params:
       params.yaml:
@@ -131,12 +131,12 @@ stages:
       \ --epochs 1\n"
     deps:
     - path: artifacts/test
-      md5: 35a4b9d9848b3bedef794260c774b7e1.dir
-      size: 80716512
+      md5: bcc44998a09d95416e1e613254d9d3b2.dir
+      size: 79362026
       nfiles: 739
     - path: artifacts/train
-      md5: af59cf990b0c79f19b8dca4fee88cc53.dir
-      size: 710180827
+      md5: 763b827559ea0fe42d62463927e5def4.dir
+      size: 711535313
       nfiles: 6651
     params:
       params.yaml:
@@ -156,11 +156,11 @@ stages:
           epochs: 1
     outs:
     - path: artifacts/encoder
-      md5: 5309da7bf5205ccb288349a4f52dad8e.dir
+      md5: 5cab9b532cb4bd6a87926779e5360282.dir
       size: 53660665
       nfiles: 4
     - path: artifacts/models
-      md5: 0ba5e8e7738d2ed93dedf1bf392b43c2.dir
+      md5: 4769cb67c977ee08e386f5b8211f2d2a.dir
       size: 157559533
       nfiles: 4
   classifier:
@@ -174,16 +174,16 @@ stages:
       \ --label-encoder-path /outputs/label_encoder --epochs 1\n"
     deps:
     - path: artifacts/encoder
-      md5: 5309da7bf5205ccb288349a4f52dad8e.dir
+      md5: 5cab9b532cb4bd6a87926779e5360282.dir
       size: 53660665
       nfiles: 4
     - path: artifacts/test
-      md5: 35a4b9d9848b3bedef794260c774b7e1.dir
-      size: 80716512
+      md5: bcc44998a09d95416e1e613254d9d3b2.dir
+      size: 79362026
       nfiles: 739
     - path: artifacts/train
-      md5: af59cf990b0c79f19b8dca4fee88cc53.dir
-      size: 710180827
+      md5: 763b827559ea0fe42d62463927e5def4.dir
+      size: 711535313
       nfiles: 6651
     params:
       params.yaml:
@@ -205,7 +205,7 @@ stages:
         train.img: etheredgeb/gloves:latest
     outs:
     - path: artifacts/classifier_models
-      md5: 4b54649dbf12f48fddb966a057f07908.dir
+      md5: 8aa1f331584780310535d225b882b480.dir
       size: 648438230
       nfiles: 16
     - path: artifacts/label_encoder
