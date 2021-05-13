@@ -121,3 +121,13 @@ stages:
     outs:
       - ${out_dir}/${classifier.model_dir}
 
+  hydra:
+    cmd: >
+      ${docker_cmd} ${train.docker_args} 
+      ${train.img} hydra.py
+    params:
+      - train.img
+      - train.docker_args
+    deps:
+      - last_build.log
+      
