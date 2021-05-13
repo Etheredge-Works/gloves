@@ -124,6 +124,10 @@ if anchor_file and other_files:
    # TODO add description of project and directions taken and things done like blog pose
    # TODO trim and optmize trained model for deployment
 
+
+
+   # TODO pull out the closest N matching images from the dataset based on distance
+
 #st.text(prediction_value)
 #st.help(prediction_value)
 st.write("# Apendix")
