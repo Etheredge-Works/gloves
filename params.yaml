@@ -5,7 +5,7 @@
 out_dir: artifacts
 docker_out_dir: /outputs
 #docker_cmd: docker run -v /nfs/data/gloves/outputs:/outputs
-docker_cmd: docker run -v ${PWD}/artifacts:/outputs
+docker_cmd: docker run -v ${PWD}/artifacts:/outputs --user 1000:1000
 
 wget:
   img: etheredgeb/wget_url:latest
