@@ -229,3 +229,7 @@ dependencies:
     - widgetsnbextension==3.5.1
     - xmltodict==0.12.0
     - zc-lockfile==2.0
+  variables:
+    VAR1: valueA
+    VAR2: valueB
+    test: valueB
