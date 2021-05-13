@@ -127,7 +127,7 @@ stages:
       \ -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME\
       \ -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD -e S3_ENDPOINT=$S3_ENDPOINT\
       \ etheredgeb/gloves:latest  main.py --train-dir /outputs/train --test-dir /outputs/test\
-      \ --model-dir /outputs/models --model-filename model --encoder-model /outputs/models/encoder\
+      \ --model-dir /outputs/models --model-filename model --encoder-model /outputs/encoder\
       \ --epochs 1\n"
     deps:
     - path: artifacts/test
@@ -152,16 +152,16 @@ stages:
             -e S3_ENDPOINT=$S3_ENDPOINT
           model_dir: models
           model_filename: model
-          encoder: models/encoder
+          encoder: encoder
           epochs: 1
     outs:
-    - path: artifacts/models/encoder
-      md5: d25f30bff42a42439a1d0c2f7e12372c.dir
+    - path: artifacts/encoder
+      md5: 5309da7bf5205ccb288349a4f52dad8e.dir
       size: 53660665
       nfiles: 4
-    - path: artifacts/models/model
-      md5: 32c1304d4481158d47d8cc8c3b929ff1.dir
-      size: 157568990
+    - path: artifacts/models
+      md5: 0ba5e8e7738d2ed93dedf1bf392b43c2.dir
+      size: 157559533
       nfiles: 4
   classifier:
     cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true\
@@ -169,12 +169,12 @@ stages:
       \ -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL\
       \ -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME\
       \ -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD -e S3_ENDPOINT=$S3_ENDPOINT\
-      \  etheredgeb/gloves:latest classifier.py --encoder-model-path /outputs/models/encoder\
+      \  etheredgeb/gloves:latest classifier.py --encoder-model-path /outputs/encoder\
       \ --train-dir /outputs/train --test-dir /outputs/test --model-path /outputs/classifier_models\
       \ --label-encoder-path /outputs/label_encoder --epochs 1\n"
     deps:
-    - path: artifacts/models/encoder
-      md5: d25f30bff42a42439a1d0c2f7e12372c.dir
+    - path: artifacts/encoder
+      md5: 5309da7bf5205ccb288349a4f52dad8e.dir
       size: 53660665
       nfiles: 4
     - path: artifacts/test
@@ -201,12 +201,12 @@ stages:
           -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI
           -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD
           -e S3_ENDPOINT=$S3_ENDPOINT
-        train.encoder: models/encoder
+        train.encoder: encoder
         train.img: etheredgeb/gloves:latest
     outs:
     - path: artifacts/classifier_models
-      md5: b99defd4035e6cf04754e9763fb6976b.dir
-      size: 648440093
+      md5: 4b54649dbf12f48fddb966a057f07908.dir
+      size: 648438230
       nfiles: 16
     - path: artifacts/label_encoder
       md5: 76527479bb35f266178120e1f15ffaf0

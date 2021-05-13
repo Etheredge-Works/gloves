@@ -44,7 +44,7 @@ train:
 
   model_dir: models
   model_filename: model
-  encoder: models/encoder
+  encoder: encoder
   # hypers
   epochs: 1
 
