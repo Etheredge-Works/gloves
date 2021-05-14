@@ -3,20 +3,21 @@ on: [push]
 jobs:
   run:
     runs-on: [self-hosted, big-gpu]
+    container: docker://dvcorg/cml:0-dvc2-base1-gpu
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '14'
-          check-lastest: true
-      - run: which npm
-      - uses: iterative/setup-cml@v1
+      #- uses: actions/setup-node@v2
+      #  with:
+      #    node-version: '14'
+      #    check-lastest: true
+      #- run: which npm
+      #- uses: iterative/setup-cml@v1
 
-      - uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-      - uses: iterative/setup-cml@v1
+      #- uses: actions/setup-python@v2
+        #with:
+          #python-version: '3.8'
+      #- uses: iterative/setup-cml@v1
 
       - name: cml_run
         shell: bash
