@@ -2,7 +2,7 @@ name: testing
 on: [push]
 jobs:
   run:
-    runs-on: [self-hosted, gpu, mixed-precision]
+    runs-on: [self-hosted, big-gpu]
     steps:
       - uses: actions/checkout@v2
       - uses: iterative/setup-cml@v1
