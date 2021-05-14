@@ -355,9 +355,10 @@ def main(
     #head = NormDistanceLayer(dtype='float32')
     model = create_siamese_model(encoder, head)
     #model = SiameseModel(encoder, head)
-    #log_summary(encoder, dir=model_dir)
-    #log_summary(model, dir=model_dir)
-    #log_summary(head, dir=model_dir)
+    Path(model_dir).mkdir(parents=True, exist_ok=True)
+    log_summary(encoder, dir=model_dir)
+    log_summary(model, dir=model_dir)
+    log_summary(head, dir=model_dir)
     
     from tensorflow.keras.optimizers import Adam
     optimizer_switch = {
@@ -460,7 +461,6 @@ def main(
 
     #model.save("model", save_format='tf')
     #model = tf.keras.Model(inputs=model.inputs, )
-    Path(model_dir).mkdir(parents=True, exist_ok=True)
     model.save(str(Path(str(model_dir))/model_filename), save_format='tf')
     mlflow.log_artifact(str(Path(str(model_dir))/model_filename))
     #trainable.save(str(Path(str(model_dir))/encoder_model))
