@@ -8,8 +8,8 @@ ENV TF_FORCE_GPU_ALLOW_GROWTH=true
 # for now, I just want the latest images
 #COPY requirements.txt params.yaml /app/
 #RUN pip install -r /app/requirements.txt
-RUN pip install mlflow wandb click tensorflow_addons==0.11.0 boto3 icecream scikit-learn
+RUN pip install mlflow wandb click tensorflow_addons==0.11.0 boto3 icecream scikit-learn dvc dvclive
 RUN pip install siamese==0.0.34 
-COPY gloves /app/gloves
-WORKDIR /app/gloves
+COPY . /gloves
+WORKDIR /gloves
 ENTRYPOINT ["python"]

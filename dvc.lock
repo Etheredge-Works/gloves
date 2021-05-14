@@ -4,25 +4,25 @@ stages:
     cmd: ./build_image.sh && echo $(date) > last_build.log
     deps:
     - path: Dockerfile
-      md5: ef359ccd22b22e2094017110b17e1e7d
-      size: 575
+      md5: 80349cbf96a46e00ae365c06637d7b46
+      size: 574
     - path: build_image.sh
       md5: e8817aee860bb869e5b9fc89c63f7c11
       size: 428
     - path: gloves/
-      md5: 60665a9830e5382c508b8c76ff805a2a.dir
-      size: 68626
-      nfiles: 21
+      md5: d038c6238694ed9a3146d839e348e1df.dir
+      size: 86429
+      nfiles: 27
     - path: requirements.txt
-      md5: 1132d4d7551cf713ad3d022e9010a456
-      size: 298
+      md5: b0bc17fbe9295cbbd9e53f024dfc5130
+      size: 306
     outs:
     - path: last_build.log
-      md5: 1867ba7e77dd51e70aa5ae4b7333d0d0
+      md5: b2a094337a2e9ea17565adac7210c871
       size: 32
   wget:
-    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 etheredgeb/wget_url:latest\
-      \ https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz /outputs/wget\n"
+    cmd: "docker run -v ${PWD}:/gloves --user 1000:1000 etheredgeb/wget_url:latest\
+      \ https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz /gloves/artifacts/wget\n"
     params:
       params.yaml:
         wget:
@@ -35,8 +35,8 @@ stages:
       size: 791918971
       nfiles: 1
   untar:
-    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 etheredgeb/untar_data:latest\
-      \ xzvf  /outputs/untar  /outputs/wget images.tar.gz\n"
+    cmd: "docker run -v ${PWD}:/gloves --user 1000:1000 etheredgeb/untar_data:latest\
+      \ xzvf  /gloves/artifacts/untar  /gloves/artifacts/wget images.tar.gz\n"
     deps:
     - path: artifacts/wget
       md5: dbd763779bfe15e4b6d824cfde1034e0.dir
@@ -56,8 +56,8 @@ stages:
       size: 796502375
       nfiles: 7393
   clean:
-    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 etheredgeb/clean_oxford_pet_data:latest\
-      \ --data_dir /outputs/untar --cleaned_dir_name /outputs/clean\n"
+    cmd: "docker run -v ${PWD}:/gloves --user 1000:1000 etheredgeb/clean_oxford_pet_data:latest\
+      \ --data_dir /gloves/artifacts/untar --cleaned_dir_name /gloves/artifacts/clean\n"
     deps:
     - path: artifacts/untar
       md5: 277f608c70d7bd7991e0cd5f5cc845c6.dir
@@ -75,9 +75,9 @@ stages:
       size: 790897339
       nfiles: 7390
   split:
-    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 etheredgeb/split_oxford_pet_data:latest\
-      \ --data-dir /outputs/clean --train-dir /outputs/train --test-dir /outputs/test\
-      \ --ratio 0.1 --by-label False\n"
+    cmd: "docker run -v ${PWD}:/gloves --user 1000:1000 etheredgeb/split_oxford_pet_data:latest\
+      \ --data-dir /gloves/artifacts/clean --train-dir /gloves/artifacts/train --test-dir\
+      \ /gloves/artifacts/test --ratio 0.1 --by-label False\n"
     deps:
     - path: artifacts/clean
       md5: 4cd0b23585aa4eaa63096ca693c28879.dir
@@ -94,12 +94,12 @@ stages:
           ratio: 0.1
     outs:
     - path: artifacts/test
-      md5: bcc44998a09d95416e1e613254d9d3b2.dir
-      size: 79362026
+      md5: 7703a0c477d6314c567eb6cbf5b5dfde.dir
+      size: 79106624
       nfiles: 739
     - path: artifacts/train
-      md5: 763b827559ea0fe42d62463927e5def4.dir
-      size: 711535313
+      md5: d0327c629f523260f1b2647575959af1.dir
+      size: 711790715
       nfiles: 6651
   hydra:
     cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true\
@@ -121,22 +121,17 @@ stages:
           -e S3_ENDPOINT=$S3_ENDPOINT
         train.img: etheredgeb/gloves:latest
   train_siamese:
-    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true\
-      \  -e MLFLOW_EXPERIMENT_NAME=gloves -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID\
-      \ -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL\
-      \ -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME\
-      \ -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD -e S3_ENDPOINT=$S3_ENDPOINT\
-      \ etheredgeb/gloves:latest  main.py --train-dir /outputs/train --test-dir /outputs/test\
-      \ --model-dir /outputs/models --model-filename model --encoder-model /outputs/encoder\
-      \ --epochs 1\n"
+    cmd: "python gloves/main.py --train-dir artifacts/train --test-dir artifacts/test\
+      \ --model-dir artifacts/models --model-filename model --encoder-model artifacts/encoder\
+      \ --metrics logs/siamese_logs --epochs 40\n"
     deps:
     - path: artifacts/test
-      md5: bcc44998a09d95416e1e613254d9d3b2.dir
-      size: 79362026
+      md5: 7703a0c477d6314c567eb6cbf5b5dfde.dir
+      size: 79106624
       nfiles: 739
     - path: artifacts/train
-      md5: 763b827559ea0fe42d62463927e5def4.dir
-      size: 711535313
+      md5: d0327c629f523260f1b2647575959af1.dir
+      size: 711790715
       nfiles: 6651
     params:
       params.yaml:
@@ -153,16 +148,21 @@ stages:
           model_dir: models
           model_filename: model
           encoder: encoder
-          epochs: 1
+          metrics: logs/siamese_logs
+          epochs: 40
     outs:
     - path: artifacts/encoder
-      md5: 5cab9b532cb4bd6a87926779e5360282.dir
-      size: 53660665
-      nfiles: 4
+      md5: 40b3c01d85750919057b83c134bb7a52.dir
+      size: 53500071
+      nfiles: 3
     - path: artifacts/models
-      md5: 4769cb67c977ee08e386f5b8211f2d2a.dir
-      size: 157559533
-      nfiles: 4
+      md5: 4c50057c2e0a23675cb9fc4718f7597c.dir
+      size: 157313425
+      nfiles: 3
+    - path: siamese_logs
+      md5: d2933283ec7e2de95fe0be7b0b6da6df.dir
+      size: 96547
+      nfiles: 9
   classifier:
     cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true\
       \  -e MLFLOW_EXPERIMENT_NAME=gloves -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID\

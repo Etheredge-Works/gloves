@@ -3,10 +3,22 @@ from genericpath import exists
 import os
 from numpy.lib import ufunclike
 from tensorflow.keras.layers import Dense
+import dvclive
+from dvclive.keras import DvcLiveCallback
 #os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 from collections import Counter
+
+from tensorflow.keras.callbacks import Callback
+class MetricsCallback(Callback):
+    def on_epoch_end(self, epoch: int, logs: dict = None):
+        logs = logs or {}
+        for metric, value in logs.items():
+            if type(value) == np.float32:
+                value = float(value)
+            dvclive.log(metric, value)
+        dvclive.next_step()
 
 import tensorflow as tf
 print(tf.version.GIT_VERSION, tf.version.VERSION)
@@ -242,6 +254,7 @@ from siamese.callbacks import NWayCallback
 @click.option("--nways", default=32, type=int)
 @click.option("--sigmoid", default=False, type=bool)
 @click.option("--use-batch-norm", default=True, type=bool)
+@click.option("--metrics", default="/tmp/logs", type=click.Path())
 @click.option("--checkpoint-dir", default="/tmp/checkpoints", type=click.Path())
 @mlflow_log_wrapper
 def main(
@@ -284,8 +297,10 @@ def main(
         nways,
         sigmoid,
         use_batch_norm,
+        metrics,
         checkpoint_dir,
-        ):
+):
+    #dvclive.init(metrics)
     print(type(batch_size))
     assert(type(batch_size) == int)
     if sigmoid:
@@ -351,7 +366,6 @@ def main(
     optimizer = optimizer_switch[optimizer]
 
     #encoder = build_custom_encoder(den)
-    model.compile(loss=loss, optimizer=optimizer(lr=lr), metrics=metrics)
 
     # TODO extract and pass in
     train_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(train_dir)/'**.jpg')))
@@ -419,10 +433,11 @@ def main(
         NWayCallback(encoder=encoder, head=head, nway_ds=nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="train_"),
         NWayCallback(encoder=encoder, head=head, nway_ds=test_nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="test_"),
         EarlyStopping(monitor=monitor_metric, min_delta=0, patience=early_stop_patience, verbose=1, restore_best_weights=True),
-        #ModelCheckpoint(checkpoint_dir, monitor="loss"),
-
+        MetricsCallback(),
     ]
+
     # TODO remove model from here and have it submit a post request to locally running rest api
+    model.compile(loss=loss, optimizer=optimizer(lr=lr), metrics=metrics)
     train_hist = model.fit(
         ds,
         epochs=epochs,

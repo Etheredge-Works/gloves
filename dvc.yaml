@@ -76,14 +76,15 @@ stages:
       - last_build.log
     
   train_siamese:
+    #${docker_cmd} ${train.docker_args} ${train.img} 
     cmd: >
-      ${docker_cmd} ${train.docker_args} ${train.img} 
-      main.py
-      --train-dir ${docker_out_dir}/${split.train_dir}
-      --test-dir ${docker_out_dir}/${split.test_dir}
-      --model-dir ${docker_out_dir}/${train.model_dir}
+      python gloves/main.py
+      --train-dir ${out_dir}/${split.train_dir}
+      --test-dir ${out_dir}/${split.test_dir}
+      --model-dir ${out_dir}/${train.model_dir}
       --model-filename ${train.model_filename}
-      --encoder-model ${docker_out_dir}/${train.encoder}
+      --encoder-model ${out_dir}/${train.encoder}
+      --metrics ${train.metrics}
       --epochs ${train.epochs}
     params:
       - out_dir
@@ -91,22 +92,27 @@ stages:
       - split.train_dir
       - split.test_dir
     deps:
+      - gloves/main.py
       - ${out_dir}/${split.train_dir}
       - ${out_dir}/${split.test_dir}
     outs:
       - ${out_dir}/${train.model_dir}
       - ${out_dir}/${train.encoder}
+    live:
+      siamese_logs:
+        summary: true
+        html: true
 
 
   classifier:
     cmd: >
       ${docker_cmd} ${train.docker_args} 
-      ${train.img} classifier.py
-      --encoder-model-path ${docker_out_dir}/${train.encoder}
-      --train-dir ${docker_out_dir}/${split.train_dir}
-      --test-dir ${docker_out_dir}/${split.test_dir}
-      --model-path ${docker_out_dir}/${classifier.model_dir}
-      --label-encoder-path ${docker_out_dir}/${classifier.label_encoder}
+      ${train.img} gloves/classifier.py
+      --encoder-model-path ${out_dir}/${train.encoder}
+      --train-dir ${out_dir}/${split.train_dir}
+      --test-dir ${out_dir}/${split.test_dir}
+      --model-path ${out_dir}/${classifier.model_dir}
+      --label-encoder-path ${out_dir}/${classifier.label_encoder}
       --epochs ${classifier.epochs}
     params:
       - classifier

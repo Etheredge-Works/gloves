@@ -3,9 +3,9 @@
 # TODO fix this absolute path
 #out_dir: /nfs/data/gloves/outputs
 out_dir: artifacts
-docker_out_dir: /outputs
+docker_out_dir: /gloves/artifacts
 #docker_cmd: docker run -v /nfs/data/gloves/outputs:/outputs
-docker_cmd: docker run -v ${PWD}/artifacts:/outputs --user 1000:1000
+docker_cmd: docker run -v ${PWD}:/gloves --user 1000:1000
 
 wget:
   img: etheredgeb/wget_url:latest
@@ -45,8 +45,9 @@ train:
   model_dir: models
   model_filename: model
   encoder: encoder
+  metrics: logs/siamese_logs
   # hypers
-  epochs: 4000
+  epochs: 40
 
 classifier:
   train_dir: train
