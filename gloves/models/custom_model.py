@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.applications.resnet_v2 import ResNet50V2 as pre_trained_model
-from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda, BatchNormalization, ReLU, Add
+from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda, BatchNormalization, ReLU, Add, AveragePooling2D
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
 import numpy as np
@@ -287,7 +287,8 @@ def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, a
         x = block(x, latent_nodes, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
     # TODO not using sigmoid here?...
-    x = AvgPool2D(7, dtype='float32')(x)
+    x = AveragePooling2D(dtype='float32')(x)
+    #x = AvgPool2D(7, dtype='float32')(x)
     x = Flatten(dtype='float32')(x)
 
     # https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf
