@@ -1,9 +1,10 @@
 name: testing
 on: [push]
 jobs:
-  environment: test
   run:
     runs-on: [self-hosted, big-gpu, cml]
+    environment: test
+    
     steps:
       - uses: actions/checkout@v2
 
