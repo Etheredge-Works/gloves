@@ -24,7 +24,7 @@ jobs:
           # No need to install other reqs as runs are done in docker
 
           # Pull data & run-cache from S3 and reproduce pipeline
-          dvc pull data --run-cache
+          dvc pull
           dvc repro
           dvc push
 
