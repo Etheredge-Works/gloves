@@ -5,10 +5,14 @@ jobs:
     runs-on: [self-hosted, big-gpu]
     steps:
       - uses: actions/checkout@v2
+
       - uses: iterative/setup-cml@v1
+
       - uses: actions/setup-python@v2
         with:
           python-version: '3.8'
+      - uses: iterative/setup-cml@v1
+
       - name: cml_run
         shell: bash
         env:
