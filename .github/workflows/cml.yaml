@@ -8,6 +8,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: docker/login-action@v1
+        with:
+          username: ${{ github.repository_owner}}
+          password: ${{ secrets.DOCKER_TOKEN }}
       - name: cml_run
         shell: bash
         env:
