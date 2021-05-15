@@ -10,15 +10,15 @@ stages:
       md5: e8817aee860bb869e5b9fc89c63f7c11
       size: 428
     - path: gloves/
-      md5: d038c6238694ed9a3146d839e348e1df.dir
-      size: 86429
-      nfiles: 27
+      md5: d42c42880eda47b2bddf943357a20434.dir
+      size: 105176
+      nfiles: 33
     - path: requirements.txt
-      md5: b0bc17fbe9295cbbd9e53f024dfc5130
-      size: 306
+      md5: bbf323d39ef924c23708859e8ce59e97
+      size: 310
     outs:
     - path: last_build.log
-      md5: b2a094337a2e9ea17565adac7210c871
+      md5: 9e5e64c2c0b6a2a1d3be8832ef0e51e7
       size: 32
   wget:
     cmd: "docker run -v ${PWD}:/gloves --user 1000:1000 etheredgeb/wget_url:latest\
@@ -123,7 +123,7 @@ stages:
   train_siamese:
     cmd: "python gloves/main.py --train-dir artifacts/train --test-dir artifacts/test\
       \ --model-dir artifacts/models --model-filename model --encoder-model artifacts/encoder\
-      \ --metrics logs/siamese_logs --epochs 40\n"
+      \ --metrics logs/siamese_logs --epochs 4\n"
     deps:
     - path: artifacts/test
       md5: 7703a0c477d6314c567eb6cbf5b5dfde.dir
@@ -133,6 +133,9 @@ stages:
       md5: d0327c629f523260f1b2647575959af1.dir
       size: 711790715
       nfiles: 6651
+    - path: gloves/main.py
+      md5: 919cc88bf635c52a0ffcada3a6ebec73
+      size: 18613
     params:
       params.yaml:
         out_dir: artifacts
@@ -149,42 +152,40 @@ stages:
           model_filename: model
           encoder: encoder
           metrics: logs/siamese_logs
-          epochs: 40
+          epochs: 4
     outs:
     - path: artifacts/encoder
-      md5: 40b3c01d85750919057b83c134bb7a52.dir
-      size: 53500071
+      md5: dee7ba73c64587b7ac03102a50e5aa5c.dir
+      size: 53500173
       nfiles: 3
     - path: artifacts/models
-      md5: 4c50057c2e0a23675cb9fc4718f7597c.dir
-      size: 157313425
-      nfiles: 3
+      md5: e92d643a4a3bba2c8cf3462916f694fe.dir
+      size: 157340791
+      nfiles: 6
     - path: siamese_logs
-      md5: d2933283ec7e2de95fe0be7b0b6da6df.dir
-      size: 96547
+      md5: c1ed224c84c17bf808a48f61e25de1c6.dir
+      size: 1590
       nfiles: 9
   classifier:
-    cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true\
-      \  -e MLFLOW_EXPERIMENT_NAME=gloves -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID\
-      \ -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL\
-      \ -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME\
-      \ -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD -e S3_ENDPOINT=$S3_ENDPOINT\
-      \  etheredgeb/gloves:latest classifier.py --encoder-model-path /outputs/encoder\
-      \ --train-dir /outputs/train --test-dir /outputs/test --model-path /outputs/classifier_models\
-      \ --label-encoder-path /outputs/label_encoder --epochs 1\n"
+    cmd: "python gloves/classifier.py --encoder-model-path artifacts/encoder --train-dir\
+      \ artifacts/train --test-dir artifacts/test --model-path artifacts/classifier_models\
+      \ --label-encoder-path artifacts/label_encoder --epochs 4\n"
     deps:
     - path: artifacts/encoder
-      md5: 5cab9b532cb4bd6a87926779e5360282.dir
-      size: 53660665
-      nfiles: 4
+      md5: dee7ba73c64587b7ac03102a50e5aa5c.dir
+      size: 53500173
+      nfiles: 3
     - path: artifacts/test
-      md5: bcc44998a09d95416e1e613254d9d3b2.dir
-      size: 79362026
+      md5: 7703a0c477d6314c567eb6cbf5b5dfde.dir
+      size: 79106624
       nfiles: 739
     - path: artifacts/train
-      md5: 763b827559ea0fe42d62463927e5def4.dir
-      size: 711535313
+      md5: d0327c629f523260f1b2647575959af1.dir
+      size: 711790715
       nfiles: 6651
+    - path: gloves/classifier.py
+      md5: 58c1d378297d2ceab690713bf44f6214
+      size: 7549
     params:
       params.yaml:
         classifier:
@@ -194,7 +195,7 @@ stages:
           model_filename: model
           label_encoder: label_encoder
           encoder: models/encoder
-          epochs: 1
+          epochs: 4
         split.train_dir: train
         train.docker_args: --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves
           -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
@@ -205,9 +206,9 @@ stages:
         train.img: etheredgeb/gloves:latest
     outs:
     - path: artifacts/classifier_models
-      md5: 8aa1f331584780310535d225b882b480.dir
-      size: 648438230
-      nfiles: 16
+      md5: 25f3dd8b904611e814b3a9b9e0a783f0.dir
+      size: 648330336
+      nfiles: 12
     - path: artifacts/label_encoder
-      md5: 76527479bb35f266178120e1f15ffaf0
-      size: 1370
+      md5: 04389aba6461b8869ba4c8f267b430bd
+      size: 1338

@@ -47,7 +47,7 @@ train:
   encoder: encoder
   metrics: logs/siamese_logs
   # hypers
-  epochs: 40
+  epochs: 4
 
 classifier:
   train_dir: train
@@ -57,4 +57,4 @@ classifier:
   label_encoder: label_encoder
   encoder: models/encoder
   # hypers
-  epochs: 4000
+  epochs: 4

@@ -20,6 +20,18 @@ import mlflow.tensorflow
 #from models import build_imagenet_encoder
 import numpy as np
 import joblib
+import dvclive
+
+
+from tensorflow.keras.callbacks import Callback
+class MetricsCallback(Callback):
+    def on_epoch_end(self, epoch: int, logs: dict = None):
+        logs = logs or {}
+        for metric, value in logs.items():
+            if type(value) == np.float32:
+                value = float(value)
+            dvclive.log(metric, value)
+        dvclive.next_step()
 
 
 def setup_ds(train_dir, batch_size, label_encoder=None, decode=random_read_decode):
@@ -130,6 +142,7 @@ def main(
         for name, model in [("encoder_frozen", encoder_model_frozen), ("encoder_unfrozen", encoder_model_unfrozen), 
                     ("imagenet_frozen", imagenet_model_frozen), ("imagenet_unfrozen", imagenet_model_unfrozen)]:
             with mlflow.start_run(nested=True):
+                dvclive.init(name)
                 mlflow.tensorflow.autolog(every_n_iter=1, log_models=False)
                 mlflow.log_artifact(label_encoder_path)
 
@@ -152,6 +165,7 @@ def main(
                     validation_freq=1,
                     epochs=epochs, verbose=verbose, callbacks=[
                         ReduceLROnPlateau(monitor='loss', patience=10),
+                        MetricsCallback(),
                         EarlyStopping(monitor='val_loss', patience=40, verbose=1, restore_best_weights=True)])
 
                 model_path = Path(str(model_path))/name

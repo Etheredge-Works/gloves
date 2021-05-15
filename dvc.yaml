@@ -106,8 +106,7 @@ stages:
 
   classifier:
     cmd: >
-      ${docker_cmd} ${train.docker_args} 
-      ${train.img} gloves/classifier.py
+      python gloves/classifier.py
       --encoder-model-path ${out_dir}/${train.encoder}
       --train-dir ${out_dir}/${split.train_dir}
       --test-dir ${out_dir}/${split.test_dir}
@@ -121,20 +120,25 @@ stages:
       - train.encoder
       - split.train_dir
     deps:
+      - gloves/classifier.py
       - ${out_dir}/${train.encoder}
       - ${out_dir}/${split.train_dir}
       - ${out_dir}/${split.test_dir}
     outs:
       - ${out_dir}/${classifier.model_dir}
       - ${out_dir}/${classifier.label_encoder}
+    #live:
+      #siamese_logs:
+        #summary: true
+        #html: true
 
-  hydra:
-    cmd: >
-      ${docker_cmd} ${train.docker_args} 
-      ${train.img} hydra.py
-    params:
-      - train.img
-      - train.docker_args
-    deps:
-      - last_build.log
+  #hydra:
+    #cmd: >
+      #${docker_cmd} ${train.docker_args} 
+      #${train.img} hydra.py
+    #params:
+      #- train.img
+      #- train.docker_args
+    #deps:
+      #- last_build.log
       
