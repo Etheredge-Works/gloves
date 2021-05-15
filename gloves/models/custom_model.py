@@ -196,6 +196,7 @@ def block(
                 use_bias=not use_batch_norm, # Don't use bias if using batch norm
                 padding="same")(x)
     if use_batch_norm: 
+        # TODO test layer norm
         y = BatchNormalization()(y)
     y = ReLU()(y)
     y = Conv2D(kernel_size=kerneal_size,
