@@ -228,9 +228,20 @@ def block(
     
 
 from tensorflow.keras.layers.experimental import preprocessing
-def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, activation, final_activation, dropout_rate, 
-                    padding='same', pooling='max', conv_reg_rate=0.01, dense_reg_rate=0.1, use_batch_norm=True,
-                    latent_dense=False):
+def build_custom_encoder(
+    input_shape, 
+    #dense_layers, 
+    #dense_nodes, 
+    latent_nodes, 
+    #activation, 
+    final_activation, 
+    #dropout_rate, 
+    #padding='same', 
+    #pooling='max', 
+    conv_reg_rate=0.01, 
+    dense_reg_rate=0.1, 
+    use_batch_norm=True,
+    latent_dense=False):
     # TODO pass activation as none and assign. str value so constructs in block.
     # TODO maybe linear final layer
 

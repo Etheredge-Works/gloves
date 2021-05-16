@@ -75,61 +75,69 @@ stages:
     outs:
       - last_build.log
     
-  train_siamese:
-    cmd: >
-      python gloves/main.py
-      --train-dir ${out_dir}/${split.train_dir}
-      --test-dir ${out_dir}/${split.test_dir}
-      --model-dir ${out_dir}/${train.model_dir}
-      --model-filename ${train.model_filename}
-      --encoder-model ${out_dir}/${train.encoder}
-      --metrics ${train.metrics}
-      --epochs ${train.epochs}
-    params:
-      - out_dir
-      - train
-      - split.train_dir
-      - split.test_dir
-    deps:
-      - gloves/main.py
-      - ${out_dir}/${split.train_dir}
-      - ${out_dir}/${split.test_dir}
-    outs:
-      - ${out_dir}/${train.model_dir}
-      - ${out_dir}/${train.encoder}
-    metrics:
-      - siamese_logs.html
-    live:
-      siamese_logs:
-        summary: true
-        html: true
+  siamese:
+    foreach: ${siamese.types}
+    do:
+      cmd: >
+        python ${siamese.src}
+        --train-dir ${out_dir}/${split.train_dir}
+        --test-dir ${out_dir}/${split.test_dir}
+        --sigmoid-head ${item.sigmoid_head}
+        --param-path params.yaml
+        --param-parent-key siamese
+        --out-model-path ${item.out_model_path}
+        --out-encoder-path ${item.out_encoder_path}
+        --out-metrics-path ${item.out_metrics_path}
+      params:
+        - siamese
+      deps:
+        - ${siamese.src}
+        - ${out_dir}/${split.train_dir}
+        - ${out_dir}/${split.test_dir}
+      outs:
+        - ${item.out_model_path}
+        - ${item.out_encoder_path}
+      # TODO why no metrics html?
+      metrics:
+        #- ${item.out_metrics_path}.html
+        - ${item.out_metrics_path}
+        - ${item.out_metrics_path}.json:
+            cache: false
 
-
-  classifier:
-    cmd: >
-      python gloves/classifier.py
-      --encoder-model-path ${out_dir}/${train.encoder}
-      --train-dir ${out_dir}/${split.train_dir}
-      --test-dir ${out_dir}/${split.test_dir}
-      --model-path ${out_dir}/${classifier.model_dir}
-      --label-encoder-path ${out_dir}/${classifier.label_encoder}
-      --epochs ${classifier.epochs}
-    params:
-      - classifier
-      - train.encoder
-      - split.train_dir
-    deps:
-      - gloves/classifier.py
-      - ${out_dir}/${train.encoder}
-      - ${out_dir}/${split.train_dir}
-      - ${out_dir}/${split.test_dir}
-    outs:
-      - ${out_dir}/${classifier.model_dir}
-      - ${out_dir}/${classifier.label_encoder}
-    #live:
-      #siamese_logs:
-        #summary: true
-        #html: true
+  classifiers:
+    foreach: ${classifier.types}
+    do:
+      cmd: >
+        python ${classifier.src}
+        --encoder-model-path ${siamese.types.distance.out_encoder_path}
+        --train-dir ${out_dir}/${split.train_dir}
+        --test-dir ${out_dir}/${split.test_dir}
+        --param-path params.yaml
+        --param-parent-key classifier
+        --out-model-path ${item.out_model_path}
+        --out-label-encoder-path ${item.out_label_encoder}
+        --out-metrics-path ${item.out_metrics_path}
+        --use-imagenet ${item.use_imagenet}
+        --is-frozen ${item.is_frozen}
+      params:
+        - classifier
+      deps:
+        - ${classifier.src}
+        - ${siamese.types.distance.out_encoder_path}
+        - ${out_dir}/${split.train_dir}
+        - ${out_dir}/${split.test_dir}
+      outs:
+        - ${item.out_model_path}
+        - ${item.out_label_encoder}
+      # TODO why no metrics html?
+      metrics:
+        - ${item.out_metrics_path}
+        - ${item.out_metrics_path}.json:
+            cache: false
+      #live:
+        #${item.out_metrics_path}:
+          #summary: true
+          #html: true
 
   #hydra:
     #cmd: >

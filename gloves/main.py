@@ -15,9 +15,10 @@ class MetricsCallback(Callback):
     def on_epoch_end(self, epoch: int, logs: dict = None):
         logs = logs or {}
         for metric, value in logs.items():
+            float_value = value
             if type(value) == np.float32:
-                value = float(value)
-            dvclive.log(metric, value)
+                float_value = float(value)
+            dvclive.log(metric, float_value)
         dvclive.next_step()
 
 import tensorflow as tf
@@ -118,11 +119,13 @@ def mlflow_log_wrapper(func):
         return func(*args, **kwargs)
     return inner
 
-def log_summary(model, dir=None):
+def log_summary(model, dir=None, name=None):
+    name = name or model.name
+    Path(dir).mkdir(parents=True, exist_ok=True)
 
     if dir:
         dir = dir + "/"
-    filename = f"{dir}{model.name}.txt"
+    filename = f"{dir}{name}.txt"
 
     with open(filename, "w") as f:
         model.summary(print_fn=lambda x: f.write(x + '\n'))
@@ -130,7 +133,6 @@ def log_summary(model, dir=None):
 
 import tensorflow as tf
 import numpy as np
-
 
 
 class NWayCallback(tf.keras.callbacks.Callback):
@@ -207,107 +209,45 @@ class NWayCallback(tf.keras.callbacks.Callback):
 
 from siamese.callbacks import NWayCallback
 
-@click.command()
-# File stuff
-@click.option('--train-dir', type=click.Path(exists=True), help='')
-@click.option('--train-extra-dir', default=None, type=click.Path(exists=True), help='')
-@click.option('--test-dir', type=click.Path(exists=True), help='')
-@click.option('--test-extra-dir',  default=None, type=click.Path(exists=True), help='')
-@click.option('--model-dir', type=click.Path(exists=None), help='')
-@click.option('--model-filename', type=click.STRING, help='')
-#@click.option('--encoder-dir', type=click.Path(exists=False), help='')
-@click.option('--encoder-model', type=click.Path(exists=False), help='')
-###############################################################################
-# Image stuff
-@click.option("--height", default=224, type=int)
-@click.option("--width", default=224, type=int)
-@click.option("--depth", default=3, type=int)
-@click.option("--mutate-anchor", default=True, type=bool)
-@click.option("--mutate-other", default=True, type=bool)
-###############################################################################
-# Model Stuff
-@click.option('--dense-layers', default=0, type=click.INT, help='')
-@click.option('--dense-nodes', default=1024, type=click.INT, help='')
-@click.option("--dense-reg-rate", default=0.001, type=float)
-@click.option("--conv-reg-rate", default=0.0001, type=float)
-@click.option("--activation", default='sigmoid', type=str)
-@click.option("--latent-nodes", default=32, type=int)
-@click.option("--dropout-rate", default=0.0, type=float) # TODO why does dropout cripple this when it helped before?
-@click.option("--final-activation", default='sigmoid', type=str)
-@click.option('--should-transfer-learn', default=False, type=click.BOOL, help='')
-###############################################################################
-# Training Stuff
-#@click.option('--loss_name', default='contrastive_loss', type=click.STRING, help='')
-@click.option('--lr', default=0.0001, type=click.FLOAT, help='')
-@click.option('--optimizer', default='adam', type=click.STRING, help='')
-@click.option('--epochs', default=4000, type=click.INT, help='')
-@click.option('--batch-size', default=32, type=click.INT, help='')
-@click.option('--verbose', default=1, type=click.INT, help='')
-#@click.option("--validation-ratio", default=0.3, type=float)
-@click.option("--eval-freq", default=1, type=int)
-@click.option("--reduce-lr-factor", default=0.1, type=float)
-@click.option("--reduce-lr-patience", default=20, type=int) # need realativily high pateiences due to high variance in ds items
-@click.option("--early-stop-patience", default=50, type=int)
-@click.option("--mixed-precision", default=True, type=bool)
-@click.option("--unfreeze", default=False, type=bool)
-@click.option("--nway_freq", default=10, type=int)
-@click.option("--nways", default=32, type=int)
-@click.option("--sigmoid", default=False, type=bool)
-@click.option("--use-batch-norm", default=True, type=bool)
-@click.option("--metrics", default="/tmp/logs", type=click.Path())
-@click.option("--checkpoint-dir", default="/tmp/checkpoints", type=click.Path())
-@mlflow_log_wrapper
-def main(
-        train_dir: str, 
-        train_extra_dir: str, 
-        test_dir: str, 
-        test_extra_dir: str, 
-        model_dir: str,
-        model_filename: str,
-        encoder_model: str,
-        ########################
-        height: int,
-        width: int,
-        depth: int,
-        mutate_anchor: bool,
-        mutate_other: bool,
-        ########################
-        dense_layers: int, 
-        dense_nodes: int, 
-        dense_reg_rate: float,
-        conv_reg_rate: float,
-        activation: str,
-        latent_nodes: int,
-        dropout_rate: float,
-        final_activation: str,
-        should_transfer_learn: bool,
-        ########################
-        lr: float, 
-        optimizer: str,
-        epochs: int, 
-        verbose: int,
-        batch_size: int, 
-        eval_freq: int,
-        reduce_lr_factor: float,
-        reduce_lr_patience: int,
-        early_stop_patience: int,
-        mixed_precision: bool,
-        unfreeze: bool,
-        nway_freq,
-        nways,
-        sigmoid,
-        use_batch_norm,
-        metrics,
-        checkpoint_dir,
+
+def train(
+    train_dir: str, 
+    train_extra_dir: str, 
+    test_dir: str, 
+    test_extra_dir: str, 
+    out_model_path: str,
+    out_encoder_path: str,
+    out_metrics_path: str,
+    *,  # only take kwargs for hypers
+    #checkpoint_dir: str,
+    height,
+    width,
+    depth,
+    # hypers
+    mutate_anchor,
+    mutate_other,
+    dense_reg_rate,
+    conv_reg_rate,
+    #activation,
+    latent_nodes,
+    final_activation,
+    lr,
+    optimizer,
+    epochs,
+    batch_size,
+    verbose,
+    eval_freq,
+    reduce_lr_factor,
+    reduce_lr_patience,
+    early_stop_patience,
+    mixed_precision,
+    nway_freq,
+    nways,
+    use_batch_norm,
+    sigmoid_head,
+    **_  # Other args in params file to ignore
 ):
     #dvclive.init(metrics)
-    print(type(batch_size))
-    assert(type(batch_size) == int)
-    if sigmoid:
-        mlflow.set_experiment("siamese-distance")
-    else:
-        mlflow.set_experiment("siamese-sigmoid")
-    mlflow.tensorflow.autolog(every_n_iter=1)
 
     if mixed_precision:
       policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
@@ -315,12 +255,9 @@ def main(
 
     encoder = build_custom_encoder(
         input_shape=(height, width, depth),
-        dense_layers=dense_layers,
-        dense_nodes=dense_nodes,
         latent_nodes=latent_nodes,
-        activation=activation,
+        #activation=activation,
         final_activation=final_activation,
-        dropout_rate=dropout_rate,
         dense_reg_rate=dense_reg_rate,
         conv_reg_rate=conv_reg_rate,
         use_batch_norm=use_batch_norm,
@@ -328,12 +265,8 @@ def main(
 
     input1 = tf.keras.Input(encoder.output_shape[-1])
     input2 = tf.keras.Input(encoder.output_shape[-1])
-    #input3 = tf.keras.Input()
-    #input4 = tf.keras.Input()
-    #outputs = NormDistanceLayer(dtype='float32')((input1, input2))
 
-    if sigmoid:
-        #head = sigmoid_model(encoder.output_shape[-1])
+    if sigmoid_head:
         outputs = Dense(1, activation='sigmoid', dtype='float32')(AbsDistanceLayer(dtype='float32')((input1, input2)))
         head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='Distance')
         loss = 'binary_crossentropy'
@@ -355,18 +288,16 @@ def main(
     #head = NormDistanceLayer(dtype='float32')
     model = create_siamese_model(encoder, head)
     #model = SiameseModel(encoder, head)
-    Path(model_dir).mkdir(parents=True, exist_ok=True)
-    log_summary(encoder, dir=model_dir)
-    log_summary(model, dir=model_dir)
-    log_summary(head, dir=model_dir)
+    #Path(out_model_path).mkdir(parents=True, exist_ok=True)
+    log_summary(encoder, dir=out_metrics_path, name='encoder')
+    log_summary(head, dir=out_metrics_path, name='head')
+    log_summary(model, dir=out_metrics_path, name='model')
     
     from tensorflow.keras.optimizers import Adam
     optimizer_switch = {
         'adam': Adam
     }
     optimizer = optimizer_switch[optimizer]
-
-    #encoder = build_custom_encoder(den)
 
     # TODO extract and pass in
     train_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(train_dir)/'**.jpg')))
@@ -407,7 +338,7 @@ def main(
         anchor_decode_func=read_decode,
         #other_items=train_files_tf, # needed since test set won't have many items
         #other_labels=train_labels
-    ).batch(batch_size).prefetch(-1)
+    ).batch(batch_size).cache().prefetch(-1)
     # TODO should val_ds be cached? or should it change?
 
     test_nway_ds = create_n_way_dataset(
@@ -429,10 +360,12 @@ def main(
 
     #wandb.init(project="siamese")
     # TODO how can I use preprocessing layers? Dataset requires images to be the same size for batching...
+    nway_callbacks = [] if sigmoid_head else [
+        NWayCallback(encoder=encoder, head=head, nway_ds=nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="train_"),
+        NWayCallback(encoder=encoder, head=head, nway_ds=test_nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="test_")]
     callbacks=[
         ReduceLROnPlateau(monitor=monitor_metric, factor=reduce_lr_factor, patience=reduce_lr_patience),
-        NWayCallback(encoder=encoder, head=head, nway_ds=nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="train_"),
-        NWayCallback(encoder=encoder, head=head, nway_ds=test_nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="test_"),
+        *nway_callbacks,
         EarlyStopping(monitor=monitor_metric, min_delta=0, patience=early_stop_patience, verbose=1, restore_best_weights=True),
         MetricsCallback(),
     ]
@@ -459,21 +392,59 @@ def main(
         #yaml.dump(history_dict, f, default_flow_style=False)
     #print(history_dict)
 
-    #model.save("model", save_format='tf')
-    #model = tf.keras.Model(inputs=model.inputs, )
-    model.save(str(Path(str(model_dir))/model_filename), save_format='tf')
-    mlflow.log_artifact(str(Path(str(model_dir))/model_filename))
-    #trainable.save(str(Path(str(model_dir))/encoder_model))
-    encoder_path = Path(str(encoder_model))
-    encoder_path.parent.mkdir(parents=True, exist_ok=True)
-    encoder.save(str(encoder_path), save_format='tf')
-    mlflow.log_artifact(str(encoder_path))
+    model.save(out_model_path, save_format='tf')
+    mlflow.log_artifact(out_model_path)
+    encoder.save(out_encoder_path, save_format='tf')
+    mlflow.log_artifact(out_metrics_path)
 
-    #mlflow.log_metrics(history_dict)
 
-    #model, _ = create_model()
-    #return model
+################################################################################
 
+@click.command()
+# File stuff
+@click.option('--train-dir', type=click.Path(exists=True), help='')
+@click.option('--train-extra-dir', default=None, type=click.Path(exists=True), help='')
+@click.option('--test-dir', type=click.Path(exists=True), help='')
+@click.option('--test-extra-dir',  default=None, type=click.Path(exists=True), help='')
+@click.option('--param-path',  default=None, type=click.Path(exists=True), help='')
+@click.option('--param-parent-key',  default='train', type=click.STRING, help='')
+@click.option('--out-model-path', type=click.Path(exists=None), help='')
+@click.option('--out-encoder-path', type=click.Path(exists=None), help='')
+@click.option('--out-metrics-path', type=click.Path(exists=None), help='')
+@click.option("--sigmoid-head", default=False, type=bool)
+@mlflow_log_wrapper
+def main(
+        train_dir: str, 
+        train_extra_dir: str, 
+        test_dir: str, 
+        test_extra_dir: str, 
+        param_path: str, 
+        param_parent_key: str,
+        out_model_path: str,
+        out_encoder_path: str,
+        out_metrics_path: str,
+        sigmoid_head: bool,
+):
+    if sigmoid_head:
+        mlflow.set_experiment("siamese-distance")
+    else:
+        mlflow.set_experiment("siamese-sigmoid")
+    mlflow.tensorflow.autolog(every_n_iter=1)
+
+    dvclive.init(out_metrics_path, summary=True, html=True)
+    with open(param_path, "r") as f:
+        train_kwargs = yaml.load(f)[param_parent_key]
+
+    train(
+        train_dir=train_dir,
+        train_extra_dir=train_extra_dir,
+        test_dir=test_dir,
+        test_extra_dir=test_extra_dir,
+        sigmoid_head=sigmoid_head,
+        out_model_path=out_model_path,
+        out_encoder_path=out_encoder_path,
+        out_metrics_path=out_metrics_path,
+        **train_kwargs)
 
 if __name__ == "__main__":
     limit_gpu_memory_use()

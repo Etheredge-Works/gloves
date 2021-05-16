@@ -43,13 +43,8 @@ def limit_gpu_memory_use():
 
 limit_gpu_memory_use()
 
-ALL = [
-    'Abyssinian',
-    'yorkshire_terrier',
-    'american_bulldog',
-    'american_pit_bull_terrier'
-]
 
+@tf.function
 def read_decode(file_path):
     byte_data = tf.io.read_file(file_path)
     img = tf.image.decode_jpeg(byte_data, channels=3)
@@ -57,6 +52,8 @@ def read_decode(file_path):
     #img = preprocess_input(img)  # NOTE: This does A TON for accuracy
     return img
 
+
+@tf.function
 def random_read_decode(file_path):
     #img = tf.io.read_file(img)
     #img = tf.image.decode_jpeg(img, channels=3)
@@ -92,6 +89,7 @@ def random_read_decode(file_path):
 # TODO could change to glob of jpgs
 #ALL_FILES = tf.io.gfile.listdir(str(DATA_DIR))
 #print(f"all_files: {ALL_FILES}")
+tf.function
 def get_pair(data_dir, all_files, labels, anchor_file_path,
              label=None):
     if label is None:
@@ -264,6 +262,7 @@ def n_way_read(data_dir, decode_func, n):
     labels = tf.strings.regex_replace(all_files_tf, pattern=r'_\d.*', rewrite='')
     count = 0
 
+    @tf.function
     def foo(file_name):
         anchors, others = [], []
         labels_list = []  # Some keras interfaces (like predict) expect a label even when not used, so we'll get them too

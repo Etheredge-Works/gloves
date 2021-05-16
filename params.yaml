@@ -28,20 +28,81 @@ split:
   test_dir: test
   ratio: 0.1
 
-train:
-  model_dir: models
-  model_filename: model
-  encoder: encoder
-  metrics: logs/siamese_logs
+
+siamese:
+
+  src: gloves/main.py
+
+  types:
+    distance:
+      out_model_path: artifacts/models/siamese_distance/model
+      out_encoder_path: artifacts/models/siamese_distance/encoder
+      out_metrics_path: logs/distance_siamese_logs
+      sigmoid_head: False
+    sigmoid:
+      out_model_path: artifacts/models/siamese_sigmoid/model
+      out_encoder_path: artifacts/models/siamese_sigmoid/encoder
+      out_metrics_path: logs/sigmoid_siamese_logs
+      sigmoid_head: True
+
+  # Image
+  height: 224
+  width: 224
+  depth: 3
   # hypers
-  epochs: 4
+  mutate_anchor: true
+  mutate_other: true
+  dense_layers: 0
+  dense_nodes: 1024
+  dense_reg_rate: 0.001
+  conv_reg_rate: 0.0001
+  activation: sigmoid
+  latent_nodes: 32
+  dropout_rate: 0.0
+  final_activation: sigmoid
+  lr: 0.0001
+  optimizer: adam
+  epochs: 1
+  batch_size: 32
+  verbose: 0
+  eval_freq: 1
+  reduce_lr_factor: 0.1
+  reduce_lr_patience: 20
+  early_stop_patience: 50
+  mixed_precision: true
+  nway_freq: 20
+  nways: 32
+  use_batch_norm: true
+
 
 classifier:
-  train_dir: train
-  test_dir: train
-  model_dir: classifier_models
-  model_filename: model
-  label_encoder: label_encoder
-  encoder: models/encoder
+  src: gloves/classifier.py
+  types:
+    imagenet_frozen:
+      out_model_path: artifacts/models/imagenet_frozen
+      out_label_encoder: artifacts/models/imagenet_frozen_label_encoder.joblib
+      out_metrics_path: logs/imagenet_frozen
+      use_imagenet: true
+      is_frozen: true
+    imagenet_unfrozen:
+      out_model_path: artifacts/models/imagenet_unfrozen
+      out_label_encoder: artifacts/models/imagenet_unfrozen_label_encoder.joblib
+      out_metrics_path: logs/imagenet_unfrozen
+      use_imagenet: true
+      is_frozen: false
+    gloves_frozen:
+      out_model_path: artifacts/models/gloves_frozen
+      out_label_encoder: artifacts/models/gloves_frozen_label_encoder.joblib
+      out_metrics_path: logs/gloves_frozen
+      use_imagenet: false
+      is_frozen: true
+    gloves_unfrozen:
+      out_model_path: artifacts/models/gloves_unfrozen
+      out_label_encoder: artifacts/models/gloves_unfrozen_label_encoder.joblib
+      out_metrics_path: logs/gloves_unfrozen
+      use_imagenet: false
+      is_frozen: false
   # hypers
-  epochs: 4
+  batch_size: 32
+  epochs: 1
+  verbose: 1
