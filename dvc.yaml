@@ -1,8 +1,5 @@
 vars:
-- params.yaml
-  # TODO figure out how to paramaterize outputs here
-  #- docker_cmd: docker run -v $(pwd)/outputs:/outputs
-- aws_cp: aws s3 --endpoint-url https://minio.etheredge.co cp
+  - params.yaml
 
 stages:
   wget:
@@ -13,13 +10,6 @@ stages:
     - wget
     outs:
     - ${out_dir}/${wget.out_dir}
-
-  #move_wget:
-    #cmd: ${aws_cp} ${out_dir}/${wget.out_dir} s3://gloves/${wget.out_dir}
-    #deps:
-      #- ${out_dir}/${wget.out_dir}
-    #outs:
-      #- s3://gloves/${wget.out_dir}
 
   untar:
     cmd: >
@@ -64,16 +54,6 @@ stages:
     outs:
     - ${out_dir}/${split.train_dir}
     - ${out_dir}/${split.test_dir}
-
-  build_image:
-    cmd: ./build_image.sh && echo $(date) > last_build.log
-    deps:
-      - Dockerfile
-      - build_image.sh
-      - requirements.txt
-      - gloves/
-    outs:
-      - last_build.log
     
   siamese:
     foreach: ${siamese.types}
@@ -139,6 +119,7 @@ stages:
           #summary: true
           #html: true
 
+  # TODO continue hydra experiments
   #hydra:
     #cmd: >
       #${docker_cmd} ${train.docker_args} 
