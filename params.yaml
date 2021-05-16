@@ -29,18 +29,6 @@ split:
   ratio: 0.1
 
 train:
-  img: etheredgeb/gloves:latest
-  docker_args: >-
-    --gpus all
-    -e TF_FORCE_GPU_ALLOW_GROWTH=true  -e MLFLOW_EXPERIMENT_NAME=gloves
-    -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-    -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-    -e MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL
-    -e MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI
-    -e MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME
-    -e MLFLOW_TRACKING_PASSWORD=$MLFLOW_TRACKING_PASSWORD
-    -e S3_ENDPOINT=$S3_ENDPOINT
-
   model_dir: models
   model_filename: model
   encoder: encoder

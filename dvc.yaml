@@ -76,7 +76,6 @@ stages:
       - last_build.log
     
   train_siamese:
-    #${docker_cmd} ${train.docker_args} ${train.img} 
     cmd: >
       python gloves/main.py
       --train-dir ${out_dir}/${split.train_dir}
@@ -117,8 +116,6 @@ stages:
       --epochs ${classifier.epochs}
     params:
       - classifier
-      - train.img
-      - train.docker_args
       - train.encoder
       - split.train_dir
     deps:
