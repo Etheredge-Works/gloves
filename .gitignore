@@ -16,7 +16,7 @@ __pycache__/
 pipeline/gloves_pipeline.tar.gz
 /outputs/*
 /last_build.log
-/siamese_logs/
+/siamese_logs
 siamese_logs.html
 encoder_frozen/
 encoder_unfrozen/

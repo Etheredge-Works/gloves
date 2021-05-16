@@ -98,6 +98,8 @@ stages:
     outs:
       - ${out_dir}/${train.model_dir}
       - ${out_dir}/${train.encoder}
+    metrics:
+      - siamese_logs.html
     live:
       siamese_logs:
         summary: true

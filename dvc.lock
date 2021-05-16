@@ -166,6 +166,9 @@ stages:
       md5: 164230f201d0e57fefe8cb0fee046297.dir
       size: 69091
       nfiles: 9
+    - path: siamese_logs.html
+      md5: 576ba2f3612a1768ee5d32010a32a9a7
+      size: 274261
   classifier:
     cmd: "python gloves/classifier.py --encoder-model-path artifacts/encoder --train-dir\
       \ artifacts/train --test-dir artifacts/test --model-path artifacts/classifier_models\
