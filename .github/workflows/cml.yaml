@@ -25,8 +25,6 @@ jobs:
           # Install requirements
           pip install dvc boto3
 
-          ./build_image.sh
-
           # No need to install other reqs as runs are done in docker
 
           # Pull data & run-cache from S3 and reproduce pipeline
