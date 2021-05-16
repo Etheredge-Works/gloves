@@ -10,15 +10,15 @@ stages:
       md5: e8817aee860bb869e5b9fc89c63f7c11
       size: 428
     - path: gloves/
-      md5: fe17e34a94ff0cc5519edec0f49e4dc4.dir
-      size: 103725
-      nfiles: 33
+      md5: 36751d3da037e0226812a60649aea5e4.dir
+      size: 86207
+      nfiles: 27
     - path: requirements.txt
       md5: d45f24d6fb70c1d7810cee36cea2a318
       size: 304
     outs:
     - path: last_build.log
-      md5: fae21cb137e923b0c0bd779adfa364e0
+      md5: 107da374b93cd3bd07c6aa6dcc2a8e86
       size: 32
   wget:
     cmd: "docker run -v ${PWD}:/gloves --user 1000:1000 etheredgeb/wget_url:latest\
@@ -123,7 +123,7 @@ stages:
   train_siamese:
     cmd: "python gloves/main.py --train-dir artifacts/train --test-dir artifacts/test\
       \ --model-dir artifacts/models --model-filename model --encoder-model artifacts/encoder\
-      \ --metrics logs/siamese_logs --epochs 4\n"
+      \ --metrics logs/siamese_logs --epochs 10\n"
     deps:
     - path: artifacts/test
       md5: 7703a0c477d6314c567eb6cbf5b5dfde.dir
@@ -146,31 +146,31 @@ stages:
           model_filename: model
           encoder: encoder
           metrics: logs/siamese_logs
-          epochs: 4
+          epochs: 10
     outs:
     - path: artifacts/encoder
-      md5: 82a898f4ff4f7bb43b62bc9d70f4626e.dir
-      size: 28292401
+      md5: 678dc93b46a33d5ec7816304d04d2b63.dir
+      size: 28293864
       nfiles: 4
     - path: artifacts/models
-      md5: 4ebc029fbfeecb0d4a8b3956231af283.dir
-      size: 82337645
+      md5: f0f7370b6d8bddfe6ec33306ddb7b7b8.dir
+      size: 82337647
       nfiles: 7
     - path: siamese_logs
-      md5: e165113011b6d88151cfbe0014bae8d2.dir
-      size: 1602
+      md5: 446bfdd865a5582f1f983c5753b9a110.dir
+      size: 3582
       nfiles: 9
     - path: siamese_logs.html
-      md5: 5ee6bddf46054fa158f9ea0deede22df
-      size: 13516
+      md5: a8f828089113cf9ff9327729d1d037f4
+      size: 21412
   classifier:
     cmd: "python gloves/classifier.py --encoder-model-path artifacts/encoder --train-dir\
       \ artifacts/train --test-dir artifacts/test --model-path artifacts/classifier_models\
       \ --label-encoder-path artifacts/label_encoder --epochs 4\n"
     deps:
     - path: artifacts/encoder
-      md5: 82a898f4ff4f7bb43b62bc9d70f4626e.dir
-      size: 28292401
+      md5: 678dc93b46a33d5ec7816304d04d2b63.dir
+      size: 28293864
       nfiles: 4
     - path: artifacts/test
       md5: 7703a0c477d6314c567eb6cbf5b5dfde.dir
@@ -197,7 +197,7 @@ stages:
         train.encoder: encoder
     outs:
     - path: artifacts/classifier_models
-      md5: 9490d3260480e1fbb117eab2d42930b8.dir
+      md5: 9ffeea4aae712f3800960b2a79fe9bac.dir
       size: 548183467
       nfiles: 16
     - path: artifacts/label_encoder
