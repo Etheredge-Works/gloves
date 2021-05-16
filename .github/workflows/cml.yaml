@@ -38,6 +38,6 @@ jobs:
           dvc metrics diff master --show-md >> report.md
 
           # Visual of logs
-          echo "```html" "$(cat siamese_logs.html)" "```" >> reprort.md
+          echo "```html\n" "$(cat siamese_logs.html)" "\n```" >> reprort.md
 
           cml-send-comment report.md
