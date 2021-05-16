@@ -28,7 +28,7 @@ jobs:
           # No need to install other reqs as runs are done in docker
 
           # Pull data & run-cache from S3 and reproduce pipeline
-          dvc pull -d --run-cache train_siamese
+          dvc pull -d --run-cache siamese@distance
           dvc repro siamese@distance
           dvc push
 
