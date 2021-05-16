@@ -246,41 +246,18 @@ def build_custom_encoder(input_shape, dense_layers, dense_nodes, latent_nodes, a
                padding="same")(x)
     x = ReLU()(BatchNormalization()(x))
     x = MaxPool2D(pool_size=3, strides=2, padding='same')(x)
-    #x = block(x, 64, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    #x = block(x, 64, downsample=False, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
-    #x = block(x, False, 64)
-    #x = block(x, False, 64)
-
-    #x = block(x, 64, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
     x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
     x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    #x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    #x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
     x = block(x, 128, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
     x = block(x, 128, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    x = block(x, 128, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    #x = block(x, 128, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
     x = block(x, 256, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
     x = block(x, 256, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    x = block(x, 256, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    #x = block(x, 256, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    #x = block(x, 256, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    #x = block(x, 256, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
     x = block(x, 512, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    x = block(x, 512, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    #x = block(x, 512, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
-    #x = block(x, True, 1024, reg_rate=conv_reg_rate)
-    #x = block(x, False, 1024, reg_rate=conv_reg_rate)
-    #x = block(x, False, 256, reg_rate=conv_reg_rate)
-    #x = block(x, False, 256)
-
-    #x = block(x, False, 512, reg_rate=conv_reg_rate)
-    #x = block(x, False, 512)
 
     # TODO why didn't this work well? lack of sigmoid? not expressive enough?
     #x = block(x, latent_nodes, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)

@@ -2,7 +2,7 @@ icecream==2.1.0
 mlflow==1.13.1
 numpy==1.19.5
 #streamlit==0.80.0
-tensorflow_addons==0.10.0
+tensorflow_addons==0.11.0
 tensorflow==2.2
 kfp==1.4.0
 siamese==0.0.35
