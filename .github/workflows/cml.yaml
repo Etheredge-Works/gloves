@@ -36,6 +36,7 @@ jobs:
           echo "## Metrics" >> report.md
           git fetch --prune
           dvc metrics diff master --show-md >> report.md
+
           cml-publish siamese_logs.html >> report.md
 
           cml-send-comment report.md
