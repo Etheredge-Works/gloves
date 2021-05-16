@@ -7,10 +7,6 @@ jobs:
     
     steps:
       - uses: actions/checkout@v2
-      - uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
       - name: cml_run
         shell: bash
         env:
