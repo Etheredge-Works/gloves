@@ -63,6 +63,7 @@ stages:
         - siamese
       deps:
         - ${siamese_src}
+        - ${siamese_model_src}
         - ${out_dir}/${split.train_dir}
         - ${out_dir}/${split.test_dir}
       outs:

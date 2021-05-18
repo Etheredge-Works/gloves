@@ -41,7 +41,9 @@ siamese_types:
     out_metrics_path: logs/sigmoid_siamese_logs
     out_summaries_path: logs/sigmoid_siamese_summaries
     sigmoid_head: true
+
 siamese_src: gloves/main.py
+siamese_model_src: gloves/models/custom_model.py
 
 siamese:
   # Image
