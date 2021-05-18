@@ -6,8 +6,6 @@ stages:
     cmd: >
       ${docker_cmd} ${wget.img}
       ${wget.data_url} ${docker_out_dir}/${wget.out_dir}
-    params:
-    - wget
     outs:
     - ${out_dir}/${wget.out_dir}
 
@@ -18,9 +16,6 @@ stages:
       ${untar.tar_file_name}
     deps:
     - ${out_dir}/${wget.out_dir}
-    params:
-    - untar
-    - wget.out_dir
     outs:
     - ${out_dir}/${untar.data_dir}
 
@@ -31,9 +26,6 @@ stages:
       --cleaned_dir_name ${docker_out_dir}/${clean.out_dir}
     deps:
     - ${out_dir}/${untar.data_dir}
-    params:
-    - clean
-    - untar.data_dir
     outs:
     - ${out_dir}/${clean.out_dir}
 
@@ -48,18 +40,16 @@ stages:
     deps:
     - ${out_dir}/${clean.out_dir}
     params:
-    - out_dir
-    - split
-    - clean.out_dir
+    - split.ratio
     outs:
     - ${out_dir}/${split.train_dir}
     - ${out_dir}/${split.test_dir}
     
   siamese:
-    foreach: ${siamese.types}
+    foreach: ${siamese_types}
     do:
       cmd: >
-        python ${siamese.src}
+        python ${siamese_src}
         --train-dir ${out_dir}/${split.train_dir}
         --test-dir ${out_dir}/${split.test_dir}
         --sigmoid-head ${item.sigmoid_head}
@@ -68,28 +58,31 @@ stages:
         --out-model-path ${item.out_model_path}
         --out-encoder-path ${item.out_encoder_path}
         --out-metrics-path ${item.out_metrics_path}
+        --out-summaries-path ${item.out_summaries_path}
       params:
         - siamese
       deps:
-        - ${siamese.src}
+        - ${siamese_src}
         - ${out_dir}/${split.train_dir}
         - ${out_dir}/${split.test_dir}
       outs:
         - ${item.out_model_path}
         - ${item.out_encoder_path}
       # TODO why no metrics html?
+      plots:
+        - ${item.out_metrics_path}
       metrics:
         #- ${item.out_metrics_path}.html
-        - ${item.out_metrics_path}
         - ${item.out_metrics_path}.json:
             cache: false
+        - ${item.out_summaries_path}
 
   classifiers:
-    foreach: ${classifier.types}
+    foreach: ${classifier_types}
     do:
       cmd: >
-        python ${classifier.src}
-        --encoder-model-path ${siamese.types.distance.out_encoder_path}
+        python ${classifier_src}
+        --encoder-model-path ${siamese_types.distance.out_encoder_path}
         --train-dir ${out_dir}/${split.train_dir}
         --test-dir ${out_dir}/${split.test_dir}
         --param-path params.yaml
@@ -102,18 +95,20 @@ stages:
       params:
         - classifier
       deps:
-        - ${classifier.src}
-        - ${siamese.types.distance.out_encoder_path}
+        - ${classifier_src}
+        - ${siamese_types.distance.out_encoder_path}
         - ${out_dir}/${split.train_dir}
         - ${out_dir}/${split.test_dir}
       outs:
         - ${item.out_model_path}
         - ${item.out_label_encoder}
       # TODO why no metrics html?
-      metrics:
+      plots:
         - ${item.out_metrics_path}
+      metrics:
         - ${item.out_metrics_path}.json:
             cache: false
+        #- ${item.out_summaries_path}
       #live:
         #${item.out_metrics_path}:
           #summary: true

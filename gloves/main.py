@@ -152,6 +152,7 @@ def train(
     out_model_path: str,
     out_encoder_path: str,
     out_metrics_path: str,
+    out_summaries_path: str,
     *,  # only take kwargs for hypers
     #checkpoint_dir: str,
     height,
@@ -223,9 +224,9 @@ def train(
     model = create_siamese_model(encoder, head)
     #model = SiameseModel(encoder, head)
     #Path(out_model_path).mkdir(parents=True, exist_ok=True)
-    log_summary(encoder, dir=out_metrics_path, name='encoder')
-    log_summary(head, dir=out_metrics_path, name='head')
-    log_summary(model, dir=out_metrics_path, name='model')
+    log_summary(encoder, dir=out_summaries_path, name='encoder')
+    log_summary(encoder, dir=out_summaries_path, name='head')
+    log_summary(encoder, dir=out_summaries_path, name='model')
     
     from tensorflow.keras.optimizers import Adam
     optimizer_switch = {
@@ -345,6 +346,7 @@ def train(
 @click.option('--out-model-path', type=click.Path(exists=None), help='')
 @click.option('--out-encoder-path', type=click.Path(exists=None), help='')
 @click.option('--out-metrics-path', type=click.Path(exists=None), help='')
+@click.option('--out-summaries-path', type=click.Path(exists=None), help='')
 @click.option("--sigmoid-head", default=False, type=bool)
 @mlflow_log_wrapper
 def main(
@@ -357,6 +359,7 @@ def main(
         out_model_path: str,
         out_encoder_path: str,
         out_metrics_path: str,
+        out_summaries_path: str,
         sigmoid_head: bool,
 ):
     if sigmoid_head:
@@ -378,6 +381,7 @@ def main(
         out_model_path=out_model_path,
         out_encoder_path=out_encoder_path,
         out_metrics_path=out_metrics_path,
+        out_summaries_path=out_summaries_path,
         **train_kwargs)
 
 if __name__ == "__main__":

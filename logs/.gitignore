@@ -3,4 +3,6 @@
 /imagenet_frozen
 /gloves_unfrozen
 /sigmoid_siamese_logs
+/sigmoid_siamese_summaries
 /distance_siamese_logs
+/distance_siamese_summaries
