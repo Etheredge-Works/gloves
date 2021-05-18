@@ -50,20 +50,16 @@ def setup_ds(train_dir, batch_size, label_encoder=None, decode=random_read_decod
 
     data_ds = tf.data.Dataset.from_tensor_slices(train_files_tf)
 
-    data_ds = data_ds.map(decode)
+    data_ds = data_ds.map(decode, num_parallel_calls=tf.data.AUTOTUNE)
 
     label_ds = tf.data.Dataset.from_tensor_slices(train_labels)
 
     ds = tf.data.Dataset.zip((data_ds, label_ds))
-    ds = ds.shuffle(item_count, seed=4, reshuffle_each_iteration=False) # TODO pass seed
+    ds = ds.shuffle(item_count, seed=4, reshuffle_each_iteration=False) # TODO pass seed mess things up?
 
-    #skip_count = int(label_count*0.2)
-    #val_ds = ds.take(skip_count)
     #val_ds = val_ds.batch(batch_size).prefetch(-1).cache()
     #val_ds = val_ds.cache() #TODO why does this give weird error?
 
-    #ds = ds.skip(skip_count)
-    #ds = ds.shuffle(item_count, reshuffle_each_iteration=True)
     ds = ds.batch(batch_size)
     ds = ds.prefetch(-1)
 
@@ -135,11 +131,10 @@ def train(
 ):
 
     ds, label_count, label_encoder = setup_ds(train_dir, batch_size, decode=random_read_decode)
-    #with open(label_encoder_path, 'w') as f:
-        #joblib.dump(label_encoder, f)
     joblib.dump(label_encoder, out_label_encoder_path)
 
-    val_ds, val_label_count, _ = setup_ds(test_dir, batch_size, label_encoder, decode=read_decode)
+    val_ds, _, _ = setup_ds(test_dir, batch_size, label_encoder, decode=read_decode)
+    val_ds = val_ds.cache().prefetch(tf.data.AUTOTUNE)
 
     # Setup models
     if use_imagenet:
