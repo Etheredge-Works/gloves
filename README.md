@@ -8,3 +8,5 @@ It's a testing ground for a new technologies.
 - There appears to be a memory leak with tensorflow datasets
   - it doesn't appear to be from shuffle
   - it doesn't appear to be from parallel maps
+  - it appears to have started when switching off tensorflow container
+  - probably a lib installed on the system
