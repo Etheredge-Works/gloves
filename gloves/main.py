@@ -7,6 +7,8 @@ import dvclive
 from dvclive.keras import DvcLiveCallback
 #os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+import psutil
+import mlflow
 
 from collections import Counter
 
@@ -19,6 +21,11 @@ class MetricsCallback(Callback):
             if type(value) == np.float32:
                 float_value = float(value)
             dvclive.log(metric, float_value)
+
+        mem = psutil.virtual_memory().used/8/1024/1024/1024
+        dvclive.log('memory_use_GB', mem)
+        mlflow.log_metric('memory_use_GB', mem)
+
         dvclive.next_step()
 
 import tensorflow as tf
