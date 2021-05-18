@@ -97,27 +97,25 @@ def build_imagenet_model(freeze):
 @click.option('--use-imagenet', default=True, type=click.BOOL, help='')
 @click.option('--is-frozen', default=True, type=click.BOOL, help='')
 def main(
-        encoder_model_path: str,
-        train_dir: str,
-        test_dir: str,
-        param_path,
-        param_parent_key,
-        out_model_path: Path,
-        out_label_encoder_path: Path,
-        out_metrics_path,
-        mixed_precision: bool,
-        use_imagenet,
-        is_frozen
-        ):
-
+    encoder_model_path: str,
+    train_dir: str,
+    test_dir: str,
+    param_path,
+    param_parent_key,
+    out_model_path: Path,
+    out_label_encoder_path: Path,
+    out_metrics_path,
+    mixed_precision: bool,
+    use_imagenet,
+    is_frozen
+):
     if mixed_precision:
       policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
       tf.keras.mixed_precision.experimental.set_policy(policy)
     with open(param_path, "r") as f:
         train_kwargs = yaml.load(f)[param_parent_key]
     train(train_dir, test_dir, encoder_model_path, out_model_path, out_metrics_path, out_label_encoder_path,
-          use_imagenet=use_imagenet,
-          is_frozen=is_frozen,
+          use_imagenet=use_imagenet, is_frozen=is_frozen,
           **train_kwargs)
 
 def train(
