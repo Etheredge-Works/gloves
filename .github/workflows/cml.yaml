@@ -19,7 +19,7 @@ jobs:
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
         run: |
           # Install requirements
-          pip install requirements.txt
+          pip install -r requirements.txt
 
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@distance
