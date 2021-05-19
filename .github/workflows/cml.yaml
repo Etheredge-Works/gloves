@@ -19,9 +19,7 @@ jobs:
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
         run: |
           # Install requirements
-          pip install dvc boto3
-
-          # No need to install other reqs as runs are done in docker
+          pip install requirements.txt
 
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@distance
