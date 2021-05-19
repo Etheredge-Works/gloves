@@ -9,6 +9,7 @@ import mlflow
 from tensorflow.keras.callbacks import Callback
 import tensorflow as tf
 print(tf.version.GIT_VERSION, tf.version.VERSION)
+from pathlib import Path
 
 class MetricsCallback(Callback):
     def on_epoch_end(self, epoch: int, logs: dict = None):
@@ -67,7 +68,6 @@ import pathlib
 def log_metric(key, value, step=None):
     mlflow.log_metric(key=key, value=value, step=step)
 
-
 from siamese.models import Encoder, SiameseModel, create_siamese_model
 #from siamese.layers import NormDistanceLayer
 from siamese.data import create_dataset, get_labels_from_filenames, create_n_way_dataset
@@ -110,6 +110,7 @@ def mlflow_log_wrapper(func):
         mlflow.log_params(params)
         return func(*args, **kwargs)
     return inner
+
 
 def log_summary(model, dir=None, name=None):
     name = name or model.name
