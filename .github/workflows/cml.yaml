@@ -3,6 +3,7 @@ on: [push]
 jobs:
   run:
     runs-on: [self-hosted, big-gpu, cml]
+    container: docker://tensorflow/tensorflow:latest-gpu
     environment: test
     
     steps:
@@ -20,6 +21,7 @@ jobs:
         run: |
           # Install requirements
           pip install -r requirements.txt
+          nvidia-smi
 
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@distance
