@@ -1,11 +1,11 @@
 import tensorflow as tf
+from tensorflow import Tensor
 from tensorflow.keras import Model
 from tensorflow.keras.applications.resnet_v2 import ResNet50V2 as pre_trained_model
 from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda, BatchNormalization, ReLU, Add, AveragePooling2D, GlobalAveragePooling2D, Softmax
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
 import numpy as np
-#from wandb.keras import WandbCallback
 import mlflow
 from tensorflow.python.keras.layers.pooling import AvgPool2D, MaxPool2D
 mlflow.tensorflow.autolog(every_n_iter=1)
@@ -91,24 +91,21 @@ def log_model(func):
         log_summary(model)
         return model
     return wrapper
+
     
 def log_summary(model):
     filename = model.name + ".txt"
     with open(filename, "w") as f:
         model.summary(print_fn=lambda x: f.write(x + '\n'))
     mlflow.log_artifact(filename)
-#@log_model
+
+
 def combine_models(base_model, head_model, name="no_name"):
-    #print(base_model.input_shape)
-    #print(base_model.output_shape)
-    #print(head_model.input_shape)
-    #print(head_model.output_shape)
     encoder_inputs = tf.keras.Input(base_model.input_shape[1:]), tf.keras.Input(base_model.input_shape[1:])
     encoder_outputs = head_model([base_model(encoder_inputs[0]), base_model(encoder_inputs[1])])
     return Model(name=name, inputs=encoder_inputs, outputs=encoder_outputs)
 
 
-#@log_model
 def distance_model(input_shape):
     input1 = tf.keras.Input(input_shape)
     input2 = tf.keras.Input(input_shape)
@@ -116,7 +113,6 @@ def distance_model(input_shape):
     return Model(inputs=(input1, input2), outputs=y_pred, name='distance_model')
 
 
-#@log_model
 def sigmoid_model(input_shape):
     input1 = tf.keras.Input(input_shape)
     input2 = tf.keras.Input(input_shape)
@@ -154,9 +150,6 @@ def build_imagenet_encoder(input_shape, dense_layers,
         layer.trainable = False
     x = base_model.output
     x = Flatten()(x)
-    #x = Dense(dense_nodes, activation=activation)(x) # NOTE added to reduce dimensions for later use
-    
-    #x = Dropout(0.5)(x)
 
     for _ in range(dense_layers):
         x = Dense(dense_nodes, activation=activation,
@@ -172,11 +165,8 @@ def build_imagenet_encoder(input_shape, dense_layers,
             )(x)
     imagenet_encoder_model = Model(base_model.inputs, x, name='imagenet_encoder')
     return imagenet_encoder_model
-    #log_summary(imagenet_encoder_model, 'imagenet_encoder.txt')
-    #conv_layers.append(imagenet_encoder_model.outputs)
 
 
-from tensorflow import Tensor
 # https://towardsdatascience.com/building-a-resnet-in-keras-e8f1322a49ba
 def block(
         x: Tensor, 

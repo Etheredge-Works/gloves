@@ -1,18 +1,15 @@
 #! python
 from genericpath import exists
 import os
-from numpy.lib import ufunclike
 from tensorflow.keras.layers import Dense
 import dvclive
 from dvclive.keras import DvcLiveCallback
-#os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
-#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import psutil
 import mlflow
-
-from collections import Counter
-
 from tensorflow.keras.callbacks import Callback
+import tensorflow as tf
+print(tf.version.GIT_VERSION, tf.version.VERSION)
+
 class MetricsCallback(Callback):
     def on_epoch_end(self, epoch: int, logs: dict = None):
         logs = logs or {}
@@ -28,8 +25,7 @@ class MetricsCallback(Callback):
 
         dvclive.next_step()
 
-import tensorflow as tf
-print(tf.version.GIT_VERSION, tf.version.VERSION)
+
 def limit_gpu_memory_use():
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
@@ -48,26 +44,17 @@ limit_gpu_memory_use()
 from utils import read_decode, random_read_decode
 from models import build_custom_encoder, sigmoid_model
 os.environ['PYTHONHASHSEED']=str(4)
-#import wandb
-#wandb.init(project="gloves", config={"hyper":"parameter"})
 import mlflow
-mlflow.set_experiment("siamese-distance")
 from mlflow import pyfunc
 import click
-from pathlib import Path
 
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping, ModelCheckpoint
-#from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping, TensorBoard
 # TODO test tensorboard for profiling
 import yaml
 import tensorflow_addons as tfa
 from icecream import ic
-#import mlflow
-
-
 import numpy as np
 np.random.seed(4)
-
 tf.random.set_seed(4)
 import mlflow.tensorflow
 #tf.config.threading.set_inter_op_parallelism_threads(1)
@@ -75,13 +62,11 @@ import mlflow.tensorflow
 import pathlib
 
 
-#print('Compute dtype: %s' % policy.compute_dtype)
-#print('Variable dtype: %s' % policy.variable_dtype)
-
 # TODO make sure test set is not mutated
 # TODO make sure test set is not in trianing set
 def log_metric(key, value, step=None):
     mlflow.log_metric(key=key, value=value, step=step)
+
 
 from siamese.models import Encoder, SiameseModel, create_siamese_model
 #from siamese.layers import NormDistanceLayer
@@ -182,8 +167,6 @@ def train(
     sigmoid_head,
     **_  # Other args in params file to ignore
 ):
-    #dvclive.init(metrics)
-
     if mixed_precision:
       policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
       tf.keras.mixed_precision.experimental.set_policy(policy)
@@ -216,14 +199,7 @@ def train(
         metrics=None
         monitor_metric = 'loss'
 
-
-    #model = tf.keras.Model(inputs=(input3, input4), outputs=head([encoder(input3), encoder(input4)]))
-    #model = tf.keras.Model(inputs=(input3, input4), outputs=NormDistanceLayer(dtype='float32')([encoder(input3), encoder(input4)]))
-
-    #head = NormDistanceLayer(dtype='float32')
     model = create_siamese_model(encoder, head)
-    #model = SiameseModel(encoder, head)
-    #Path(out_model_path).mkdir(parents=True, exist_ok=True)
     log_summary(encoder, dir=out_summaries_path, name='encoder')
     log_summary(encoder, dir=out_summaries_path, name='head')
     log_summary(encoder, dir=out_summaries_path, name='model')
@@ -322,7 +298,6 @@ def train(
 
     history_dict = train_hist.history
     history_dict = {key: float(value[-1]) for key, value in history_dict.items()}
-    mlflow.log_metrics(history_dict)
     #with open(metrics_file_name, 'w') as f:
         #yaml.dump(history_dict, f, default_flow_style=False)
     #print(history_dict)
@@ -332,8 +307,6 @@ def train(
     encoder.save(out_encoder_path, save_format='tf')
     mlflow.log_artifact(out_metrics_path)
 
-
-################################################################################
 
 @click.command()
 # File stuff
@@ -383,6 +356,7 @@ def main(
         out_metrics_path=out_metrics_path,
         out_summaries_path=out_summaries_path,
         **train_kwargs)
+
 
 if __name__ == "__main__":
     limit_gpu_memory_use()

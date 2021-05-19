@@ -9,7 +9,6 @@ from tensorflow.keras.layers import Flatten, Dense
 from models import softmax_model
 from utils import read_decode, random_read_decode
 from siamese.data import get_labels_from_filenames
-#from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2 as pre_trained_model
 from tensorflow.keras.applications.resnet_v2 import ResNet50V2 as pre_trained_model
 import os
 from icecream import ic
@@ -18,7 +17,6 @@ from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 import mlflow
 mlflow.set_experiment("gloves-classifier")
 import mlflow.tensorflow
-#from models import build_imagenet_encoder
 import numpy as np
 import joblib
 import dvclive
@@ -57,14 +55,10 @@ def setup_ds(train_dir, batch_size, label_encoder=None, decode=random_read_decod
     ds = tf.data.Dataset.zip((data_ds, label_ds))
     ds = ds.shuffle(item_count, seed=4, reshuffle_each_iteration=False) # TODO pass seed mess things up?
 
-    #val_ds = val_ds.batch(batch_size).prefetch(-1).cache()
-    #val_ds = val_ds.cache() #TODO why does this give weird error?
-
     ds = ds.batch(batch_size)
     ds = ds.prefetch(-1)
 
     return ds, label_count, label_encoder
-    #return ds, val_ds, label_count
 
 
 def build_imagenet_model(freeze):
@@ -76,7 +70,6 @@ def build_imagenet_model(freeze):
     x = Flatten()(x)
     imagenet_model = tf.keras.Model(inputs=imagenet.inputs, outputs=x)
     return imagenet_model
-
 
 
 @click.command()
