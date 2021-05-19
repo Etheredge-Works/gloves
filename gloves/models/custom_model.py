@@ -136,7 +136,7 @@ def softmax_model(input_shape, label_count,
     for node_count in dense_nodes:
         x = Dense(node_count, activation=activation)(x)
         x = Dropout(dropout_rate)(x)
-    x = Dense(label_count, dtype='float32')(x)
+    x = Dense(label_count)(x)
     x = Softmax(dtype='float32')(x)
     return Model(inputs=input1, outputs=x, name='softmax_model')
 
