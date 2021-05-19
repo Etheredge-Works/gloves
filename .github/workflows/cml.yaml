@@ -1,4 +1,4 @@
-name: testing
+name: Testing DVC Action
 on: [push]
 jobs:
   run:
