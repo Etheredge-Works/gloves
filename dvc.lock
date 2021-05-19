@@ -292,8 +292,8 @@ stages:
       md5: b94fa3df206be9624c423724061f6794
       size: 13491
     - path: gloves/models/custom_model.py
-      md5: 154b0455aee2f7747bf276b22f179e86
-      size: 11439
+      md5: b2fc18485c63e183751fa212d2883ce2
+      size: 11286
     params:
       params.yaml:
         siamese:
@@ -325,23 +325,23 @@ stages:
           use_batch_norm: true
     outs:
     - path: artifacts/models/siamese_distance/encoder
-      md5: e230fd58291903b36af747803ed1a33c.dir
-      size: 8485733
+      md5: f343b01797a600a056198836aaed1d11.dir
+      size: 20976243
       nfiles: 3
     - path: artifacts/models/siamese_distance/model
-      md5: 52d882f7af697441f9cbf80c2fdcb776.dir
-      size: 23105655
+      md5: 4dd99df0554cc87571ff305a3ea9eb61.dir
+      size: 61591719
       nfiles: 3
     - path: logs/distance_siamese_logs
-      md5: 6c68f1a1b80d7833c597942571679b9a.dir
-      size: 189369
+      md5: b6b752c6ba7f394f9ba64111002d049b.dir
+      size: 377707
       nfiles: 10
     - path: logs/distance_siamese_logs.json
-      md5: 8fdbc6387e9455daaef4059709ea3142
-      size: 385
+      md5: 4943dfc92783888f88972a26bde40285
+      size: 367
     - path: logs/distance_siamese_summaries
-      md5: 344b737d224289465513cbab2344d4a6.dir
-      size: 43647
+      md5: 354679b7f1272118dd0958f82019267a.dir
+      size: 25827
       nfiles: 3
   siamese@sigmoid:
     cmd: "python gloves/main.py --train-dir artifacts/train --test-dir artifacts/test\
@@ -361,8 +361,8 @@ stages:
       md5: b94fa3df206be9624c423724061f6794
       size: 13491
     - path: gloves/models/custom_model.py
-      md5: 154b0455aee2f7747bf276b22f179e86
-      size: 11439
+      md5: b2fc18485c63e183751fa212d2883ce2
+      size: 11286
     params:
       params.yaml:
         siamese:
@@ -394,23 +394,23 @@ stages:
           use_batch_norm: true
     outs:
     - path: artifacts/models/siamese_sigmoid/encoder
-      md5: fb6297a738226c82612c9967937cd454.dir
-      size: 8485733
+      md5: 35cd4dc192139a0a4bca3c187d48e0b7.dir
+      size: 20975015
       nfiles: 3
     - path: artifacts/models/siamese_sigmoid/model
-      md5: a98a829117582fd998d1616d03bc104a.dir
-      size: 23134941
+      md5: c6ecee0bfe4e3ea683b05418e8b8c6af.dir
+      size: 61618787
       nfiles: 3
     - path: logs/sigmoid_siamese_logs
-      md5: ab1906352c203cfd4d69a91a3b4f56f4.dir
-      size: 68911
+      md5: 78df62bd418bcbe6a0d1a15364bccd98.dir
+      size: 71681
       nfiles: 6
     - path: logs/sigmoid_siamese_logs.json
-      md5: a6bb953df89854ff336272c185ef478d
-      size: 200
+      md5: b5ca688892de75831da36e499f82af66
+      size: 199
     - path: logs/sigmoid_siamese_summaries
-      md5: 344b737d224289465513cbab2344d4a6.dir
-      size: 43647
+      md5: 354679b7f1272118dd0958f82019267a.dir
+      size: 25827
       nfiles: 3
   classifiers@imagenet_unfrozen:
     cmd: "python gloves/classifier.py --encoder-model-path artifacts/models/siamese_distance/encoder\
@@ -421,8 +421,8 @@ stages:
       \ false\n"
     deps:
     - path: artifacts/models/siamese_distance/encoder
-      md5: e230fd58291903b36af747803ed1a33c.dir
-      size: 8485733
+      md5: f343b01797a600a056198836aaed1d11.dir
+      size: 20976243
       nfiles: 3
     - path: artifacts/test
       md5: b98fddfe57c20c4de06747a5ecd79bf6.dir
@@ -433,7 +433,7 @@ stages:
       size: 712774465
       nfiles: 6651
     - path: gloves/classifier.py
-      md5: 1871d95a2307741308087d3b7a4af18d
+      md5: 321e81f2d2bacf30c6b9b0f6d87351a2
       size: 6629
     params:
       params.yaml:
@@ -443,19 +443,19 @@ stages:
           verbose: 1
     outs:
     - path: artifacts/models/imagenet_unfrozen
-      md5: e89d4b839c3a10e3f40851eecec0730e.dir
-      size: 312807789
+      md5: 913a829d1eb2b589fa588d3523564d0d.dir
+      size: 312813832
       nfiles: 3
     - path: artifacts/models/imagenet_unfrozen_label_encoder.joblib
       md5: 04389aba6461b8869ba4c8f267b430bd
       size: 1338
     - path: logs/imagenet_unfrozen
-      md5: d7cb876f29fdf41d1621fec6d294829b.dir
-      size: 24295
+      md5: f4fd60c809bb83db9385febd195e11af.dir
+      size: 48200
       nfiles: 11
     - path: logs/imagenet_unfrozen.json
-      md5: 17306d9abaa89301a649056e7a59ef80
-      size: 350
+      md5: 503bb580867b5999de8b45f7d4cc10df
+      size: 353
   classifiers@gloves_frozen:
     cmd: "python gloves/classifier.py --encoder-model-path artifacts/models/siamese_distance/encoder\
       \ --train-dir artifacts/train --test-dir artifacts/test --param-path params.yaml\
@@ -464,8 +464,8 @@ stages:
       \ --out-metrics-path logs/gloves_frozen --use-imagenet false --is-frozen true\n"
     deps:
     - path: artifacts/models/siamese_distance/encoder
-      md5: e230fd58291903b36af747803ed1a33c.dir
-      size: 8485733
+      md5: f343b01797a600a056198836aaed1d11.dir
+      size: 20976243
       nfiles: 3
     - path: artifacts/test
       md5: b98fddfe57c20c4de06747a5ecd79bf6.dir
@@ -476,7 +476,7 @@ stages:
       size: 712774465
       nfiles: 6651
     - path: gloves/classifier.py
-      md5: 1871d95a2307741308087d3b7a4af18d
+      md5: 321e81f2d2bacf30c6b9b0f6d87351a2
       size: 6629
     params:
       params.yaml:
@@ -486,19 +486,19 @@ stages:
           verbose: 1
     outs:
     - path: artifacts/models/gloves_frozen
-      md5: 3f98d535c0043c80aa6bee025db7a261.dir
-      size: 9370854
+      md5: 8be43bffa26d09119b80b065e3a96253.dir
+      size: 21910155
       nfiles: 3
     - path: artifacts/models/gloves_frozen_label_encoder.joblib
       md5: 04389aba6461b8869ba4c8f267b430bd
       size: 1338
     - path: logs/gloves_frozen
-      md5: a07a7fb40248b4190e1f4ad075a58c10.dir
-      size: 17323
+      md5: 9bf7b7a574b656994bd0469bc9d60ab7.dir
+      size: 17340
       nfiles: 11
     - path: logs/gloves_frozen.json
-      md5: 3361246c17c980892c3b71a31d89844a
-      size: 352
+      md5: ba951fb70db2988c034905170cca858f
+      size: 338
   classifiers@imagenet_frozen:
     cmd: "python gloves/classifier.py --encoder-model-path artifacts/models/siamese_distance/encoder\
       \ --train-dir artifacts/train --test-dir artifacts/test --param-path params.yaml\
@@ -507,8 +507,8 @@ stages:
       \ --out-metrics-path logs/imagenet_frozen --use-imagenet true --is-frozen true\n"
     deps:
     - path: artifacts/models/siamese_distance/encoder
-      md5: e230fd58291903b36af747803ed1a33c.dir
-      size: 8485733
+      md5: f343b01797a600a056198836aaed1d11.dir
+      size: 20976243
       nfiles: 3
     - path: artifacts/test
       md5: b98fddfe57c20c4de06747a5ecd79bf6.dir
@@ -519,7 +519,7 @@ stages:
       size: 712774465
       nfiles: 6651
     - path: gloves/classifier.py
-      md5: 1871d95a2307741308087d3b7a4af18d
+      md5: 321e81f2d2bacf30c6b9b0f6d87351a2
       size: 6629
     params:
       params.yaml:
@@ -529,19 +529,19 @@ stages:
           verbose: 1
     outs:
     - path: artifacts/models/imagenet_frozen
-      md5: c221902b39e4cd54da3dec2625e0c98b.dir
-      size: 123837275
+      md5: dfee141f8fc61d444aefd30274975c62.dir
+      size: 123839011
       nfiles: 3
     - path: artifacts/models/imagenet_frozen_label_encoder.joblib
       md5: 04389aba6461b8869ba4c8f267b430bd
       size: 1338
     - path: logs/imagenet_frozen
-      md5: 1b9a7f9f1031bba0b71625b4a01be653.dir
-      size: 34018
+      md5: 58750bac00ecdecf99dc8eaafbee4cd1.dir
+      size: 17110
       nfiles: 11
     - path: logs/imagenet_frozen.json
-      md5: 99bb23d5c93eac5ad19aff6af0003160
-      size: 294
+      md5: 54a7053df491f8e825d46fe26ae4c008
+      size: 293
   classifiers@gloves_unfrozen:
     cmd: "python gloves/classifier.py --encoder-model-path artifacts/models/siamese_distance/encoder\
       \ --train-dir artifacts/train --test-dir artifacts/test --param-path params.yaml\
@@ -550,8 +550,8 @@ stages:
       \ --out-metrics-path logs/gloves_unfrozen --use-imagenet false --is-frozen false\n"
     deps:
     - path: artifacts/models/siamese_distance/encoder
-      md5: e230fd58291903b36af747803ed1a33c.dir
-      size: 8485733
+      md5: f343b01797a600a056198836aaed1d11.dir
+      size: 20976243
       nfiles: 3
     - path: artifacts/test
       md5: b98fddfe57c20c4de06747a5ecd79bf6.dir
@@ -562,7 +562,7 @@ stages:
       size: 712774465
       nfiles: 6651
     - path: gloves/classifier.py
-      md5: 1871d95a2307741308087d3b7a4af18d
+      md5: 321e81f2d2bacf30c6b9b0f6d87351a2
       size: 6629
     params:
       params.yaml:
@@ -572,16 +572,16 @@ stages:
           verbose: 1
     outs:
     - path: artifacts/models/gloves_unfrozen
-      md5: 93fb71b6f2de9c76b4d8fd4b752144cc.dir
-      size: 23323732
+      md5: bc496f6288d2f7b7ec94957b18c2301b.dir
+      size: 62102761
       nfiles: 3
     - path: artifacts/models/gloves_unfrozen_label_encoder.joblib
       md5: 04389aba6461b8869ba4c8f267b430bd
       size: 1338
     - path: logs/gloves_unfrozen
-      md5: 1400dc4d9316d2314a992d1e06bde60f.dir
-      size: 29587
+      md5: 80fb39e81a55e96cfa8e1c9d86f846b2.dir
+      size: 27552
       nfiles: 11
     - path: logs/gloves_unfrozen.json
-      md5: ab0089083a4b6680ced60bbee43334ca
-      size: 348
+      md5: 0f162660a66e7322764e8188236ac578
+      size: 350

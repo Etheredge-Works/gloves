@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.applications.resnet_v2 import ResNet50V2 as pre_trained_model
-from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda, BatchNormalization, ReLU, Add, AveragePooling2D, GlobalAveragePooling2D
+from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda, BatchNormalization, ReLU, Add, AveragePooling2D, GlobalAveragePooling2D, Softmax
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
 import numpy as np
@@ -129,7 +129,7 @@ def sigmoid_model(input_shape):
     )(x)
     return Model(inputs=(input1, input2), outputs=y_pred, name='sigmoid_model')
 
-#@log_model
+
 def softmax_model(input_shape, label_count, 
             dense_nodes: list = [],
             activation='relu',
@@ -140,15 +140,11 @@ def softmax_model(input_shape, label_count,
     for node_count in dense_nodes:
         x = Dense(node_count, activation=activation)(x)
         x = Dropout(dropout_rate)(x)
-    y_pred = Dense(label_count, activation='softmax', 
-            dtype='float32',
-            #kernel_initializer=weight_init(), 
-            #bias_initializer=bia_init(), 
-            #kernel_regularizer=reg(),
-    )(x)
-    return Model(inputs=input1, outputs=y_pred, name='softmax_model')
+    x = Dense(label_count, dtype='float32')(x)
+    x = Softmax(dtype='float32')(x)
+    return Model(inputs=input1, outputs=x, name='softmax_model')
 
-#@log_model
+
 def build_imagenet_encoder(input_shape, dense_layers, 
             dense_nodes, latent_nodes, 
             dropout_rate, activation, final_activation, pooling=None):
@@ -251,23 +247,23 @@ def build_custom_encoder(
     # semi from resnet https://arxiv.org/pdf/1512.03385.pdf
     x = Conv2D(kernel_size=7,
                strides=2,
-               filters=32,
+               filters=64,
                kernel_regularizer=reg(conv_reg_rate),
                use_bias=False,
                padding="same")(x)
     x = ReLU()(BatchNormalization()(x))
     x = MaxPool2D(pool_size=3, strides=2, padding='same')(x)
 
-    x = block(x, 32, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    x = block(x, 32, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-
-    x = block(x, 64, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 32, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 32, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
     x = block(x, 128, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    x = block(x, 128, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
     x = block(x, 256, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    #x = block(x, 128, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+
+    x = block(x, 512, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
     # TODO why didn't this work well? lack of sigmoid? not expressive enough?
     #x = block(x, latent_nodes, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
