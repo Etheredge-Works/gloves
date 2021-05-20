@@ -152,7 +152,7 @@ with st.beta_expander("2. Encoder Applied Demos"):
         st.image(image, caption="Uploaded Image.", use_column_width=True)
     n = st.number_input("Top Labels to get", value=5, max_value=34, step=1)
 
-    cols = st.beta_columns(2)
+    multi_cols = st.beta_columns(2)
 
     if image is not None:
         data = utils.simple_decode(image.read())
@@ -165,8 +165,8 @@ with st.beta_expander("2. Encoder Applied Demos"):
                 "Breed": predictions[:n],
                 "Confidence": y_hat[sorted_predictions[:n]]})
             
-        cols[idx%2].write(name)
-        cols[idx%2].dataframe(df)
+            multi_cols[idx%2].write(name)
+            multi_cols[idx%2].dataframe(df)
     
 
     st.write("""
