@@ -11,7 +11,7 @@ scikit_learn
 siamese==0.0.35
 dvclive==0.0.2
 dvc==2.1.0
-boto3==1.17.72
+boto3
 tensorflow_addons==0.11.0
 tensorflow==2.4.1
 pathlib
