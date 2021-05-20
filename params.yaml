@@ -110,5 +110,5 @@ classifier_types:
 classifier:
   # hypers
   batch_size: 32
-  epochs: 10
+  epochs: 1000
   verbose: 1
