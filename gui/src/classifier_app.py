@@ -36,7 +36,6 @@ There are 2 sections.
     - This is done by comparing the pretrained and encoder vs imagnet models 
 
 """)
-@st.cache(allow_output_mutation=True)
 def load_model_gloves(mlflow_model_name='gloves', mlflow_model_stage='Production'):
     client = mlflow.tracking.MlflowClient()
     model_version = client.get_latest_versions(name=mlflow_model_name, stages=[mlflow_model_stage])[0]
@@ -119,7 +118,6 @@ with st.beta_expander("1.2: Classifier Model Summary"):
     sub_model.summary(print_fn=st.text)
 
 
-@st.cache(allow_output_mutation=True)
 def load_model(model_name, mlflow_model_stage='Production'):
    client = mlflow.tracking.MlflowClient()
    model_version = client.get_latest_versions(name=f"{model_name}", stages=[mlflow_model_stage])[0]
