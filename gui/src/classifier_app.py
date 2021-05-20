@@ -125,6 +125,14 @@ def load_model(model_name, mlflow_model_stage='Production'):
    
    return model, label_encoder, model_version, rundata
 
+model_names = [
+    "gloves_encoder_frozen",
+    "gloves_encoder_unfrozen",
+    "gloves_imagenet_frozen",
+    "gloves_imagenet_unfrozen",
+]
+models = [(model_name, load_model(model_name)) for model_name in model_names]
+
 
 with st.beta_expander("2. Encoder Applied Demos"):
     st.write("""
@@ -138,14 +146,6 @@ with st.beta_expander("2. Encoder Applied Demos"):
             - Same imagenet but unfrozen
             - Siamese network architecture is used for feature extraction with same dense network architecture but is randomly initialized instead of being frozen. (measures effectivness of network pre-training)
     """)
-
-    model_names = [
-        "gloves_encoder_frozen",
-        "gloves_encoder_unfrozen",
-        "gloves_imagenet_frozen",
-        "gloves_imagenet_unfrozen",
-    ]
-    models = [(model_name, load_model(model_name)) for model_name in model_names]
 
     image = st.file_uploader("Input Image to classify", type="jpg")
     if image is not None:
