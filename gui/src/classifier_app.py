@@ -40,12 +40,13 @@ There are 2 sections.
 def load_model_gloves(mlflow_model_name='gloves', mlflow_model_stage='Production'):
     client = mlflow.tracking.MlflowClient()
     model_version = client.get_latest_versions(name=mlflow_model_name, stages=[mlflow_model_stage])[0]
+    rundata = client.get_run(model_version.run_id)
     model_path = client.download_artifacts(model_version.run_id, 'model', dst_path='/tmp/')
     model_summary_path = client.download_artifacts(model_version.run_id, 'model_summary.txt', dst_path='/tmp/')
     model = tf.keras.models.load_model(model_path)
     with open(model_summary_path) as f:
         summary = f.read()
-    return model, model_version, summary
+    return model, model_version, summary, rundata.data.metrics
 
 def predict(model, anchor, others):
     # TODO could optimize like I did for nway, but that's too much work right now
@@ -54,8 +55,8 @@ def predict(model, anchor, others):
     others = np.stack(others)
     return model.predict([anchors, others])
 
-
-model, model_version, summary = load_model_gloves()
+model, model_version, summary, metrics = load_model_gloves()
+cls_model, cls_model_version, cls_summary, cls_metrics = load_model_gloves('gloves-classifier')
 with st.beta_expander("1. Distances and Classification"):
     # TODO dynamically pull from a medium artical with information in it
     st.write("""
@@ -65,29 +66,15 @@ with st.beta_expander("1. Distances and Classification"):
     Input 1 or more other images to see predicting distances and predicted matching percentage.
     """)
 
-    cls_model, cls_model_version, cls_summary = load_model_gloves('gloves-classifier')
-    st.write(f"""
-    ### Distance Model Information
-    | Model Creation Date |  Model Version |
-    | :-------: | :---: |
-    | {datetime.datetime.fromtimestamp(float(model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {model_version.version} |
-
-    ### Classifier Model Information
-    | Model Creation Date |  Model Version |
-    | :-------: | :---: |
-    | {datetime.datetime.fromtimestamp(float(model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {model_version.version} |
-
-    """)
-
     anchor_file = st.file_uploader("Input an Image to use an anchor image", type="jpg",)
     if anchor_file is not None:
         st.image(anchor_file, caption="Uploaded Anchor Image.", use_column_width=True)
 
     other_files = st.file_uploader("Input Images to compare to Anchor Image", accept_multiple_files=True, type="jpg")
     if other_files is not None:
-        cols = st.beta_columns(4)
+        cols_1 = st.beta_columns(4)
         for idx, file in enumerate(other_files):
-            cols[idx%4].image(file, caption=file.name, use_column_width=True)
+            cols_1[idx%4].image(file, caption=file.name, use_column_width=True)
 
     if anchor_file and other_files:
         cleaned_anchor = utils.simple_decode(anchor_file.read())
@@ -97,19 +84,40 @@ with st.beta_expander("1. Distances and Classification"):
         dist_prediction_values = predict(model, cleaned_anchor, cleaned_others)
         cls_prediction_values = predict(cls_model, cleaned_anchor, cleaned_others)
         st.write("## Distances")
-        cols = st.beta_columns(4)
+        cols_2 = st.beta_columns(4)
         for idx, (file, predictions, matches) in enumerate(zip(other_files, dist_prediction_values, cls_prediction_values)):
             dist = predictions[0]
             y_hat = matches[0]
-            cols[idx%4].image(file, caption=f"Dist: {dist}    match: {y_hat}", use_column_width=True)
+            cols_2[idx%4].image(file, caption=f"Dist: {dist}    match: {y_hat}", use_column_width=True)
 
-with st.beta_expander("1.1: Model Summary"):
+with st.beta_expander("1.1: Distance Model Summary"):
+    st.write(f"""
+    ### Distance Model Information
+    | Model Creation Date |  Model Version |
+    | :-------: | :---: |
+    | {datetime.datetime.fromtimestamp(float(model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {model_version.version} |
+    """)
+    st.write(metrics)
     st.write("## Model Summary")
     model.summary(print_fn=st.text)
     sub_model = [layer for layer in model.layers if layer.name == 'model'][0]
     st.write("## Sub Model Summary (duplicated siamese network / latent encoder)")
     sub_model.summary(print_fn=st.text)
-    st.write(model)
+
+with st.beta_expander("1.2: Classifier Model Summary"):
+    st.write(f"""
+        ### Classifier Model Information
+        | Model Creation Date |  Model Version |
+        | :-------: | :---: |
+        | {datetime.datetime.fromtimestamp(float(cls_model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {cls_model_version.version} |
+    """)
+    st.write(cls_metrics)
+    st.write("## Model Summary")
+    cls_model.summary(print_fn=st.text)
+    sub_model = [layer for layer in cls_model.layers if layer.name == 'model'][0]
+    st.write("## Sub Model Summary (duplicated siamese network / latent encoder)")
+    sub_model.summary(print_fn=st.text)
+
 
 @st.cache(allow_output_mutation=True)
 def load_model(model_name, mlflow_model_stage='Production'):
