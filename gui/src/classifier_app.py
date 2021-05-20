@@ -27,14 +27,13 @@ This is a demo site for my Siamese Network experiments in image comparisons. All
 
 While results perform great on the Oxford pet dataset, not much testing has been done on other datasets. What little testing has been done is not promising. So don't expect great results!
 
-There are 3 sections.
+There are 2 sections.
 
 1. Distances and Classifications
     - User entered images are compared
 2. Encoder Applied Demo
     - Demos applying the encoders to classification.
     - This is done by comparing the pretrained and encoder vs imagnet models 
-3. Model Summaries
 
 """)
 @st.cache(allow_output_mutation=True)
@@ -104,23 +103,30 @@ with st.beta_expander("1. Distances and Classification"):
             y_hat = matches[0]
             cols[idx%4].image(file, caption=f"Dist: {dist}    match: {y_hat}", use_column_width=True)
 
+with st.beta_expander("1.1: Model Summary"):
+    st.write("## Model Summary")
+    model.summary(print_fn=st.text)
+    sub_model = [layer for layer in model.layers if layer.name == 'model'][0]
+    st.write("## Sub Model Summary (duplicated siamese network / latent encoder)")
+    sub_model.summary(print_fn=st.text)
+    st.write(model)
 
 @st.cache(allow_output_mutation=True)
 def load_model(model_name, mlflow_model_stage='Production'):
    client = mlflow.tracking.MlflowClient()
-   model_version = client.get_latest_versions(name=f"gloves_{model_name}", stages=[mlflow_model_stage])[0]
+   model_version = client.get_latest_versions(name=f"{model_name}", stages=[mlflow_model_stage])[0]
    rundata = client.get_run(model_version.run_id)
-   parent_id = rundata.data.tags['mlflow.parentRunId']
+   #parent_id = rundata.data.tags['mlflow.parentRunId']
    model_path = client.download_artifacts(model_version.run_id, model_name, dst_path='/tmp/')
-   model = tf.keras.models.load_model(f"{model_path}/data/model.h5")
+   model = tf.keras.models.load_model(f"{model_path}")
 
-   label_encoder_path = client.download_artifacts(model_version.run_id, 'label_encoder', dst_path='/tmp/')
+   label_encoder_path = client.download_artifacts(model_version.run_id, f'{model_name}_label_encoder.joblib', dst_path='/tmp/')
    label_encoder = joblib.load(label_encoder_path)
    
    return model, label_encoder, model_version, rundata
 
 
-with st.beta_expander("Encoder Applied Demos"):
+with st.beta_expander("2. Encoder Applied Demos"):
     st.write("""
         This page demonstrates the effectiveness of the current siamese network encoder applied to feature extraction for pet breed classifiction on the Oxford pet dataset. 
         Process: 
@@ -134,10 +140,10 @@ with st.beta_expander("Encoder Applied Demos"):
     """)
 
     model_names = [
-    "encoder_frozen",
-    "encoder_unfrozen",
-    "imagenet_frozen",
-    "imagenet_unfrozen",
+        "gloves_encoder_frozen",
+        "gloves_encoder_unfrozen",
+        "gloves_imagenet_frozen",
+        "gloves_imagenet_unfrozen",
     ]
     models = [(model_name, load_model(model_name)) for model_name in model_names]
 
@@ -148,7 +154,6 @@ with st.beta_expander("Encoder Applied Demos"):
 
     cols = st.beta_columns(2)
 
-    st.write("# Appendix")
     if image is not None:
         data = utils.simple_decode(image.read())
         for idx, (name, (model, le, model_version, rundata)) in enumerate(models):
@@ -163,19 +168,9 @@ with st.beta_expander("Encoder Applied Demos"):
         cols[idx%2].write(name)
         cols[idx%2].dataframe(df)
     
-    for idx, (name, (model, le, model_version, rundata)) in enumerate(models):
-        with st.beta_expander(f"{name} model info"):
-            st.write(f"""
-                | Model Creation Date |  Model Version |
-                | :-------: | :---: |
-                | {datetime.datetime.fromtimestamp(float(model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {model_version.version} |
-            """)
-            st.write(rundata.data.metrics)
-            st.write("## Summary")
-            model.summary(print_fn=st.text)
-    
+
     st.write("""
-    # General Notes/TODOs
+    ### General Notes/TODOs
     - Validation accuracy isn't perfect as there's a chance validation samples were leaked during training of siamese network
     - K fold (or another variant) of cross-validation is needed. Currently that's non-trivial to implement using tf.data.Dataset.
     - maybe don't use tf.data.Dataset.
@@ -185,12 +180,14 @@ with st.beta_expander("Encoder Applied Demos"):
     """)
 
     #st.text(prediction_value)
-    #st.help(prediction_value)
-
-with st.beta_expander("Model Summary"):
-    st.write("## Model Summary")
-    model.summary(print_fn=st.text)
-    sub_model = [layer for layer in model.layers if layer.name == 'model'][0]
-    st.write("## Sub Model Summary (duplicated siamese network / latent encoder)")
-    sub_model.summary(print_fn=st.text)
-    st.write(model)
+for idx, (name, (model, le, model_version, rundata)) in enumerate(models):
+    with st.beta_expander(f"2.{idx+1}: {name} model info"):
+        st.write(f"""
+            | Model Creation Date |  Model Version |
+            | :-------: | :---: |
+            | {datetime.datetime.fromtimestamp(float(model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {model_version.version} |
+        """)
+        st.write(rundata.data.metrics)
+        st.write("## Summary")
+        model.summary(print_fn=st.text)
+#st.help(prediction_value)
