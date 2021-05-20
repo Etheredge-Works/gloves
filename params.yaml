@@ -79,29 +79,29 @@ classifier_src: gloves/classifier.py
 
 classifier_types:
   imagenet_frozen:
-    out_model_path: artifacts/models/imagenet_frozen
-    out_label_encoder: artifacts/models/imagenet_frozen_label_encoder.joblib
+    out_model_path: artifacts/models/gloves_imagenet_frozen
+    out_label_encoder: artifacts/models/gloves_imagenet_frozen_label_encoder.joblib
     out_metrics_path: logs/imagenet_frozen
     out_summaries_path: logs/imagenet_frozen_summaries
     use_imagenet: true
     is_frozen: true
   imagenet_unfrozen:
-    out_model_path: artifacts/models/imagenet_unfrozen
-    out_label_encoder: artifacts/models/imagenet_unfrozen_label_encoder.joblib
+    out_model_path: artifacts/models/gloves_imagenet_unfrozen
+    out_label_encoder: artifacts/models/gloves_imagenet_unfrozen_label_encoder.joblib
     out_metrics_path: logs/imagenet_unfrozen
     out_summaries_path: logs/imagenet_unfrozen_summaries
     use_imagenet: true
     is_frozen: false
   gloves_frozen:
-    out_model_path: artifacts/models/gloves_frozen
-    out_label_encoder: artifacts/models/gloves_frozen_label_encoder.joblib
+    out_model_path: artifacts/models/gloves_encoder_frozen
+    out_label_encoder: artifacts/models/gloves_encoder_frozen_label_encoder.joblib
     out_metrics_path: logs/gloves_frozen
     out_summaries_path: logs/gloves_frozen_summaries
     use_imagenet: false
     is_frozen: true
   gloves_unfrozen:
-    out_model_path: artifacts/models/gloves_unfrozen
-    out_label_encoder: artifacts/models/gloves_unfrozen_label_encoder.joblib
+    out_model_path: artifacts/models/gloves_encoder_unfrozen
+    out_label_encoder: artifacts/models/gloves_encoder_unfrozen_label_encoder.joblib
     out_metrics_path: logs/gloves_unfrozen
     out_summaries_path: logs/gloves_unfrozen_summaries
     use_imagenet: false
@@ -110,5 +110,5 @@ classifier_types:
 classifier:
   # hypers
   batch_size: 32
-  epochs: 1000
+  epochs: 10
   verbose: 1
