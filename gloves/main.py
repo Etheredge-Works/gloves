@@ -337,9 +337,9 @@ def main(
         sigmoid_head: bool,
 ):
     if sigmoid_head:
-        mlflow.set_experiment("siamese-distance")
-    else:
         mlflow.set_experiment("siamese-sigmoid")
+    else:
+        mlflow.set_experiment("siamese-distance")
     mlflow.tensorflow.autolog(every_n_iter=1)
 
     dvclive.init(out_metrics_path, summary=True, html=True)

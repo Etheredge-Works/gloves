@@ -143,7 +143,7 @@ def train(
         mlflow.tensorflow.autolog(every_n_iter=1, log_models=False)
         mlflow.log_artifact(out_label_encoder_path)
 
-        head = softmax_model(model.output_shape[1:], label_count, dense_nodes=[1024], dropout_rate=0.2)
+        head = softmax_model(model.output_shape[1:], label_count, dense_nodes=[256], dropout_rate=0.5)
         classifier = tf.keras.Model(inputs=model.inputs, outputs=head(model.outputs))
         classifier.compile(optimizer='adam', loss=tf.keras.losses.CategoricalCrossentropy(), 
                 metrics=['acc', tf.keras.metrics.Precision(name='precision'), tf.keras.metrics.Recall(name='recall'), tf.keras.metrics.AUC(name='auc')])
@@ -157,6 +157,7 @@ def train(
                 EarlyStopping(monitor='val_loss', patience=40, verbose=1, restore_best_weights=True)])
 
         classifier.save(out_model_path, save_format='tf')
+        mlflow.log_artifact(out_model_path)
 
 if __name__ == "__main__":
     main()
