@@ -9,7 +9,7 @@ from tensorflow.keras.layers import Flatten, Dense
 from models import softmax_model
 from utils import read_decode, random_read_decode
 from siamese.data import get_labels_from_filenames
-from tensorflow.keras.applications.resnet_v2 import ResNet50V2 as pre_trained_model
+from tensorflow.keras.applications import MobileNet as pre_trained_model
 import os
 from icecream import ic
 from sklearn import preprocessing

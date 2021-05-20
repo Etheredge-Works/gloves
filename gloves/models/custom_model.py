@@ -237,7 +237,7 @@ def build_custom_encoder(
     # semi from resnet https://arxiv.org/pdf/1512.03385.pdf
     x = Conv2D(kernel_size=7,
                strides=2,
-               filters=64,
+               filters=32,
                kernel_regularizer=reg(conv_reg_rate),
                use_bias=False,
                padding="same")(x)
@@ -247,13 +247,13 @@ def build_custom_encoder(
     #x = block(x, 32, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
     #x = block(x, 32, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
-    x = block(x, 128, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    x = block(x, 64, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
     #x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
-    x = block(x, 256, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    x = block(x, 128, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
     #x = block(x, 128, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
-    x = block(x, 512, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    x = block(x, 256, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
     # TODO why didn't this work well? lack of sigmoid? not expressive enough?
     #x = block(x, latent_nodes, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
