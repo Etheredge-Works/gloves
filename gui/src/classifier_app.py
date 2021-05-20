@@ -133,7 +133,6 @@ with st.beta_expander("Encoder Applied Demos"):
             - Siamese network architecture is used for feature extraction with same dense network architecture but is randomly initialized instead of being frozen. (measures effectivness of network pre-training)
     """)
 
-'''
     model_names = [
     "encoder_frozen",
     "encoder_unfrozen",
@@ -187,7 +186,7 @@ with st.beta_expander("Encoder Applied Demos"):
 
     #st.text(prediction_value)
     #st.help(prediction_value)
-'''
+
 with st.beta_expander("Model Summary"):
     st.write("## Model Summary")
     model.summary(print_fn=st.text)

@@ -140,7 +140,7 @@ def train(
 
     dvclive.init(out_metric_path)
     with mlflow.start_run():
-        mlflow.tensorflow.autolog(every_n_iter=1, log_models=False)
+        mlflow.tensorflow.autolog(every_n_iter=1)
         mlflow.log_artifact(out_label_encoder_path)
 
         head = softmax_model(model.output_shape[1:], label_count, dense_nodes=[256], dropout_rate=0.5)
