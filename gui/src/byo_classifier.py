@@ -55,6 +55,7 @@ def predict(model, anchor, others):
 
 
 model, model_version, summary = load_model()
+cls_model, cls_model_version, cls_summary = load_model('gloves-classifier')
 #st.write(f"{summary}")
 #st.write(f"{len(summary)}")
 
@@ -64,7 +65,12 @@ model, model_version, summary = load_model()
    #('Model Version', model_version.version)
 #))
 st.write(f"""
-   ### Model Information
+   ### Distance Model Information
+   | Model Creation Date |  Model Version |
+   | :-------: | :---: |
+   | {datetime.datetime.fromtimestamp(float(model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {model_version.version} |
+
+   ### Classifier Model Information
    | Model Creation Date |  Model Version |
    | :-------: | :---: |
    | {datetime.datetime.fromtimestamp(float(model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {model_version.version} |

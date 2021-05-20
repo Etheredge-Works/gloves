@@ -38,7 +38,7 @@ import os
 
 
 @st.cache(allow_output_mutation=True)
-def load_model(mlflow_model_name='gloves', mlflow_model_stage='Production'):
+def load_model(mlflow_model_name, mlflow_model_stage='Production'):
    client = mlflow.tracking.MlflowClient()
    model_version = client.get_latest_versions(name=mlflow_model_name, stages=[mlflow_model_stage])[0]
    model_artifact = client.download_artifacts(model_version.run_id, 'model', dst_path='/tmp/')
@@ -47,11 +47,14 @@ def load_model(mlflow_model_name='gloves', mlflow_model_stage='Production'):
 
 
 # TODO why does st.cache cause incorecct prediction returns?
-def predict(model, anchor, other):
+def dist_predict(model, anchor, other):
    return model.predict([np.expand_dims(anchor, axis=0), np.expand_dims(other, axis=0)])[0][0]
 
+#def class_predict(model, anchor, other):
+   #return model.predict([np.expand_dims(anchor, axis=0), np.expand_dims(other, axis=0)])[0][0]
 
-model, model_version = load_model()
+dist_model, dist_model_version = load_model('gloves')
+clas_model, clas_model_version = load_model('gloves-classifier')
 
 #st.table((
    #('Creation Date',
@@ -59,10 +62,15 @@ model, model_version = load_model()
    #('Model Version', model_version.version)
 #))
 st.write(f"""
-   ### Model Information
+   ### Distance Model Information
    | Model Creation Date |  Model Version |
    | :-------: | :---: |
-   | {datetime.datetime.fromtimestamp(float(model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {model_version.version} |
+   | {datetime.datetime.fromtimestamp(float(clas_model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {clas_model_version.version} |
+
+   ### Classifier Model Information
+   | Model Creation Date |  Model Version |
+   | :-------: | :---: |
+   | {datetime.datetime.fromtimestamp(float(clas_model_version.creation_timestamp/1000)).strftime('%Y-%m-%d %H:%M:%S.%f')} | {clas_model_version.version} |
 
 """)
 
@@ -90,9 +98,9 @@ if anchor_file and other_file_1 and other_file_2:
 
    st.write("Predicting on images..")
    # TODO pass all at once
-   prediction_value_1 = predict(model, cleaned_anchor, cleaned_other_1)
-   prediction_value_2 = predict(model, cleaned_anchor, cleaned_other_2)
-   prediction_value_3 = predict(model, cleaned_other_1, cleaned_other_2)
+   prediction_value_1 = predict(dist_model, cleaned_anchor, cleaned_other_1)
+   prediction_value_2 = predict(distmodel, cleaned_anchor, cleaned_other_2)
+   prediction_value_3 = predict(dist_model, cleaned_other_1, cleaned_other_2)
    st.write("Done.")
    col1, col2 = st.beta_columns(2)
    if prediction_value_1 < prediction_value_2:

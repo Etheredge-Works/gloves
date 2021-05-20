@@ -21,18 +21,20 @@ import datetime
 #model = custom_model.get_model()
 
 st.title("""
-Pet Breed Classifier
+Siamese Network Exploration
 
 This is a demo site for my Siamese Network experiments in image comparisons. All models were trained using the Oxford pet dataset.
 
 While results perform great on the Oxford pet dataset, not much testing has been done on other datasets. What little testing has been done is not promising. So don't expect great results!
 
-There are X sections.
+There are 3 sections.
 
-1. This
-3. Encoder Applied Demo
+1. Distances and Classifications
+    - User entered images are compared
+2. Encoder Applied Demo
     - Demos applying the encoders to classification.
     - This is done by comparing the pretrained and encoder vs imagnet models 
+3. Model Summaries
 
 """)
 @st.cache(allow_output_mutation=True)
@@ -46,7 +48,6 @@ def load_model_gloves(mlflow_model_name='gloves', mlflow_model_stage='Production
         summary = f.read()
     return model, model_version, summary
 
-@st.cache()
 def predict(model, anchor, others):
     # TODO could optimize like I did for nway, but that's too much work right now
     anchors = np.stack([anchor for _ in others])
@@ -55,16 +56,16 @@ def predict(model, anchor, others):
     return model.predict([anchors, others])
 
 
+model, model_version, summary = load_model_gloves()
 with st.beta_expander("1. Distances and Classification"):
     # TODO dynamically pull from a medium artical with information in it
     st.write("""
     ## How to use
     Input an anchor image of the animal type you want to classifer (best on dog/cat breeds).
     \n
-    Input 1 or more other images to see predicting distances and predicted matching.
+    Input 1 or more other images to see predicting distances and predicted matching percentage.
     """)
 
-    model, model_version, summary = load_model_gloves()
     cls_model, cls_model_version, cls_summary = load_model_gloves('gloves-classifier')
     st.write(f"""
     ### Distance Model Information
@@ -98,21 +99,10 @@ with st.beta_expander("1. Distances and Classification"):
         cls_prediction_values = predict(cls_model, cleaned_anchor, cleaned_others)
         st.write("## Distances")
         cols = st.beta_columns(4)
-        for idx, (file, predictions) in enumerate(zip(other_files, dist_prediction_values)):
-            cols[idx%4].image(file, caption=str(*predictions), use_column_width=True)
-
-        cols = st.beta_columns(4)
         for idx, (file, predictions, matches) in enumerate(zip(other_files, dist_prediction_values, cls_prediction_values)):
             dist = predictions[0]
             y_hat = matches[0]
-            cols[idx%4].image(file, caption=f"Dist: {dist}\nmatch: {y_hat}", use_column_width=True)
-
-    st.write("## Model Summary")
-    model.summary(print_fn=st.text)
-    sub_model = [layer for layer in model.layers if layer.name == 'model'][0]
-    st.write("## Sub Model Summary (duplicated siamese network / latent encoder)")
-    sub_model.summary(print_fn=st.text)
-    st.write(model)
+            cols[idx%4].image(file, caption=f"Dist: {dist}    match: {y_hat}", use_column_width=True)
 
 
 @st.cache(allow_output_mutation=True)
@@ -136,12 +126,14 @@ with st.beta_expander("Encoder Applied Demos"):
         Process: 
 
         1. A siamese network is trained on the Oxford pet dataset to generate encodings that are close in distance for similar breeds.
-        2. The encoder is ripped out and used as feature extractor with a dense network tacke don the end.
-        3. This is compared to two other models. 
-        a. Imagenet feature extractor is used with same dense network architecture tacked on. (how does it compare to a bigger, more general feature extractor)
-        b. Siamese network architecutre is used for feature extraction with same dense network architecture but is randomly initialized instead of being frozen. (measures effectivness of network pre-training)
+        2. The encoder is ripped out and used as feature extractor with a dense network tacked on the end.
+        3. This is compared to Three other models. 
+            - Imagenet feature extractor is used with same dense network architecture tacked on. (how does it compare to a bigger, more general feature extractor)
+            - Same imagenet but unfrozen
+            - Siamese network architecture is used for feature extraction with same dense network architecture but is randomly initialized instead of being frozen. (measures effectivness of network pre-training)
     """)
 
+'''
     model_names = [
     "encoder_frozen",
     "encoder_unfrozen",
@@ -195,3 +187,11 @@ with st.beta_expander("Encoder Applied Demos"):
 
     #st.text(prediction_value)
     #st.help(prediction_value)
+'''
+with st.beta_expander("Model Summary"):
+    st.write("## Model Summary")
+    model.summary(print_fn=st.text)
+    sub_model = [layer for layer in model.layers if layer.name == 'model'][0]
+    st.write("## Sub Model Summary (duplicated siamese network / latent encoder)")
+    sub_model.summary(print_fn=st.text)
+    st.write(model)
