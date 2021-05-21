@@ -60,7 +60,7 @@ siamese:
   activation: sigmoid
   latent_nodes: 32
   dropout_rate: 0.0
-  final_activation: sigmoid
+  final_activation: linear
   lr: 0.0001
   optimizer: adam
   epochs: 1000
