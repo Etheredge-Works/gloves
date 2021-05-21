@@ -58,7 +58,7 @@ siamese:
   dense_reg_rate: 0.001
   conv_reg_rate: 0.0001
   activation: sigmoid
-  latent_nodes: 32
+  latent_nodes: 64
   dropout_rate: 0.0
   final_activation: linear
   lr: 0.0001
