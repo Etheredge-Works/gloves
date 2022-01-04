@@ -8,10 +8,12 @@ Pillow==8.2.0
 pytest==6.2.3
 PyYAML==5.4.1
 scikit_learn
-siamese==0.0.35
+siamese==0.0.38
 dvclive==0.0.2
 dvc==2.1.0
 boto3
 tensorflow_addons==0.13.0
-tensorflow==2.4.1
+tensorflow==2.5.0
 pathlib
+pandas
+pip-tools
