@@ -15,5 +15,3 @@ boto3
 tensorflow_addons==0.13.0
 tensorflow==2.5.0
 pathlib
-pandas
-pip-tools
