@@ -49,16 +49,18 @@ stages:
     foreach: ${siamese_types}
     do:
       cmd: >
-        python ${siamese_src}
-        --train-dir ${out_dir}/${split.train_dir}
-        --test-dir ${out_dir}/${split.test_dir}
+        ${docker_cmd} ${mlflow_env_vars} --gpus all ${gloves_train_image}
+        python gloves/${siamese_src}
+        --train-dir ${docker_out_dir}/${split.train_dir}
+        --test-dir ${docker_out_dir}/${split.test_dir}
         --sigmoid-head ${item.sigmoid_head}
-        --param-path params.yaml
+        --param-path gloves/params.yaml
         --param-parent-key siamese
-        --out-model-path ${item.out_model_path}
-        --out-encoder-path ${item.out_encoder_path}
-        --out-metrics-path ${item.out_metrics_path}
-        --out-summaries-path ${item.out_summaries_path}
+        --out-model-path /gloves/${item.out_model_path}
+        --out-encoder-path /gloves/${item.out_encoder_path}
+        --out-metrics-path /gloves/${item.out_metrics_path}
+        --out-summaries-path /gloves/${item.out_summaries_path}
+     
       params:
         - siamese
       deps:
@@ -82,15 +84,16 @@ stages:
     foreach: ${classifier_types}
     do:
       cmd: >
+        ${docker_cmd} ${mlflow_env_vars} --gpus all ${gloves_train_image}
         python ${classifier_src}
         --encoder-model-path ${siamese_types.distance.out_encoder_path}
-        --train-dir ${out_dir}/${split.train_dir}
-        --test-dir ${out_dir}/${split.test_dir}
+        --train-dir ${docker_out_dir}/${split.train_dir}
+        --test-dir ${docker_out_dir}/${split.test_dir}
         --param-path params.yaml
         --param-parent-key classifier
-        --out-model-path ${item.out_model_path}
-        --out-label-encoder-path ${item.out_label_encoder}
-        --out-metrics-path ${item.out_metrics_path}
+        --out-model-path /gloves/${item.out_model_path}
+        --out-label-encoder-path /gloves/${item.out_label_encoder}
+        --out-metrics-path /gloves/${item.out_metrics_path}
         --use-imagenet ${item.use_imagenet}
         --is-frozen ${item.is_frozen}
       params:

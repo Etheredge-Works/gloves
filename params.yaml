@@ -6,6 +6,15 @@ out_dir: artifacts
 docker_out_dir: /gloves/artifacts
 #docker_cmd: docker run -v /nfs/data/gloves/outputs:/outputs
 docker_cmd: docker run -v ${PWD}:/gloves --user 1000:1000
+mlflow_env_vars: '
+      -e MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} 
+      -e MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME} 
+      -e MLFLOW_TRACKING_PASSWORD=${MLFLOW_TRACKING_PASSWORD}
+      -e MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL}
+      -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      '
+gloves_train_image: etheredgeb/gloves:custom-tensorflow-2.7.0
 
 wget:
   img: etheredgeb/wget_url:latest

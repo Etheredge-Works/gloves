@@ -1,0 +1,6 @@
+gui/
+.dvc/
+.github/
+mlruns/
+pipeline
+scripts/
