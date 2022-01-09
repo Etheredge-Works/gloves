@@ -28,6 +28,9 @@ jobs:
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
           WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
         run: |
+          # TODO add version
+          pip install 'dvc[s3]'
+
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@sigmoid
           dvc repro siamese@sigmoid

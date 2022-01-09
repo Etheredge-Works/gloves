@@ -8,5 +8,5 @@ dvc plots show --show-md
 #echo "\`\`\`html\n" "$(cat siamese_logs.html)" "\n\`\`\`" >> reprort.md
 
 # Visual of encoder model:
-echo "\`\`\`\n" "$(cat logs/distance_siamese_summaires/encoder.txt)" "\n\`\`\`" 
+#echo "\`\`\`\n" "$(cat logs/distance_siamese_summaires/encoder.txt)" "\n\`\`\`" 
 
