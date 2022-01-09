@@ -1,5 +1,5 @@
 FROM tensorflow/tensorflow:2.7.0-gpu
-COPY docker-requirements.txt /tmp/requirements.txt
+COPY requirements.txt /tmp/requirements.txt
 
 # RUN apt update \
 #     && apt install -y git \ 
