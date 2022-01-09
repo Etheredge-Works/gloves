@@ -21,63 +21,43 @@ stages:
       md5: a1ed12d459108b2281f864d1a721635b
       size: 32
   wget:
-    cmd: "docker run -v ${PWD}:/gloves --user 1000:1000 etheredgeb/wget_url:latest\
-      \ https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz /gloves/artifacts/wget\n"
-    params:
-      params.yaml:
-        wget:
-          img: etheredgeb/wget_url:latest
-          data_url: https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz
-          out_dir: wget
+    cmd: "docker run -v ${PWD}:/app/gloves --user 1000:1000 etheredgeb/wget_url:latest\
+      \ https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz /app/gloves/artifacts/wget\n"
     outs:
     - path: artifacts/wget
       md5: dbd763779bfe15e4b6d824cfde1034e0.dir
       size: 791918971
       nfiles: 1
   untar:
-    cmd: "docker run -v ${PWD}:/gloves --user 1000:1000 etheredgeb/untar_data:latest\
-      \ xzvf  /gloves/artifacts/untar  /gloves/artifacts/wget images.tar.gz\n"
+    cmd: "docker run -v ${PWD}:/app/gloves --user 1000:1000 etheredgeb/untar_data:latest\
+      \ xzvf  /app/gloves/artifacts/untar  /app/gloves/artifacts/wget images.tar.gz\n"
     deps:
     - path: artifacts/wget
       md5: dbd763779bfe15e4b6d824cfde1034e0.dir
       size: 791918971
       nfiles: 1
-    params:
-      params.yaml:
-        untar:
-          img: etheredgeb/untar_data:latest
-          tar_args: xzvf
-          data_dir: untar
-          tar_file_name: images.tar.gz
-        wget.out_dir: wget
     outs:
     - path: artifacts/untar
       md5: 277f608c70d7bd7991e0cd5f5cc845c6.dir
       size: 796502375
       nfiles: 7393
   clean:
-    cmd: "docker run -v ${PWD}:/gloves --user 1000:1000 etheredgeb/clean_oxford_pet_data:latest\
-      \ --data_dir /gloves/artifacts/untar --cleaned_dir_name /gloves/artifacts/clean\n"
+    cmd: "docker run -v ${PWD}:/app/gloves --user 1000:1000 etheredgeb/clean_oxford_pet_data:latest\
+      \ --data_dir /app/gloves/artifacts/untar --cleaned_dir_name /app/gloves/artifacts/clean\n"
     deps:
     - path: artifacts/untar
       md5: 277f608c70d7bd7991e0cd5f5cc845c6.dir
       size: 796502375
       nfiles: 7393
-    params:
-      params.yaml:
-        clean:
-          img: etheredgeb/clean_oxford_pet_data:latest
-          out_dir: clean
-        untar.data_dir: untar
     outs:
     - path: artifacts/clean
       md5: 4cd0b23585aa4eaa63096ca693c28879.dir
       size: 790897339
       nfiles: 7390
   split:
-    cmd: "docker run -v ${PWD}:/gloves --user 1000:1000 etheredgeb/split_oxford_pet_data:latest\
-      \ --data-dir /gloves/artifacts/clean --train-dir /gloves/artifacts/train --test-dir\
-      \ /gloves/artifacts/test --ratio 0.1 --by-label False\n"
+    cmd: "docker run -v ${PWD}:/app/gloves --user 1000:1000 etheredgeb/split_oxford_pet_data:latest\
+      \ --data-dir /app/gloves/artifacts/clean --train-dir /app/gloves/artifacts/train\
+      \ --test-dir /app/gloves/artifacts/test --ratio 0.1 --by-label False\n"
     deps:
     - path: artifacts/clean
       md5: 4cd0b23585aa4eaa63096ca693c28879.dir
@@ -88,12 +68,12 @@ stages:
         split.ratio: 0.1
     outs:
     - path: artifacts/test
-      md5: b98fddfe57c20c4de06747a5ecd79bf6.dir
-      size: 78122874
+      md5: b4837ae96a2ca3976e9c5c776d4b557d.dir
+      size: 79015432
       nfiles: 739
     - path: artifacts/train
-      md5: 66d0403084220e6c3c75897280716366.dir
-      size: 712774465
+      md5: cdd147d2867963c98b603c29c31a1042.dir
+      size: 711881907
       nfiles: 6651
   hydra:
     cmd: "docker run -v ${PWD}/artifacts:/outputs --user 1000:1000 --gpus all -e TF_FORCE_GPU_ALLOW_GROWTH=true\
@@ -275,22 +255,28 @@ stages:
       md5: e81d0298ba5c1833c1ebbcd229cfba76
       size: 9554
   siamese@distance:
-    cmd: "python gloves/main.py --train-dir artifacts/train --test-dir artifacts/test\
-      \ --sigmoid-head false --param-path params.yaml --param-parent-key siamese --out-model-path\
-      \ artifacts/models/siamese_distance/model --out-encoder-path artifacts/models/siamese_distance/encoder\
-      \ --out-metrics-path logs/distance_siamese_logs --out-summaries-path logs/distance_siamese_summaries\n"
+    cmd: "docker run -v ${PWD}:/app/gloves --user 1000:1000   -e MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}\
+      \ -e MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME} -e MLFLOW_TRACKING_PASSWORD=${MLFLOW_TRACKING_PASSWORD}\
+      \ -e MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}\
+      \ -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}   -e WANDB_API_KEY=${WANDB_API_KEY}\
+      \  --gpus all  -e TF_FORCE_GPU_ALLOW_GROWTH=true etheredgeb/gloves:custom-tensorflow-2.7.0\
+      \ python gloves/gloves/main.py --train-dir /app/gloves/artifacts/train --test-dir\
+      \ /app/gloves/artifacts/test --sigmoid-head false --param-path gloves/params.yaml\
+      \ --param-parent-key siamese --out-model-path /app/gloves/artifacts/models/siamese_distance/model\
+      \ --out-encoder-path /app/gloves/artifacts/models/siamese_distance/encoder --out-metrics-path\
+      \ /app/gloves/logs/distance_siamese_logs --out-summaries-path /app/gloves/logs/distance_siamese_summaries\n"
     deps:
     - path: artifacts/test
-      md5: b98fddfe57c20c4de06747a5ecd79bf6.dir
-      size: 78122874
+      md5: b4837ae96a2ca3976e9c5c776d4b557d.dir
+      size: 79015432
       nfiles: 739
     - path: artifacts/train
-      md5: 66d0403084220e6c3c75897280716366.dir
-      size: 712774465
+      md5: cdd147d2867963c98b603c29c31a1042.dir
+      size: 711881907
       nfiles: 6651
     - path: gloves/main.py
-      md5: 4cda1541cfeac293c9b9bf0c6e335724
-      size: 12460
+      md5: 779f75ac27a9f238da322f2be1b34b11
+      size: 13762
     - path: gloves/models/custom_model.py
       md5: 74184c53d64a358f3ad592750aea265e
       size: 10801
@@ -312,7 +298,7 @@ stages:
           final_activation: linear
           lr: 0.0001
           optimizer: adam
-          epochs: 1000
+          epochs: 200
           batch_size: 32
           verbose: 0
           eval_freq: 1
@@ -325,41 +311,47 @@ stages:
           use_batch_norm: true
     outs:
     - path: artifacts/models/siamese_distance/encoder
-      md5: 3b2735a0c1814a68420dbb0e6ac288f1.dir
-      size: 6161646
-      nfiles: 3
+      md5: 6f52ae5235e54d650e527dd12eb0e477.dir
+      size: 6133141
+      nfiles: 4
     - path: artifacts/models/siamese_distance/model
-      md5: 96f54c3578b0ecfed9b39d12a402b0af.dir
-      size: 17159543
-      nfiles: 3
+      md5: 57d7d3ffdd14c8359ad6b36106d0c0f6.dir
+      size: 17088523
+      nfiles: 4
     - path: logs/distance_siamese_logs
-      md5: 582bcb0af7bc6f5cdebf22a1f32df226.dir
-      size: 271990
+      md5: fb0e3fda56275373eedd8e9888ab42d1.dir
+      size: 76395
       nfiles: 10
     - path: logs/distance_siamese_logs.json
-      md5: 5be78ffb080d911a0545bdf9754aa424
-      size: 384
+      md5: 1bae638b182c46cf87c98fa413d30e4c
+      size: 431
     - path: logs/distance_siamese_summaries
-      md5: 759f98409efc0ce2f3075dfefc0a8fbf.dir
-      size: 25827
+      md5: a8051d89a99d2c6271dc243c386f8e27.dir
+      size: 31173
       nfiles: 3
   siamese@sigmoid:
-    cmd: "python gloves/main.py --train-dir artifacts/train --test-dir artifacts/test\
-      \ --sigmoid-head true --param-path params.yaml --param-parent-key siamese --out-model-path\
-      \ artifacts/models/siamese_sigmoid/model --out-encoder-path artifacts/models/siamese_sigmoid/encoder\
-      \ --out-metrics-path logs/sigmoid_siamese_logs --out-summaries-path logs/sigmoid_siamese_summaries\n"
+    cmd: "docker run -v ${PWD}:/app/gloves --user 1000:1000   -e MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}\
+      \ -e MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME} -e MLFLOW_TRACKING_PASSWORD=${MLFLOW_TRACKING_PASSWORD}\
+      \ -e MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}\
+      \ -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}   -e WANDB_API_KEY=${WANDB_API_KEY}\
+      \  --gpus all  -e TF_FORCE_GPU_ALLOW_GROWTH=true etheredgeb/gloves:custom-tensorflow-2.7.0\
+      \ python gloves/gloves/main.py --train-dir /app/gloves/artifacts/train --test-dir\
+      \ /app/gloves/artifacts/test --sigmoid-head true --param-path gloves/params.yaml\
+      \ --param-parent-key siamese --out-model-path /app/gloves/artifacts/models/siamese_sigmoid/model\
+      \ --out-encoder-path /app/gloves/artifacts/models/siamese_sigmoid/encoder --out-metrics-path\
+      \ /app/gloves/logs/sigmoid_siamese_logs --out-summaries-path /app/gloves/logs/sigmoid_siamese_summaries\n"
     deps:
     - path: artifacts/test
-      md5: b98fddfe57c20c4de06747a5ecd79bf6.dir
-      size: 78122874
+      md5: b4837ae96a2ca3976e9c5c776d4b557d.dir
+      size: 79015432
       nfiles: 739
     - path: artifacts/train
-      md5: 66d0403084220e6c3c75897280716366.dir
-      size: 712774465
+      md5: cdd147d2867963c98b603c29c31a1042.dir
+      size: 711881907
       nfiles: 6651
     - path: gloves/main.py
-      md5: 4cda1541cfeac293c9b9bf0c6e335724
-      size: 12460
+      md5: 779f75ac27a9f238da322f2be1b34b11
+      size: 13762
     - path: gloves/models/custom_model.py
       md5: 74184c53d64a358f3ad592750aea265e
       size: 10801
@@ -381,7 +373,7 @@ stages:
           final_activation: linear
           lr: 0.0001
           optimizer: adam
-          epochs: 1000
+          epochs: 200
           batch_size: 32
           verbose: 0
           eval_freq: 1
@@ -394,194 +386,219 @@ stages:
           use_batch_norm: true
     outs:
     - path: artifacts/models/siamese_sigmoid/encoder
-      md5: 6a8db3302ee200597ec334981ed830e9.dir
-      size: 6160418
-      nfiles: 3
+      md5: c2ce4faecaf14bdf3becd57afc74e8f5.dir
+      size: 6133141
+      nfiles: 4
     - path: artifacts/models/siamese_sigmoid/model
-      md5: 8f541c94367efadeb36335a2e4d36502.dir
-      size: 17186376
-      nfiles: 3
+      md5: 9ab72595f39f5a1282e2e1833a32bb0e.dir
+      size: 17119547
+      nfiles: 4
     - path: logs/sigmoid_siamese_logs
-      md5: f6e0a27e25b4955ce91142267a328b52.dir
-      size: 57337
+      md5: e1c69dcc386008c1b45523f384cde682.dir
+      size: 21627
       nfiles: 6
     - path: logs/sigmoid_siamese_logs.json
-      md5: 1cac675c20554a3a537ab20e83234b15
-      size: 200
+      md5: 97bfdfd5e604225d99dad8f08b7b4864
+      size: 226
     - path: logs/sigmoid_siamese_summaries
-      md5: 759f98409efc0ce2f3075dfefc0a8fbf.dir
-      size: 25827
+      md5: a8051d89a99d2c6271dc243c386f8e27.dir
+      size: 31173
       nfiles: 3
   classifiers@imagenet_unfrozen:
-    cmd: "python gloves/classifier.py --encoder-model-path artifacts/models/siamese_distance/encoder\
-      \ --train-dir artifacts/train --test-dir artifacts/test --param-path params.yaml\
-      \ --param-parent-key classifier --out-model-path artifacts/models/gloves_imagenet_unfrozen\
-      \ --out-label-encoder-path artifacts/models/gloves_imagenet_unfrozen_label_encoder.joblib\
-      \ --out-metrics-path logs/imagenet_unfrozen --use-imagenet true --is-frozen\
-      \ false\n"
+    cmd: "docker run -v ${PWD}:/app/gloves --user 1000:1000   -e MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}\
+      \ -e MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME} -e MLFLOW_TRACKING_PASSWORD=${MLFLOW_TRACKING_PASSWORD}\
+      \ -e MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}\
+      \ -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}   -e WANDB_API_KEY=${WANDB_API_KEY}\
+      \  --gpus all  -e TF_FORCE_GPU_ALLOW_GROWTH=true etheredgeb/gloves:custom-tensorflow-2.7.0\
+      \ python gloves/gloves/classifier.py --encoder-model-path /app/gloves/artifacts/models/siamese_distance/encoder\
+      \ --train-dir /app/gloves/artifacts/train --test-dir /app/gloves/artifacts/test\
+      \ --param-path /app/gloves/params.yaml --param-parent-key classifier --out-model-path\
+      \ /app/gloves/artifacts/models/gloves_imagenet_unfrozen --out-label-encoder-path\
+      \ /app/gloves/artifacts/models/gloves_imagenet_unfrozen_label_encoder.joblib\
+      \ --out-metrics-path /app/gloves/logs/imagenet_unfrozen --use-imagenet true\
+      \ --is-frozen false\n"
     deps:
     - path: artifacts/models/siamese_distance/encoder
-      md5: 3b2735a0c1814a68420dbb0e6ac288f1.dir
-      size: 6161646
-      nfiles: 3
+      md5: 6f52ae5235e54d650e527dd12eb0e477.dir
+      size: 6133141
+      nfiles: 4
     - path: artifacts/test
-      md5: b98fddfe57c20c4de06747a5ecd79bf6.dir
-      size: 78122874
+      md5: b4837ae96a2ca3976e9c5c776d4b557d.dir
+      size: 79015432
       nfiles: 739
     - path: artifacts/train
-      md5: 66d0403084220e6c3c75897280716366.dir
-      size: 712774465
+      md5: cdd147d2867963c98b603c29c31a1042.dir
+      size: 711881907
       nfiles: 6651
     - path: gloves/classifier.py
-      md5: bbaf3579e1997711ec1d14e0bbf9607c
-      size: 6346
+      md5: 722b276237cfd916d266e4b526a2eb8d
+      size: 6683
     params:
       params.yaml:
         classifier:
           batch_size: 32
-          epochs: 1000
+          epochs: 200
           verbose: 1
     outs:
     - path: artifacts/models/gloves_imagenet_unfrozen
-      md5: 8c526d99700e7b2e866c05dc21c306d4.dir
-      size: 44186608
-      nfiles: 3
+      md5: 70dbddf5e46b3de02de984ec6c9f56fa.dir
+      size: 44190466
+      nfiles: 4
     - path: artifacts/models/gloves_imagenet_unfrozen_label_encoder.joblib
-      md5: 04389aba6461b8869ba4c8f267b430bd
-      size: 1338
+      md5: 38667ce457ab1f450710e92cad517df4
+      size: 1331
     - path: logs/imagenet_unfrozen
-      md5: cb78c879512f0a0e364590df9078040d.dir
-      size: 64222
+      md5: fb6e1cebf6bb26ea51a6052b08222bac.dir
+      size: 29183
       nfiles: 11
     - path: logs/imagenet_unfrozen.json
-      md5: b3e2d606a5adec1e87c88e7dfb2499ce
-      size: 352
+      md5: 368c4cf5ad03847af5f5f2ca92b75d19
+      size: 401
   classifiers@gloves_frozen:
-    cmd: "python gloves/classifier.py --encoder-model-path artifacts/models/siamese_distance/encoder\
-      \ --train-dir artifacts/train --test-dir artifacts/test --param-path params.yaml\
-      \ --param-parent-key classifier --out-model-path artifacts/models/gloves_encoder_frozen\
-      \ --out-label-encoder-path artifacts/models/gloves_encoder_frozen_label_encoder.joblib\
-      \ --out-metrics-path logs/gloves_frozen --use-imagenet false --is-frozen true\n"
+    cmd: "docker run -v ${PWD}:/app/gloves --user 1000:1000   -e MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}\
+      \ -e MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME} -e MLFLOW_TRACKING_PASSWORD=${MLFLOW_TRACKING_PASSWORD}\
+      \ -e MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}\
+      \ -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}   -e WANDB_API_KEY=${WANDB_API_KEY}\
+      \  --gpus all  -e TF_FORCE_GPU_ALLOW_GROWTH=true etheredgeb/gloves:custom-tensorflow-2.7.0\
+      \ python gloves/gloves/classifier.py --encoder-model-path /app/gloves/artifacts/models/siamese_distance/encoder\
+      \ --train-dir /app/gloves/artifacts/train --test-dir /app/gloves/artifacts/test\
+      \ --param-path /app/gloves/params.yaml --param-parent-key classifier --out-model-path\
+      \ /app/gloves/artifacts/models/gloves_encoder_frozen --out-label-encoder-path\
+      \ /app/gloves/artifacts/models/gloves_encoder_frozen_label_encoder.joblib --out-metrics-path\
+      \ /app/gloves/logs/gloves_frozen --use-imagenet false --is-frozen true\n"
     deps:
     - path: artifacts/models/siamese_distance/encoder
-      md5: 3b2735a0c1814a68420dbb0e6ac288f1.dir
-      size: 6161646
-      nfiles: 3
+      md5: 6f52ae5235e54d650e527dd12eb0e477.dir
+      size: 6133141
+      nfiles: 4
     - path: artifacts/test
-      md5: b98fddfe57c20c4de06747a5ecd79bf6.dir
-      size: 78122874
+      md5: b4837ae96a2ca3976e9c5c776d4b557d.dir
+      size: 79015432
       nfiles: 739
     - path: artifacts/train
-      md5: 66d0403084220e6c3c75897280716366.dir
-      size: 712774465
+      md5: cdd147d2867963c98b603c29c31a1042.dir
+      size: 711881907
       nfiles: 6651
     - path: gloves/classifier.py
-      md5: bbaf3579e1997711ec1d14e0bbf9607c
-      size: 6346
+      md5: 722b276237cfd916d266e4b526a2eb8d
+      size: 6683
     params:
       params.yaml:
         classifier:
           batch_size: 32
-          epochs: 1000
+          epochs: 200
           verbose: 1
     outs:
     - path: artifacts/models/gloves_encoder_frozen
-      md5: 3f4b7cb72142ce0bcbf9fad8df5d1e8a.dir
-      size: 6471866
-      nfiles: 3
+      md5: df583d28fd025b98eb32fd9bfff105cf.dir
+      size: 6454660
+      nfiles: 4
     - path: artifacts/models/gloves_encoder_frozen_label_encoder.joblib
-      md5: 04389aba6461b8869ba4c8f267b430bd
-      size: 1338
+      md5: 38667ce457ab1f450710e92cad517df4
+      size: 1331
     - path: logs/gloves_frozen
-      md5: d9c8c5fd01b2a1dee655106fd5f385de.dir
-      size: 18497
+      md5: a5bd5a919206102a941086c8e3930e7a.dir
+      size: 43924
       nfiles: 11
     - path: logs/gloves_frozen.json
-      md5: 2a396c92de5b4c99c929abdd62363945
-      size: 352
+      md5: a9f8e470419e952fa6cd42ade47a2838
+      size: 405
   classifiers@imagenet_frozen:
-    cmd: "python gloves/classifier.py --encoder-model-path artifacts/models/siamese_distance/encoder\
-      \ --train-dir artifacts/train --test-dir artifacts/test --param-path params.yaml\
-      \ --param-parent-key classifier --out-model-path artifacts/models/gloves_imagenet_frozen\
-      \ --out-label-encoder-path artifacts/models/gloves_imagenet_frozen_label_encoder.joblib\
-      \ --out-metrics-path logs/imagenet_frozen --use-imagenet true --is-frozen true\n"
+    cmd: "docker run -v ${PWD}:/app/gloves --user 1000:1000   -e MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}\
+      \ -e MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME} -e MLFLOW_TRACKING_PASSWORD=${MLFLOW_TRACKING_PASSWORD}\
+      \ -e MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}\
+      \ -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}   -e WANDB_API_KEY=${WANDB_API_KEY}\
+      \  --gpus all  -e TF_FORCE_GPU_ALLOW_GROWTH=true etheredgeb/gloves:custom-tensorflow-2.7.0\
+      \ python gloves/gloves/classifier.py --encoder-model-path /app/gloves/artifacts/models/siamese_distance/encoder\
+      \ --train-dir /app/gloves/artifacts/train --test-dir /app/gloves/artifacts/test\
+      \ --param-path /app/gloves/params.yaml --param-parent-key classifier --out-model-path\
+      \ /app/gloves/artifacts/models/gloves_imagenet_frozen --out-label-encoder-path\
+      \ /app/gloves/artifacts/models/gloves_imagenet_frozen_label_encoder.joblib --out-metrics-path\
+      \ /app/gloves/logs/imagenet_frozen --use-imagenet true --is-frozen true\n"
     deps:
     - path: artifacts/models/siamese_distance/encoder
-      md5: 3b2735a0c1814a68420dbb0e6ac288f1.dir
-      size: 6161646
-      nfiles: 3
+      md5: 6f52ae5235e54d650e527dd12eb0e477.dir
+      size: 6133141
+      nfiles: 4
     - path: artifacts/test
-      md5: b98fddfe57c20c4de06747a5ecd79bf6.dir
-      size: 78122874
+      md5: b4837ae96a2ca3976e9c5c776d4b557d.dir
+      size: 79015432
       nfiles: 739
     - path: artifacts/train
-      md5: 66d0403084220e6c3c75897280716366.dir
-      size: 712774465
+      md5: cdd147d2867963c98b603c29c31a1042.dir
+      size: 711881907
       nfiles: 6651
     - path: gloves/classifier.py
-      md5: bbaf3579e1997711ec1d14e0bbf9607c
-      size: 6346
+      md5: 722b276237cfd916d266e4b526a2eb8d
+      size: 6683
     params:
       params.yaml:
         classifier:
           batch_size: 32
-          epochs: 1000
+          epochs: 200
           verbose: 1
     outs:
     - path: artifacts/models/gloves_imagenet_frozen
-      md5: 6f63ec23d8c739af23ed474be9c7d02a.dir
-      size: 18141725
-      nfiles: 3
+      md5: b4fe62826e294a47aeaf23922cc884f2.dir
+      size: 18188020
+      nfiles: 4
     - path: artifacts/models/gloves_imagenet_frozen_label_encoder.joblib
-      md5: 04389aba6461b8869ba4c8f267b430bd
-      size: 1338
+      md5: 38667ce457ab1f450710e92cad517df4
+      size: 1331
     - path: logs/imagenet_frozen
-      md5: 13a2154886dc03f7f8175600a582f97e.dir
-      size: 17393
+      md5: 4af86d7df29079a1165922f6f5ee3ec8.dir
+      size: 15967
       nfiles: 11
     - path: logs/imagenet_frozen.json
-      md5: b0ef1f7c7e7fe4066c5f201fc7aeefe8
-      size: 294
+      md5: 23e2def25b5cf56be02ae20b6f6db0fc
+      size: 343
   classifiers@gloves_unfrozen:
-    cmd: "python gloves/classifier.py --encoder-model-path artifacts/models/siamese_distance/encoder\
-      \ --train-dir artifacts/train --test-dir artifacts/test --param-path params.yaml\
-      \ --param-parent-key classifier --out-model-path artifacts/models/gloves_encoder_unfrozen\
-      \ --out-label-encoder-path artifacts/models/gloves_encoder_unfrozen_label_encoder.joblib\
-      \ --out-metrics-path logs/gloves_unfrozen --use-imagenet false --is-frozen false\n"
+    cmd: "docker run -v ${PWD}:/app/gloves --user 1000:1000   -e MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}\
+      \ -e MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME} -e MLFLOW_TRACKING_PASSWORD=${MLFLOW_TRACKING_PASSWORD}\
+      \ -e MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}\
+      \ -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}   -e WANDB_API_KEY=${WANDB_API_KEY}\
+      \  --gpus all  -e TF_FORCE_GPU_ALLOW_GROWTH=true etheredgeb/gloves:custom-tensorflow-2.7.0\
+      \ python gloves/gloves/classifier.py --encoder-model-path /app/gloves/artifacts/models/siamese_distance/encoder\
+      \ --train-dir /app/gloves/artifacts/train --test-dir /app/gloves/artifacts/test\
+      \ --param-path /app/gloves/params.yaml --param-parent-key classifier --out-model-path\
+      \ /app/gloves/artifacts/models/gloves_encoder_unfrozen --out-label-encoder-path\
+      \ /app/gloves/artifacts/models/gloves_encoder_unfrozen_label_encoder.joblib\
+      \ --out-metrics-path /app/gloves/logs/gloves_unfrozen --use-imagenet false --is-frozen\
+      \ false\n"
     deps:
     - path: artifacts/models/siamese_distance/encoder
-      md5: 3b2735a0c1814a68420dbb0e6ac288f1.dir
-      size: 6161646
-      nfiles: 3
+      md5: 6f52ae5235e54d650e527dd12eb0e477.dir
+      size: 6133141
+      nfiles: 4
     - path: artifacts/test
-      md5: b98fddfe57c20c4de06747a5ecd79bf6.dir
-      size: 78122874
+      md5: b4837ae96a2ca3976e9c5c776d4b557d.dir
+      size: 79015432
       nfiles: 739
     - path: artifacts/train
-      md5: 66d0403084220e6c3c75897280716366.dir
-      size: 712774465
+      md5: cdd147d2867963c98b603c29c31a1042.dir
+      size: 711881907
       nfiles: 6651
     - path: gloves/classifier.py
-      md5: bbaf3579e1997711ec1d14e0bbf9607c
-      size: 6346
+      md5: 722b276237cfd916d266e4b526a2eb8d
+      size: 6683
     params:
       params.yaml:
         classifier:
           batch_size: 32
-          epochs: 1000
+          epochs: 200
           verbose: 1
     outs:
     - path: artifacts/models/gloves_encoder_unfrozen
-      md5: 7c79300445d3a6e353e14c75c7bd0321.dir
-      size: 17052023
-      nfiles: 3
+      md5: 49032811410bafee6b66c41a78a177cc.dir
+      size: 17019347
+      nfiles: 4
     - path: artifacts/models/gloves_encoder_unfrozen_label_encoder.joblib
-      md5: 04389aba6461b8869ba4c8f267b430bd
-      size: 1338
+      md5: 38667ce457ab1f450710e92cad517df4
+      size: 1331
     - path: logs/gloves_unfrozen
-      md5: 42b1fcba544f4d3006e0123d4def96fb.dir
-      size: 30805
+      md5: 5fa006d398284f681147cc83cbf9d3f3.dir
+      size: 49815
       nfiles: 11
     - path: logs/gloves_unfrozen.json
-      md5: 41831d689c2e8eecee019989b7dea0f3
-      size: 350
+      md5: b64d84b64125e58520cc78fd45cf416a
+      size: 400
