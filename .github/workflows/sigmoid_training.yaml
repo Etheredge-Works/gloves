@@ -29,7 +29,7 @@ jobs:
           WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
         run: |
           # TODO add version
-          pip install 'dvc[s3]'
+          pip install --user 'dvc[s3]'
 
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@sigmoid
