@@ -110,7 +110,7 @@ def mlflow_log_wrapper(func):
             #params[arg_name] = arg
 
         mlflow.log_params(params)
-        name = 'gloves-sigmoid' if params['sigmoid_head'] else 'distance'
+        name = 'gloves-sigmoid' if params['sigmoid_head'] else 'gloves-distance'
         wandb.init(project=name, config=params)
 
         return func(*args, **kwargs)

@@ -20,6 +20,7 @@ import mlflow.tensorflow
 import numpy as np
 import joblib
 import dvclive
+import wandb
 
 
 from tensorflow.keras.callbacks import Callback
@@ -98,11 +99,24 @@ def main(
     use_imagenet,
     is_frozen
 ):
+
+
     if mixed_precision:
       policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
       tf.keras.mixed_precision.experimental.set_policy(policy)
     with open(param_path, "r") as f:
-        train_kwargs = yaml.load(f)[param_parent_key]
+        train_kwargs = yaml.safe_load(f)[param_parent_key]
+
+    sub_name = "siamese" if use_imagenet else "imagenet"
+    forzen = "frozen" if is_frozen else "unfrozen"
+    project_name = f"gloves-classifier-{sub_name}-{forzen}"
+    wandb.init(
+        project=project_name, 
+        config=dict(
+            mixed_precision=mixed_precision,
+            **train_kwargs)
+    )
+
     train(train_dir, test_dir, encoder_model_path, out_model_path, out_metrics_path, out_label_encoder_path,
           use_imagenet=use_imagenet, is_frozen=is_frozen,
           **train_kwargs)
