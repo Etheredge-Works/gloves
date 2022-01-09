@@ -8,7 +8,6 @@ import psutil
 import mlflow
 from tensorflow.keras.callbacks import Callback
 import tensorflow as tf
-from tensorflow.python.framework.tensor_conversion_registry import get
 print(tf.version.GIT_VERSION, tf.version.VERSION)
 from pathlib import Path
 
@@ -71,7 +70,7 @@ def log_metric(key, value, step=None):
 
 from siamese.models import Encoder, SiameseModel, create_siamese_model
 #from siamese.layers import NormDistanceLayer
-from siamese.data import create_dataset, get_labels_from_filenames, get_labels_from_files_path, create_n_way_dataset
+from siamese.data import create_dataset, get_labels_from_files_path, create_n_way_dataset
 
 class NormDistanceLayer(tf.keras.layers.Layer):
    def __init__(self, **kwargs):
@@ -167,19 +166,8 @@ def train(
     nways,
     use_batch_norm,
     sigmoid_head,
-    glob_pattern='*.jpg',
-    nway_disabled=False,
-    label_func='name',
     **_  # Other args in params file to ignore
 ):
-    if label_func == 'name':
-        label_func = get_labels_from_filenames
-    elif label_func == 'path':
-        label_func = get_labels_from_files_path
-    else:
-        raise ValueError
-
-
     if mixed_precision:
       policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
       tf.keras.mixed_precision.experimental.set_policy(policy)
@@ -224,74 +212,61 @@ def train(
     optimizer = optimizer_switch[optimizer]
 
     # TODO extract and pass in
-    train_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(train_dir)/glob_pattern)))
-    train_labels = tf.convert_to_tensor(label_func(train_files_tf))
-    mlflow.log_param("dataset_size", len(train_labels))
+    train_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(train_dir)/'**/*.JPEG')))
+    print(str(Path(train_dir)/'**.JPEG'))
+    print(train_files_tf)
+    train_labels = tf.convert_to_tensor(get_labels_from_files_path(train_files_tf))
     assert len(train_files_tf) == len(train_labels)
     assert tf.size(train_files_tf) > 0, "no train files found"
 
-    test_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(test_dir)/glob_pattern)))
-    test_labels = tf.convert_to_tensor(label_func(test_files_tf))
+    test_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(test_dir)/'**/*.JPEG')))
+    test_labels = tf.convert_to_tensor(get_labels_from_files_path(test_files_tf))
     assert len(test_files_tf) == len(test_labels)
     assert tf.size(test_files_tf) > 0, "no test files found"
 
-    @tf.function
-    def read_decode(file_path):
-        byte_data = tf.io.read_file(file_path)
-        img = tf.image.decode_jpeg(byte_data, channels=3)
-        img = tf.image.resize(img, [224, 224]) #TODO 
-
-        #img = preprocess_input(img)  # NOTE: This does A TON for accuracy
-        #img = tf.image.convert_image_dtype(img, 'float32')
-        return img
     #all_files_tf  = tf.concat([train_files_tf, test_files_tf])
     ds = create_dataset(
         anchor_items=train_files_tf,
         anchor_labels=train_labels,
-        anchor_decode_func=read_decode,
-        #anchor_decode_func=random_read_decode if mutate_anchor else read_decode,
-        #other_decode_func=random_read_decode if mutate_other else read_decode,
-        other_decode_func=read_decode,
-        #other_items=extra_train_files,
-        #other_labels=get_labels_from_files_path(extra_train_files),
+        anchor_decode_func=random_read_decode if mutate_anchor else read_decode,
+        other_decode_func=random_read_decode if mutate_other else read_decode,
         #repeat=1,
     ).batch(batch_size).prefetch(-1)
 
     # NOTE can just take from ds here to remove those items from the training set but leave the files available
     #ds = ds.take(1000)
     #ds = ds.map(lambda anchor, other, label: prepr)
-    #val_ds = create_dataset(
-        #anchor_items=test_files_tf,
-        #anchor_labels=test_labels,
+    val_ds = create_dataset(
+        anchor_items=test_files_tf,
+        anchor_labels=test_labels,
         #anchor_items=train_files_tf,
         #anchor_labels=train_labels,
-        #anchor_decode_func=read_decode,
+        anchor_decode_func=read_decode,
         #other_items=train_files_tf, # needed since test set won't have many items
         #other_labels=train_labels
-    #).batch(batch_size).prefetch(-1) # TODO param cache
+    ).batch(batch_size).cache().prefetch(-1)
     # TODO should val_ds be cached? or should it change?
 
-    if not sigmoid_head and not nway_disabled:
-        #assert False
-        test_nway_ds = create_n_way_dataset(
-            items=test_files_tf, 
-            labels=test_labels,
-            ratio=1.0, 
-            anchor_decode_func=read_decode, 
-            n_way_count=nways)
+    test_nway_ds = create_n_way_dataset(
+        items=test_files_tf, 
+        labels=test_labels,
+        ratio=1.0, 
+        anchor_decode_func=read_decode, 
+        n_way_count=nways)
 
-        nway_ds = create_n_way_dataset(
-            items=train_files_tf, 
-            labels=train_labels,
-            ratio=0.1, 
-            anchor_decode_func=read_decode, 
-            n_way_count=nways)
+    nway_ds = create_n_way_dataset(
+        items=train_files_tf, 
+        labels=train_labels,
+        ratio=0.05, 
+        anchor_decode_func=read_decode, 
+        n_way_count=nways)
     
-    #mlflow.log_param("validation_dataset_size", len(list(val_ds))*batch_size)
+    mlflow.log_param("dataset_size", len(list(ds))*batch_size)
+    mlflow.log_param("validation_dataset_size", len(list(val_ds))*batch_size)
 
     #wandb.init(project="siamese")
     # TODO how can I use preprocessing layers? Dataset requires images to be the same size for batching...
-    nway_callbacks = [] if sigmoid_head or nway_disabled else [
+    nway_callbacks = [] if sigmoid_head else [
         NWayCallback(encoder=encoder, head=head, nway_ds=nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="train_"),
         NWayCallback(encoder=encoder, head=head, nway_ds=test_nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="test_")]
     callbacks=[
@@ -303,15 +278,15 @@ def train(
 
     # TODO remove model from here and have it submit a post request to locally running rest api
     model.compile(loss=loss, optimizer=optimizer(lr=lr), metrics=metrics)
-    print('Starting training')
     train_hist = model.fit(
         ds,
         epochs=epochs,
-        #batch_size=batch_size,
-        #validation_data=val_ds,
-        #validation_freq=eval_freq,
+        batch_size=batch_size,
+        validation_data=val_ds,
+        validation_freq=eval_freq,
         #steps_per_epoch=steps_per_epoch,
         #verbose=verbose,
+        shuffle=False,  # TODO dataset should handle shuffling
         callbacks=callbacks
     )
     # TODO remove nway from sigmoid training
@@ -325,7 +300,6 @@ def train(
     model.save(out_model_path, save_format='tf')
     mlflow.log_artifact(out_model_path)
     encoder.save(out_encoder_path, save_format='tf')
-    mlflow.log_artifact(out_model_path)
     mlflow.log_artifact(out_metrics_path)
 
 
@@ -342,9 +316,6 @@ def train(
 @click.option('--out-metrics-path', type=click.Path(exists=None), help='')
 @click.option('--out-summaries-path', type=click.Path(exists=None), help='')
 @click.option("--sigmoid-head", default=False, type=bool)
-@click.option("--glob-pattern", default="*.jpg", type=str)
-@click.option("--nway-disabled", default=False, type=bool)
-@click.option("--label-func", default='name', type=str)
 @mlflow_log_wrapper
 def main(
         train_dir: str, 
@@ -358,9 +329,6 @@ def main(
         out_metrics_path: str,
         out_summaries_path: str,
         sigmoid_head: bool,
-        glob_pattern: str,
-        nway_disabled: bool,
-        label_func: str,
 ):
     if sigmoid_head:
         mlflow.set_experiment("siamese-sigmoid")
@@ -370,7 +338,7 @@ def main(
 
     dvclive.init(out_metrics_path, summary=True, html=True)
     with open(param_path, "r") as f:
-        train_kwargs = yaml.safe_load(f)[param_parent_key]
+        train_kwargs = yaml.load(f)[param_parent_key]
 
     train(
         train_dir=train_dir,
@@ -382,9 +350,6 @@ def main(
         out_encoder_path=out_encoder_path,
         out_metrics_path=out_metrics_path,
         out_summaries_path=out_summaries_path,
-        glob_pattern=glob_pattern,
-        nway_disabled=nway_disabled,
-        label_func=label_func,
         **train_kwargs)
 
 

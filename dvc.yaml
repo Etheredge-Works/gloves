@@ -45,6 +45,42 @@ stages:
     - ${out_dir}/${split.train_dir}
     - ${out_dir}/${split.test_dir}
     
+  siamese_pretrain:
+    foreach: ${siamese_types}
+    do:
+      cmd: >
+        python gloves/main.py
+        --train-dir /nfs/data/imagenet/imagenet21k_resized/imagenet21k_train
+        --test-dir  /nfs/data/imagenet/imagenet21k_resized/imagenet21k_train
+        --sigmoid-head ${item.sigmoid_head}
+        --param-path params.yaml
+        --param-parent-key siamese
+        --out-model-path ${item.out_model_path}_imagenet
+        --out-encoder-path ${item.out_encoder_path}_imagenet
+        --out-metrics-path ${item.out_metrics_path}_imagenet
+        --out-summaries-path ${item.out_summaries_path}_imagenet
+        --glob-pattern "**/*.JPEG"
+        --nway-disabled True
+        --label-func path
+      params:
+        - siamese
+      deps:
+        - gloves/imagenet.py
+        - ${siamese_model_src}
+        #- ${out_dir}/${split.train_dir}_imagenet
+        #- ${out_dir}/${split.test_dir}_imagenet
+      outs:
+        - ${item.out_model_path}_imagenet
+        - ${item.out_encoder_path}_imagenet
+      # TODO why no metrics html?
+      #plots:
+        #- ${item.out_metrics_path}_imagenet
+      #metrics:
+        #- ${item.out_metrics_path}.html
+        #- ${item.out_metrics_path}_imagenet.json:
+            #cache: false
+        #- ${item.out_summaries_path}_imagenet
+
   siamese:
     foreach: ${siamese_types}
     do:

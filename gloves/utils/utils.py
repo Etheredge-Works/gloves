@@ -89,7 +89,7 @@ def random_read_decode(file_path):
 # TODO could change to glob of jpgs
 #ALL_FILES = tf.io.gfile.listdir(str(DATA_DIR))
 #print(f"all_files: {ALL_FILES}")
-tf.function
+@tf.function
 def get_pair(data_dir, all_files, labels, anchor_file_path,
              label=None):
     if label is None:
