@@ -45,57 +45,62 @@ stages:
     - ${out_dir}/${split.train_dir}
     - ${out_dir}/${split.test_dir}
     
-  siamese_pretrain:
-    foreach: ${siamese_types}
-    do:
-      cmd: >
-        python gloves/main.py
-        --train-dir /nfs/data/imagenet/imagenet21k_resized/imagenet21k_train
-        --test-dir  /nfs/data/imagenet/imagenet21k_resized/imagenet21k_train
-        --sigmoid-head ${item.sigmoid_head}
-        --param-path params.yaml
-        --param-parent-key siamese
-        --out-model-path ${item.out_model_path}_imagenet
-        --out-encoder-path ${item.out_encoder_path}_imagenet
-        --out-metrics-path ${item.out_metrics_path}_imagenet
-        --out-summaries-path ${item.out_summaries_path}_imagenet
-        --glob-pattern "**/*.JPEG"
-        --nway-disabled True
-        --label-func path
-      params:
-        - siamese
-      deps:
-        - gloves/imagenet.py
-        - ${siamese_model_src}
-        #- ${out_dir}/${split.train_dir}_imagenet
-        #- ${out_dir}/${split.test_dir}_imagenet
-      outs:
-        - ${item.out_model_path}_imagenet
-        - ${item.out_encoder_path}_imagenet
-      # TODO why no metrics html?
-      #plots:
-        #- ${item.out_metrics_path}_imagenet
-      #metrics:
-        #- ${item.out_metrics_path}.html
-        #- ${item.out_metrics_path}_imagenet.json:
-            #cache: false
-        #- ${item.out_summaries_path}_imagenet
+  # siamese_pretrain:
+  #   foreach: ${siamese_types}
+  #   do:
+  #     cmd: >
+  #       python gloves/main.py
+  #       --train-dir /nfs/data/imagenet/imagenet21k_resized/imagenet21k_train
+  #       --test-dir  /nfs/data/imagenet/imagenet21k_resized/imagenet21k_train
+  #       --sigmoid-head ${item.sigmoid_head}
+  #       --param-path params.yaml
+  #       --param-parent-key siamese
+  #       --out-model-path ${item.out_model_path}_imagenet
+  #       --out-encoder-path ${item.out_encoder_path}_imagenet
+  #       --out-metrics-path ${item.out_metrics_path}_imagenet
+  #       --out-summaries-path ${item.out_summaries_path}_imagenet
+  #       --glob-pattern "**/*.JPEG"
+  #       --nway-disabled True
+  #       --label-func path
+  #     params:
+  #       - siamese
+  #     deps:
+  #       - gloves/imagenet.py
+  #       - ${siamese_model_src}
+  #       #- ${out_dir}/${split.train_dir}_imagenet
+  #       #- ${out_dir}/${split.test_dir}_imagenet
+  #     outs:
+  #       - ${item.out_model_path}_imagenet
+  #       - ${item.out_encoder_path}_imagenet
+  #     # TODO why no metrics html?
+  #     #plots:
+  #       #- ${item.out_metrics_path}_imagenet
+  #     #metrics:
+  #       #- ${item.out_metrics_path}.html
+  #       #- ${item.out_metrics_path}_imagenet.json:
+  #           #cache: false
+  #       #- ${item.out_summaries_path}_imagenet
 
   siamese:
     foreach: ${siamese_types}
     do:
       cmd: >
-        ${docker_cmd} ${mlflow_env_vars} --gpus all ${gloves_train_image}
+        ${docker_cmd} 
+        ${mlflow_env_vars} 
+        ${wandb_env_vars} 
+        --gpus all 
+        -e TF_FORCE_GPU_ALLOW_GROWTH=true
+        ${gloves_train_image}
         python gloves/${siamese_src}
         --train-dir ${docker_out_dir}/${split.train_dir}
         --test-dir ${docker_out_dir}/${split.test_dir}
         --sigmoid-head ${item.sigmoid_head}
         --param-path gloves/params.yaml
         --param-parent-key siamese
-        --out-model-path /gloves/${item.out_model_path}
-        --out-encoder-path /gloves/${item.out_encoder_path}
-        --out-metrics-path /gloves/${item.out_metrics_path}
-        --out-summaries-path /gloves/${item.out_summaries_path}
+        --out-model-path ${docker_work_dir}/${item.out_model_path}
+        --out-encoder-path ${docker_work_dir}/${item.out_encoder_path}
+        --out-metrics-path ${docker_work_dir}/${item.out_metrics_path}
+        --out-summaries-path ${docker_work_dir}/${item.out_summaries_path}
      
       params:
         - siamese
@@ -120,16 +125,21 @@ stages:
     foreach: ${classifier_types}
     do:
       cmd: >
-        ${docker_cmd} ${mlflow_env_vars} --gpus all ${gloves_train_image}
+        ${docker_cmd} 
+        ${mlflow_env_vars} 
+        ${wandb_env_vars} 
+        --gpus all 
+        -e TF_FORCE_GPU_ALLOW_GROWTH=true
+        ${gloves_train_image}
         python ${classifier_src}
         --encoder-model-path ${siamese_types.distance.out_encoder_path}
         --train-dir ${docker_out_dir}/${split.train_dir}
         --test-dir ${docker_out_dir}/${split.test_dir}
         --param-path params.yaml
         --param-parent-key classifier
-        --out-model-path /gloves/${item.out_model_path}
-        --out-label-encoder-path /gloves/${item.out_label_encoder}
-        --out-metrics-path /gloves/${item.out_metrics_path}
+        --out-model-path ${docker_work_dir}/${item.out_model_path}
+        --out-label-encoder-path ${docker_work_dir}/${item.out_label_encoder}
+        --out-metrics-path ${docker_work_dir}/${item.out_metrics_path}
         --use-imagenet ${item.use_imagenet}
         --is-frozen ${item.is_frozen}
       params:

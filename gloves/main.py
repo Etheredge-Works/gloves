@@ -6,6 +6,7 @@ import dvclive
 from dvclive.keras import DvcLiveCallback
 import psutil
 import mlflow
+import wandb
 from tensorflow.keras.callbacks import Callback
 import tensorflow as tf
 from tensorflow.python.framework.tensor_conversion_registry import get
@@ -46,7 +47,6 @@ limit_gpu_memory_use()
 from utils import read_decode, random_read_decode
 from models import build_custom_encoder, sigmoid_model
 os.environ['PYTHONHASHSEED']=str(4)
-import mlflow
 from mlflow import pyfunc
 import click
 
@@ -67,6 +67,7 @@ import pathlib
 # TODO make sure test set is not mutated
 # TODO make sure test set is not in trianing set
 def log_metric(key, value, step=None):
+    wandb.log({key: value}, step=step)
     mlflow.log_metric(key=key, value=value, step=step)
 
 from siamese.models import Encoder, SiameseModel, create_siamese_model
@@ -109,6 +110,9 @@ def mlflow_log_wrapper(func):
             #params[arg_name] = arg
 
         mlflow.log_params(params)
+        name = 'gloves-sigmoid' if params['sigmoid_head'] else 'distance'
+        wandb.init(project=name, config=params)
+
         return func(*args, **kwargs)
     return inner
 
@@ -260,15 +264,15 @@ def train(
     # NOTE can just take from ds here to remove those items from the training set but leave the files available
     #ds = ds.take(1000)
     #ds = ds.map(lambda anchor, other, label: prepr)
-    #val_ds = create_dataset(
-        #anchor_items=test_files_tf,
-        #anchor_labels=test_labels,
-        #anchor_items=train_files_tf,
-        #anchor_labels=train_labels,
-        #anchor_decode_func=read_decode,
-        #other_items=train_files_tf, # needed since test set won't have many items
-        #other_labels=train_labels
-    #).batch(batch_size).prefetch(-1) # TODO param cache
+    val_ds = create_dataset(
+        anchor_items=test_files_tf,
+        anchor_labels=test_labels,
+        # anchor_items=train_files_tf,
+        # anchor_labels=train_labels,
+        anchor_decode_func=read_decode,
+        # other_items=train_files_tf, # needed since test set won't have many items
+        # other_labels=train_labels
+    ).batch(batch_size).prefetch(-1) # TODO param cache
     # TODO should val_ds be cached? or should it change?
 
     if not sigmoid_head and not nway_disabled:
@@ -289,7 +293,6 @@ def train(
     
     #mlflow.log_param("validation_dataset_size", len(list(val_ds))*batch_size)
 
-    #wandb.init(project="siamese")
     # TODO how can I use preprocessing layers? Dataset requires images to be the same size for batching...
     nway_callbacks = [] if sigmoid_head or nway_disabled else [
         NWayCallback(encoder=encoder, head=head, nway_ds=nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="train_"),
@@ -299,6 +302,7 @@ def train(
         *nway_callbacks,
         EarlyStopping(monitor=monitor_metric, min_delta=0, patience=early_stop_patience, verbose=1, restore_best_weights=True),
         MetricsCallback(),
+        wandb.keras.WandbCallback(),
     ]
 
     # TODO remove model from here and have it submit a post request to locally running rest api
@@ -308,8 +312,8 @@ def train(
         ds,
         epochs=epochs,
         #batch_size=batch_size,
-        #validation_data=val_ds,
-        #validation_freq=eval_freq,
+        validation_data=val_ds,
+        validation_freq=eval_freq,
         #steps_per_epoch=steps_per_epoch,
         #verbose=verbose,
         callbacks=callbacks
@@ -364,8 +368,11 @@ def main(
 ):
     if sigmoid_head:
         mlflow.set_experiment("siamese-sigmoid")
+        wandb.project="siamese-sigmoid"
     else:
         mlflow.set_experiment("siamese-distance")
+        wandb.project="siamese-distance"
+
     mlflow.tensorflow.autolog(every_n_iter=1)
 
     dvclive.init(out_metrics_path, summary=True, html=True)

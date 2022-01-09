@@ -3,9 +3,10 @@
 # TODO fix this absolute path
 #out_dir: /nfs/data/gloves/outputs
 out_dir: artifacts
-docker_out_dir: /gloves/artifacts
+docker_out_dir: /app/gloves/artifacts
+docker_work_dir: /app/gloves
 #docker_cmd: docker run -v /nfs/data/gloves/outputs:/outputs
-docker_cmd: docker run -v ${PWD}:/gloves --user 1000:1000
+docker_cmd: docker run -v ${PWD}:/app/gloves --user 1000:1000
 mlflow_env_vars: '
       -e MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} 
       -e MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME} 
@@ -14,6 +15,7 @@ mlflow_env_vars: '
       -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       '
+wandb_env_vars: -e WANDB_API_KEY=${WANDB_API_KEY}
 gloves_train_image: etheredgeb/gloves:custom-tensorflow-2.7.0
 
 wget:
@@ -72,7 +74,7 @@ siamese:
   final_activation: linear
   lr: 0.0001
   optimizer: adam
-  epochs: 1000
+  epochs: 10
   batch_size: 32
   verbose: 0
   eval_freq: 1

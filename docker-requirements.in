@@ -16,3 +16,4 @@ pathlib
 pandas
 kubernetes
 psutil
+wandb

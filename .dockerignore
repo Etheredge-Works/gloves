@@ -1,6 +1,3 @@
-gui/
-.dvc/
-.github/
-mlruns/
-pipeline
-scripts/
+*
+!gloves/
+!docker-requirements.txt

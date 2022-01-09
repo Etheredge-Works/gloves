@@ -23,6 +23,7 @@ certifi==2021.10.8
     # via
     #   kubernetes
     #   requests
+    #   sentry-sdk
 charset-normalizer==2.0.10
     # via requests
 click==8.0.3
@@ -31,14 +32,19 @@ click==8.0.3
     #   databricks-cli
     #   flask
     #   mlflow
+    #   wandb
 cloudpickle==2.0.0
     # via mlflow
 colorama==0.4.4
     # via icecream
+configparser==5.2.0
+    # via wandb
 databricks-cli==0.16.2
     # via mlflow
 docker==5.0.3
     # via mlflow
+docker-pycreds==0.4.0
+    # via wandb
 dvclive==0.0.8
     # via -r docker-requirements.in
 entrypoints==0.3
@@ -52,7 +58,9 @@ flask==2.0.2
 gitdb==4.0.9
     # via gitpython
 gitpython==3.1.25
-    # via mlflow
+    # via
+    #   mlflow
+    #   wandb
 google-auth==2.3.3
     # via kubernetes
 greenlet==1.1.2
@@ -106,6 +114,8 @@ pandas==1.3.5
     #   mlflow
 pathlib==1.0.1
     # via -r docker-requirements.in
+pathtools==0.1.2
+    # via wandb
 pillow==9.0.0
     # via -r docker-requirements.in
 pluggy==1.0.0
@@ -114,10 +124,16 @@ prometheus-client==0.12.0
     # via prometheus-flask-exporter
 prometheus-flask-exporter==0.18.7
     # via mlflow
+promise==2.3
+    # via wandb
 protobuf==3.19.1
-    # via mlflow
+    # via
+    #   mlflow
+    #   wandb
 psutil==5.9.0
-    # via -r docker-requirements.in
+    # via
+    #   -r docker-requirements.in
+    #   wandb
 py==1.11.0
     # via pytest
 pyasn1==0.4.8
@@ -138,6 +154,7 @@ python-dateutil==2.8.2
     #   botocore
     #   kubernetes
     #   pandas
+    #   wandb
 python-editor==1.0.4
     # via alembic
 pytz==2021.3
@@ -149,6 +166,7 @@ pyyaml==6.0
     #   -r docker-requirements.in
     #   kubernetes
     #   mlflow
+    #   wandb
 querystring-parser==1.2.4
     # via mlflow
 requests==2.27.1
@@ -158,6 +176,7 @@ requests==2.27.1
     #   kubernetes
     #   mlflow
     #   requests-oauthlib
+    #   wandb
 requests-oauthlib==1.3.0
     # via kubernetes
 rsa==4.8
@@ -168,16 +187,23 @@ scikit-learn==1.0.2
     # via -r docker-requirements.in
 scipy==1.7.3
     # via scikit-learn
+sentry-sdk==1.5.1
+    # via wandb
+shortuuid==1.0.8
+    # via wandb
 siamese==0.0.38
     # via -r docker-requirements.in
 six==1.16.0
     # via
     #   asttokens
     #   databricks-cli
+    #   docker-pycreds
     #   google-auth
     #   kubernetes
+    #   promise
     #   python-dateutil
     #   querystring-parser
+    #   wandb
 smmap==5.0.0
     # via gitdb
 sqlalchemy==1.4.29
@@ -186,10 +212,14 @@ sqlalchemy==1.4.29
     #   mlflow
 sqlparse==0.4.2
     # via mlflow
+subprocess32==3.5.4
+    # via wandb
 tabulate==0.8.9
     # via databricks-cli
 tensorflow_addons==0.13.0
     # via -r docker-requirements.in
+termcolor==1.1.0
+    # via yaspin
 threadpoolctl==3.0.0
     # via scikit-learn
 toml==0.10.2
@@ -201,12 +231,17 @@ urllib3==1.26.8
     #   botocore
     #   kubernetes
     #   requests
+    #   sentry-sdk
+wandb==0.12.9
+    # via -r docker-requirements.in
 websocket-client==1.2.3
     # via
     #   docker
     #   kubernetes
 werkzeug==2.0.2
     # via flask
+yaspin==2.1.0
+    # via wandb
 zipp==3.7.0
     # via importlib-metadata
 
