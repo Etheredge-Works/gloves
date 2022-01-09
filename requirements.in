@@ -2,8 +2,8 @@ icecream
 mlflow
 numpy
 click
-kubernetes
-botocore
+#kubernetes
+#botocore
 Pillow
 pytest
 PyYAML
