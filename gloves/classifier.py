@@ -168,7 +168,10 @@ def train(
             epochs=epochs, verbose=verbose, callbacks=[
                 ReduceLROnPlateau(monitor='loss', patience=10),
                 MetricsCallback(),
-                EarlyStopping(monitor='val_loss', patience=40, verbose=1, restore_best_weights=True)])
+                EarlyStopping(monitor='val_loss', patience=40, verbose=1, restore_best_weights=True),
+                wandb.keras.WandbCallback(),
+            ]
+        )
 
         classifier.save(out_model_path, save_format='tf')
         mlflow.log_artifact(out_model_path)

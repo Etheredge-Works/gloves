@@ -6,3 +6,9 @@
 /sigmoid_siamese_summaries
 /distance_siamese_logs
 /distance_siamese_summaries
+/cosine_distance_siamese_summaries
+/cosine_distance_siamese_logs
+/l2_distance_siamese_summaries
+/l2_distance_siamese_logs
+/l1_distance_siamese_summaries
+/l1_distance_siamese_logs
