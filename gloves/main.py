@@ -74,13 +74,51 @@ from siamese.models import Encoder, SiameseModel, create_siamese_model
 #from siamese.layers import NormDistanceLayer
 from siamese.data import create_dataset, get_labels_from_filenames, get_labels_from_files_path, create_n_way_dataset
 
-class NormDistanceLayer(tf.keras.layers.Layer):
+class L1DistanceLayer(tf.keras.layers.Layer):
    def __init__(self, **kwargs):
-      super(NormDistanceLayer, self).__init__(**kwargs)
+      super(L1DistanceLayer, self).__init__(**kwargs)
 
    def call(self, inputs):
       x, y = inputs
-      return tf.norm(x-y, axis=-1, keepdims=True)
+      return tf.norm(x-y, ord=1, axis=-1, keepdims=True)
+
+class L2DistanceLayer(tf.keras.layers.Layer):
+   def __init__(self, **kwargs):
+      super(L2DistanceLayer, self).__init__(**kwargs)
+
+   def call(self, inputs):
+      x, y = inputs
+      # TODO verify norm logic
+      return tf.norm(x-y, ord=2, axis=-1, keepdims=True)
+
+
+import tensorflow.keras.backend as K
+class CosineDistanceLayer(tf.keras.layers.Layer):
+   def __init__(self, **kwargs):
+      super(CosineDistanceLayer, self).__init__(**kwargs)
+
+
+   def call(self, inputs):
+      # https://gist.github.com/ranarag/77014b952a649dbaf8f47969affdd3bc
+      # Tried and failed to get it working till I found this persons code
+      x1, x2 = inputs
+
+      x1_val = tf.sqrt(tf.reduce_sum(tf.matmul(x1,tf.transpose(x1)),axis=1))
+      x2_val = tf.sqrt(tf.reduce_sum(tf.matmul(x2,tf.transpose(x2)),axis=1))
+
+      denom =  tf.multiply(x1_val,x2_val)
+      num = tf.reduce_sum(tf.multiply(x1,x2),axis=1)
+      return num / denom
+
+      x = K.l2_normalize(x, axis=-1)
+      y = K.l2_normalize(y, axis=-1)
+      return K.dot(x, y) / (x*y)
+      #return K.mean(1 - K.sum((x * y), axis=-1))
+      # TODO does this have to be a layer, maybe since it's not the loss used
+      return tf.keras.losses.cosine_similarity(x, y, axis=-1)
+      return tf.losses.cosine_distance(x, y, axis=-1) #, reduction=tf.losses.Reduction.NONE)
+      #return tf.norm(x-y, ord=2, axis=-1, keepdims=True)
+
 
 class AbsDistanceLayer(tf.keras.layers.Layer):
    def __init__(self, **kwargs):
@@ -110,7 +148,11 @@ def mlflow_log_wrapper(func):
             #params[arg_name] = arg
 
         mlflow.log_params(params)
-        name = 'gloves-sigmoid' if params['sigmoid_head'] else 'gloves-distance'
+        if params['loss'] == 'binary_crossentropy':
+            name = 'gloves-sigmoid' 
+        else: 
+            sub_name = params['loss'].split('_')[0]
+            name = f'gloves-{sub_name}-distance'
         wandb.init(project=name, config=params)
 
         return func(*args, **kwargs)
@@ -170,7 +212,7 @@ def train(
     nway_freq,
     nways,
     use_batch_norm,
-    sigmoid_head,
+    loss,
     glob_pattern='*.jpg',
     nway_disabled=False,
     label_func='name',
@@ -201,7 +243,7 @@ def train(
     input1 = tf.keras.Input(encoder.output_shape[-1])
     input2 = tf.keras.Input(encoder.output_shape[-1])
 
-    if sigmoid_head:
+    if loss == 'binary_crossentropy':
         outputs = Dense(1, activation='sigmoid', dtype='float32')(AbsDistanceLayer(dtype='float32')((input1, input2)))
         head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='Distance')
         loss = 'binary_crossentropy'
@@ -209,7 +251,16 @@ def train(
         metrics=['acc']
         monitor_metric = 'val_loss'
     else:
-        outputs = NormDistanceLayer(dtype='float32')((input1, input2))
+        if loss == 'l1':
+            outputs = L1DistanceLayer(dtype='float32')((input1, input2))
+        elif loss == 'l2':
+            outputs = L2DistanceLayer(dtype='float32')((input1, input2))
+        elif loss == 'cosine':
+            #outputs = CosineDistanceLayer(dtype='float32')((input1, input2))
+            outputs = CosineDistanceLayer(dtype='float32')((input1, input2))
+        else:
+            raise ValueError("Unknown loss: {loss}")
+
         head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='NormDistance')
         loss = tfa.losses.ContrastiveLoss()
         nway_comparator = 'min'
@@ -275,7 +326,7 @@ def train(
     ).batch(batch_size).prefetch(-1) # TODO param cache
     # TODO should val_ds be cached? or should it change?
 
-    if not sigmoid_head and not nway_disabled:
+    if not nway_disabled:
         #assert False
         test_nway_ds = create_n_way_dataset(
             items=test_files_tf, 
@@ -294,7 +345,7 @@ def train(
     #mlflow.log_param("validation_dataset_size", len(list(val_ds))*batch_size)
 
     # TODO how can I use preprocessing layers? Dataset requires images to be the same size for batching...
-    nway_callbacks = [] if sigmoid_head or nway_disabled else [
+    nway_callbacks = [] if nway_disabled else [
         NWayCallback(encoder=encoder, head=head, nway_ds=nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="train_"),
         NWayCallback(encoder=encoder, head=head, nway_ds=test_nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="test_")]
     callbacks=[
@@ -345,7 +396,7 @@ def train(
 @click.option('--out-encoder-path', type=click.Path(exists=None), help='')
 @click.option('--out-metrics-path', type=click.Path(exists=None), help='')
 @click.option('--out-summaries-path', type=click.Path(exists=None), help='')
-@click.option("--sigmoid-head", default=False, type=bool)
+@click.option("--loss", default='cosine', type=str)
 @click.option("--glob-pattern", default="*.jpg", type=str)
 @click.option("--nway-disabled", default=False, type=bool)
 @click.option("--label-func", default='name', type=str)
@@ -361,17 +412,13 @@ def main(
         out_encoder_path: str,
         out_metrics_path: str,
         out_summaries_path: str,
-        sigmoid_head: bool,
+        loss: str,
         glob_pattern: str,
         nway_disabled: bool,
         label_func: str,
 ):
-    if sigmoid_head:
-        mlflow.set_experiment("siamese-sigmoid")
-        wandb.project="siamese-sigmoid"
-    else:
-        mlflow.set_experiment("siamese-distance")
-        wandb.project="siamese-distance"
+    mlflow.set_experiment(f"siamese-{loss}")
+    wandb.project=f"siamese-{loss}"
 
     mlflow.tensorflow.autolog(every_n_iter=1)
 
@@ -384,7 +431,7 @@ def main(
         train_extra_dir=train_extra_dir,
         test_dir=test_dir,
         test_extra_dir=test_extra_dir,
-        sigmoid_head=sigmoid_head,
+        loss=loss,
         out_model_path=out_model_path,
         out_encoder_path=out_encoder_path,
         out_metrics_path=out_metrics_path,

@@ -94,7 +94,7 @@ stages:
         python gloves/${siamese_src}
         --train-dir ${docker_out_dir}/${split.train_dir}
         --test-dir ${docker_out_dir}/${split.test_dir}
-        --sigmoid-head ${item.sigmoid_head}
+        --loss ${item.loss}
         --param-path gloves/params.yaml
         --param-parent-key siamese
         --out-model-path ${docker_work_dir}/${item.out_model_path}
@@ -132,7 +132,7 @@ stages:
         -e TF_FORCE_GPU_ALLOW_GROWTH=true
         ${gloves_train_image}
         python gloves/${classifier_src}
-        --encoder-model-path ${docker_work_dir}/${siamese_types.distance.out_encoder_path}
+        --encoder-model-path ${docker_work_dir}/${siamese_types.cosine_distance.out_encoder_path}
         --train-dir ${docker_out_dir}/${split.train_dir}
         --test-dir ${docker_out_dir}/${split.test_dir}
         --param-path ${docker_work_dir}/params.yaml
@@ -146,7 +146,7 @@ stages:
         - classifier
       deps:
         - ${classifier_src}
-        - ${siamese_types.distance.out_encoder_path}
+        - ${siamese_types.cosine_distance.out_encoder_path}
         - ${out_dir}/${split.train_dir}
         - ${out_dir}/${split.test_dir}
       outs:
