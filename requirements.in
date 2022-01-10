@@ -12,8 +12,8 @@ siamese==0.0.38
 dvclive==0.0.8
 dvc[s3]
 pygtrie==2.3.2
-tensorflow_addons==0.13.0
-tensorflow==2.6.0
+tensorflow_addons
+tensorflow==2.7.0
 pathlib
 pandas
 wandb

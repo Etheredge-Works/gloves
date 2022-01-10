@@ -54,8 +54,6 @@ charset-normalizer==2.0.10
     # via
     #   aiohttp
     #   requests
-clang==5.0
-    # via tensorflow
 click==8.0.3
     # via
     #   -r requirements.in
@@ -182,6 +180,8 @@ jsonpath-ng==1.5.3
 keras==2.7.0
     # via tensorflow
 keras-preprocessing==1.1.2
+    # via tensorflow
+libclang==12.0.0
     # via tensorflow
 mailchecker==4.1.7
     # via python-benedict
@@ -397,11 +397,13 @@ tensorboard-data-server==0.6.1
     # via tensorboard
 tensorboard-plugin-wit==1.8.1
     # via tensorboard
-tensorflow==2.6.0
+tensorflow==2.7.0
     # via -r requirements.in
-tensorflow_addons==0.13.0
+tensorflow-addons==0.13.0
     # via -r requirements.in
 tensorflow-estimator==2.7.0
+    # via tensorflow
+tensorflow-io-gcs-filesystem==0.23.1
     # via tensorflow
 termcolor==1.1.0
     # via
