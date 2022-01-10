@@ -86,7 +86,7 @@ siamese:
   final_activation: linear
   lr: 0.0001
   optimizer: adam
-  epochs: 1
+  epochs: 1000
   batch_size: 32
   verbose: 0
   eval_freq: 1
@@ -133,5 +133,5 @@ classifier_types:
 classifier:
   # hypers
   batch_size: 32
-  epochs: 1
+  epochs: 1000
   verbose: 1
