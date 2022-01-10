@@ -283,8 +283,6 @@ jobs:
     container:
       image: etheredgeb/gloves:custom-tensorflow-2.7.0
       options: --gpus=all
-      options:
-        - '--gpus=all'
     needs: [l1_distance, l2_distance, cosine_distance, sigmoid]
     
     steps:
