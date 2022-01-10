@@ -269,8 +269,8 @@ def train(
 
     model = create_siamese_model(encoder, head)
     log_summary(encoder, dir=out_summaries_path, name='encoder')
-    log_summary(encoder, dir=out_summaries_path, name='head')
-    log_summary(encoder, dir=out_summaries_path, name='model')
+    log_summary(head, dir=out_summaries_path, name='head')
+    log_summary(model, dir=out_summaries_path, name='model')
     
     from tensorflow.keras.optimizers import Adam
     optimizer_switch = {
