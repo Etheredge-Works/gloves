@@ -1,6 +1,13 @@
 
 name: Train All Models
-on: [push]
+on: 
+  push:
+    paths:
+      - '.github/workflows/training.yaml'
+      - 'gloves'
+      - 'params.yaml'
+      - 'dvc.yaml'
+  
 jobs:
   setup:
     runs-on: ubuntu-latest
