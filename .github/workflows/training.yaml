@@ -138,13 +138,12 @@ jobs:
     
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
       - uses: iterative/setup-cml@v1
 
-      - name: train_imagenet_frozen:
+      - name: train_imagenet_frozen
         shell: bash
         env:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -178,7 +177,7 @@ jobs:
           node-version: '16'
       - uses: iterative/setup-cml@v1
 
-      - name: train_imagenet_unfrozen:
+      - name: train_imagenet_unfrozen
         shell: bash
         env:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -213,7 +212,7 @@ jobs:
           node-version: '16'
       - uses: iterative/setup-cml@v1
 
-      - name: train_gloves_frozen:
+      - name: train_gloves_frozen
         shell: bash
         env:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -249,7 +248,7 @@ jobs:
           node-version: '16'
       - uses: iterative/setup-cml@v1
 
-      - name: train_gloves_unfrozen:
+      - name: train_gloves_unfrozen
         shell: bash
         env:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
