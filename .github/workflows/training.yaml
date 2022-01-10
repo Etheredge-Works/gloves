@@ -6,6 +6,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.8' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+        architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
+        #install-deps: true # optional. Defaults to true
+    - name: Install DVC
+      run: pip install 'dvc[s3]==2.5.0'
     - name: Repro Initial stages
       env:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -49,6 +56,7 @@ jobs:
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md
+
   l2_distance:
     runs-on: [self-hosted, big-gpu]
     needs: [setup]
