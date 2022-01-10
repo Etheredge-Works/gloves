@@ -30,11 +30,11 @@ jobs:
         run: |
           echo "Training Sigmoid Model"
           # Pull data & run-cache from S3 and reproduce pipeline
-          dvc pull -v -d --run-cache siamese@sigmoid
-          # dvc repro siamese@sigmoid
-          # dvc push
+          dvc pull -d --run-cache siamese@sigmoid
+          dvc repro siamese@sigmoid
+          dvc push
 
-          # scripts/distance_report.sh >> report.md
-          # cml-send-comment report.md
+          scripts/distance_report.sh >> report.md
+          cml-send-comment report.md
 
         
