@@ -86,14 +86,14 @@ siamese:
   final_activation: linear
   lr: 0.0001
   optimizer: adam
-  epochs: 1000
+  epochs: 1
   batch_size: 32
   verbose: 0
   eval_freq: 1
   reduce_lr_factor: 0.1
   reduce_lr_patience: 20
   early_stop_patience: 50
-  mixed_precision: true
+  mixed_precision: false
   nway_freq: 20
   nways: 32
   use_batch_norm: true
@@ -133,5 +133,5 @@ classifier_types:
 classifier:
   # hypers
   batch_size: 32
-  epochs: 1000
+  epochs: 1
   verbose: 1
