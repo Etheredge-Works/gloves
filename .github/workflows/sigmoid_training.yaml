@@ -31,7 +31,7 @@ jobs:
           dvc repro siamese@sigmoid
           dvc push
 
-          scripts/distance_report.sh >> report.md
+          scripts/basic_report.sh >> report.md
           cml-send-comment report.md
 
         
