@@ -115,7 +115,7 @@ stages:
             cache: false
         - ${item.out_summaries_path}
 
-  classifiers:
+  classifier:
     foreach: ${classifier_types}
     do:
       cmd: >
