@@ -3,3 +3,4 @@
 .vscode/
 /metrics.yaml
 pipeline/gloves_pipeline.tar.gz
+wandb/
