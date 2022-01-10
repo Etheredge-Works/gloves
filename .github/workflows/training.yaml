@@ -4,7 +4,6 @@ on: [push]
 jobs:
   l1_distance:
     runs-on: [self-hosted, big-gpu]
-    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     
     steps:
       - uses: actions/checkout@v2
@@ -36,7 +35,6 @@ jobs:
           cml-send-comment report.md
   l2_distance:
     runs-on: [self-hosted, big-gpu]
-    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     
     steps:
       - uses: actions/checkout@v2
@@ -68,7 +66,6 @@ jobs:
           cml-send-comment report.md
   cosine_distance:
     runs-on: [self-hosted, big-gpu]
-    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     
     steps:
       - uses: actions/checkout@v2
@@ -101,7 +98,6 @@ jobs:
 
   sigmoid:
     runs-on: [self-hosted, big-gpu]
-    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     
     steps:
       - uses: actions/checkout@v2
@@ -134,7 +130,6 @@ jobs:
 
   imagenet_frozen:
     runs-on: [self-hosted, big-gpu]
-    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     
     steps:
       - uses: actions/checkout@v2
@@ -167,7 +162,6 @@ jobs:
 
   imagenet_unfrozen:
     runs-on: [self-hosted, big-gpu]
-    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     
     steps:
       - uses: actions/checkout@v2
@@ -202,7 +196,6 @@ jobs:
   gloves_frozen:
     runs-on: [self-hosted, big-gpu]
     needs: [l1_distance, l2_distance, cosine_distance, sigmoid]
-    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     
     steps:
       - uses: actions/checkout@v2
@@ -238,7 +231,6 @@ jobs:
   gloves_unfrozen:
     runs-on: [self-hosted, big-gpu]
     needs: [l1_distance, l2_distance, cosine_distance, sigmoid]
-    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     
     steps:
       - uses: actions/checkout@v2
