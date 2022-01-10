@@ -1,5 +1,5 @@
 
-name: Train Sigmoid Model
+name: Train All Models
 on: [push]
 jobs:
   l1_distance:
@@ -201,7 +201,7 @@ jobs:
 
   gloves_frozen:
     runs-on: [self-hosted, big-gpu]
-    needs: [l2_distance, cosine_distance, sigmoid]
+    needs: [l1_distance, l2_distance, cosine_distance, sigmoid]
     container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     
     steps:
