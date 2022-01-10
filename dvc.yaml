@@ -92,15 +92,15 @@ stages:
         # -e TF_FORCE_GPU_ALLOW_GROWTH=true
         # ${gloves_train_image}
         python gloves/${siamese_src}
-        --train-dir ${docker_out_dir}/${split.train_dir}
-        --test-dir ${docker_out_dir}/${split.test_dir}
+        --train-dir ${out_dir}/${split.train_dir}
+        --test-dir ${out_dir}/${split.test_dir}
         --loss ${item.loss}
         --param-path gloves/params.yaml
         --param-parent-key siamese
-        --out-model-path ${docker_work_dir}/${item.out_model_path}
-        --out-encoder-path ${docker_work_dir}/${item.out_encoder_path}
-        --out-metrics-path ${docker_work_dir}/${item.out_metrics_path}
-        --out-summaries-path ${docker_work_dir}/${item.out_summaries_path}
+        --out-model-path ${item.out_model_path}
+        --out-encoder-path ${item.out_encoder_path}
+        --out-metrics-path ${item.out_metrics_path}
+        --out-summaries-path {item.out_summaries_path}
      
       params:
         - siamese
@@ -132,14 +132,14 @@ stages:
         # -e TF_FORCE_GPU_ALLOW_GROWTH=true
         # ${gloves_train_image}
         python gloves/${classifier_src}
-        --encoder-model-path ${docker_work_dir}/${siamese_types.cosine_distance.out_encoder_path}
-        --train-dir ${docker_out_dir}/${split.train_dir}
-        --test-dir ${docker_out_dir}/${split.test_dir}
-        --param-path ${docker_work_dir}/params.yaml
+        --encoder-model-path ${siamese_types.cosine_distance.out_encoder_path}
+        --train-dir ${out_dir}/${split.train_dir}
+        --test-dir ${out_dir}/${split.test_dir}
+        --param-path params.yaml
         --param-parent-key classifier
-        --out-model-path ${docker_work_dir}/${item.out_model_path}
-        --out-label-encoder-path ${docker_work_dir}/${item.out_label_encoder}
-        --out-metrics-path ${docker_work_dir}/${item.out_metrics_path}
+        --out-model-path ${item.out_model_path}
+        --out-label-encoder-path ${item.out_label_encoder}
+        --out-metrics-path ${item.out_metrics_path}
         --use-imagenet ${item.use_imagenet}
         --is-frozen ${item.is_frozen}
       params:
