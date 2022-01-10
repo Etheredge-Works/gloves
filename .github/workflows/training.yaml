@@ -93,7 +93,7 @@ jobs:
           echo "Training cosine_distance Model"
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@cosine_distance
-          dvc repro siamese@sigmoid
+          dvc repro siamese@cosine_distance
           dvc push
 
           scripts/basic_report.sh >> report.md
