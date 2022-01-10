@@ -85,12 +85,12 @@ stages:
     foreach: ${siamese_types}
     do:
       cmd: >
-        ${docker_cmd} 
-        ${mlflow_env_vars} 
-        ${wandb_env_vars} 
-        --gpus all 
-        -e TF_FORCE_GPU_ALLOW_GROWTH=true
-        ${gloves_train_image}
+        # ${docker_cmd} 
+        # ${mlflow_env_vars} 
+        # ${wandb_env_vars} 
+        # --gpus all 
+        # -e TF_FORCE_GPU_ALLOW_GROWTH=true
+        # ${gloves_train_image}
         python gloves/${siamese_src}
         --train-dir ${docker_out_dir}/${split.train_dir}
         --test-dir ${docker_out_dir}/${split.test_dir}
@@ -125,12 +125,12 @@ stages:
     foreach: ${classifier_types}
     do:
       cmd: >
-        ${docker_cmd} 
-        ${mlflow_env_vars} 
-        ${wandb_env_vars} 
-        --gpus all 
-        -e TF_FORCE_GPU_ALLOW_GROWTH=true
-        ${gloves_train_image}
+        # ${docker_cmd} 
+        # ${mlflow_env_vars} 
+        # ${wandb_env_vars} 
+        # --gpus all 
+        # -e TF_FORCE_GPU_ALLOW_GROWTH=true
+        # ${gloves_train_image}
         python gloves/${classifier_src}
         --encoder-model-path ${docker_work_dir}/${siamese_types.cosine_distance.out_encoder_path}
         --train-dir ${docker_out_dir}/${split.train_dir}

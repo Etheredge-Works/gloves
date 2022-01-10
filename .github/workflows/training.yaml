@@ -2,8 +2,24 @@
 name: Train All Models
 on: [push]
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Repro Initial stages
+      env:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_AWS_ACCESS_KEY_ID}}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_AWS_SECRET_ACCESS_KEY }}
+      run:
+        dvc pull -d --run-cache split
+        dvc repro split
+        dvc push --run-cache
+      
   l1_distance:
     runs-on: [self-hosted, big-gpu]
+    needs: [setup]
+    container: "docker:etheredgeb/gloves:custom-tensorflow-2.7.0"
     
     steps:
       - uses: actions/checkout@v2
@@ -29,12 +45,14 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@l1_distance
           dvc repro siamese@l1_distance
-          dvc push
+          dvc push --run-cache
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md
   l2_distance:
     runs-on: [self-hosted, big-gpu]
+    needs: [setup]
+    container: "docker:etheredgeb/gloves:custom-tensorflow-2.7.0"
     
     steps:
       - uses: actions/checkout@v2
@@ -60,12 +78,15 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@l2_distance
           dvc repro siamese@l2_distance
-          dvc push
+          dvc push --run-cache
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md
+
   cosine_distance:
     runs-on: [self-hosted, big-gpu]
+    needs: [setup]
+    container: "docker:etheredgeb/gloves:custom-tensorflow-2.7.0"
     
     steps:
       - uses: actions/checkout@v2
@@ -91,13 +112,15 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@cosine_distance
           dvc repro siamese@cosine_distance
-          dvc push
+          dvc push --run-cache
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md
 
   sigmoid:
     runs-on: [self-hosted, big-gpu]
+    needs: [setup]
+    container: "docker:etheredgeb/gloves:custom-tensorflow-2.7.0"
     
     steps:
       - uses: actions/checkout@v2
@@ -123,13 +146,15 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@sigmoid
           dvc repro siamese@sigmoid
-          dvc push
+          dvc push --run-cache
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md
 
   imagenet_frozen:
     runs-on: [self-hosted, big-gpu]
+    needs: [setup]
+    container: "docker:etheredgeb/gloves:custom-tensorflow-2.7.0"
     
     steps:
       - uses: actions/checkout@v2
@@ -154,7 +179,7 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache classifier@imagenet_frozen 
           dvc repro classifier@imagenet_frozen
-          dvc push
+          dvc push --run-cache
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md
@@ -162,6 +187,7 @@ jobs:
 
   imagenet_unfrozen:
     runs-on: [self-hosted, big-gpu]
+    container: "docker:etheredgeb/gloves:custom-tensorflow-2.7.0"
     
     steps:
       - uses: actions/checkout@v2
@@ -187,7 +213,7 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache classifier@imagenet_unfrozen 
           dvc repro classifier@imagenet_unfrozen
-          dvc push
+          dvc push --run-cache
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md
@@ -195,6 +221,7 @@ jobs:
 
   gloves_frozen:
     runs-on: [self-hosted, big-gpu]
+    container: "docker:etheredgeb/gloves:custom-tensorflow-2.7.0"
     needs: [l1_distance, l2_distance, cosine_distance, sigmoid]
     
     steps:
@@ -221,7 +248,7 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache classifier@gloves_frozen 
           dvc repro classifier@gloves_frozen
-          dvc push
+          dvc push --run-cache
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md
@@ -230,6 +257,7 @@ jobs:
 
   gloves_unfrozen:
     runs-on: [self-hosted, big-gpu]
+    container: "docker:etheredgeb/gloves:custom-tensorflow-2.7.0"
     needs: [l1_distance, l2_distance, cosine_distance, sigmoid]
     
     steps:
@@ -256,7 +284,7 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache classifier@gloves_unfrozen 
           dvc repro classifier@gloves_unfrozen
-          dvc push
+          dvc push --run-cache
 
           scripts/basic_report.sh >> report.md
           # TODO generate report comparing frozen vs unfrozen vs siamese
