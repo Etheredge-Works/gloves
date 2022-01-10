@@ -3,7 +3,6 @@ sys.path.append('gloves')
 sys.path.append('.')
 import streamlit as st
 from gloves import utils
-from gloves.main import NormDistanceLayer
 #from gloves import custom_model
 from PIL import Image
 import os
@@ -13,7 +12,6 @@ import numpy as np
 import mlflow
 from pathlib import Path
 import joblib
-from icecream import ic
 import utils
 import pandas as pd
 import datetime
