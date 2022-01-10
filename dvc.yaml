@@ -94,7 +94,7 @@ stages:
         --out-model-path ${item.out_model_path}
         --out-encoder-path ${item.out_encoder_path}
         --out-metrics-path ${item.out_metrics_path}
-        --out-summaries-path {item.out_summaries_path}
+        --out-summaries-path ${item.out_summaries_path}
      
       params:
         - siamese
