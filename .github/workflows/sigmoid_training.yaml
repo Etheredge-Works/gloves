@@ -30,7 +30,7 @@ jobs:
         run: |
           echo "Training Sigmoid Model"
           # Pull data & run-cache from S3 and reproduce pipeline
-          # dvc pull -d --run-cache siamese@sigmoid
+          dvc pull -d --run-cache siamese@sigmoid
           # dvc repro siamese@sigmoid
           # dvc push
 
