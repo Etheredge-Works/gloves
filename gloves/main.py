@@ -161,9 +161,9 @@ def mlflow_log_wrapper(func):
 
 def log_summary(model, dir=None, name=None):
     name = name or model.name
-    Path(dir).mkdir(parents=True, exist_ok=True)
 
     if dir:
+        Path(dir).mkdir(parents=True, exist_ok=True)
         dir = dir + "/"
     filename = f"{dir}{name}.txt"
 
