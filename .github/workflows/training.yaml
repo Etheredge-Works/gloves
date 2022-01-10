@@ -1,0 +1,272 @@
+
+name: Train Sigmoid Model
+on: [push]
+jobs:
+  l1_distance:
+    runs-on: [self-hosted, big-gpu]
+    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - uses: iterative/setup-cml@v1
+
+      - name: train_l1_distance
+        shell: bash
+        env:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_AWS_ACCESS_KEY_ID}}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_AWS_SECRET_ACCESS_KEY }}
+          MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        run: |
+          echo "Training l1_distance Model"
+          # Pull data & run-cache from S3 and reproduce pipeline
+          dvc pull -d --run-cache siamese@l1_distance
+          dvc repro siamese@l1_distance
+          dvc push
+
+          scripts/basic_report.sh >> report.md
+          cml-send-comment report.md
+  l2_distance:
+    runs-on: [self-hosted, big-gpu]
+    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - uses: iterative/setup-cml@v1
+
+      - name: train_l2_distance
+        shell: bash
+        env:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_AWS_ACCESS_KEY_ID}}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_AWS_SECRET_ACCESS_KEY }}
+          MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        run: |
+          echo "Training l2_distance Model"
+          # Pull data & run-cache from S3 and reproduce pipeline
+          dvc pull -d --run-cache siamese@l2_distance
+          dvc repro siamese@l2_distance
+          dvc push
+
+          scripts/basic_report.sh >> report.md
+          cml-send-comment report.md
+  cosine_distance:
+    runs-on: [self-hosted, big-gpu]
+    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - uses: iterative/setup-cml@v1
+
+      - name: train_cosine_distance
+        shell: bash
+        env:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_AWS_ACCESS_KEY_ID}}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_AWS_SECRET_ACCESS_KEY }}
+          MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        run: |
+          echo "Training cosine_distance Model"
+          # Pull data & run-cache from S3 and reproduce pipeline
+          dvc pull -d --run-cache siamese@cosine_distance
+          dvc repro siamese@sigmoid
+          dvc push
+
+          scripts/basic_report.sh >> report.md
+          cml-send-comment report.md
+
+  sigmoid:
+    runs-on: [self-hosted, big-gpu]
+    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - uses: iterative/setup-cml@v1
+
+      - name: train_sigmoid
+        shell: bash
+        env:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_AWS_ACCESS_KEY_ID}}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_AWS_SECRET_ACCESS_KEY }}
+          MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        run: |
+          echo "Training Sigmoid Model"
+          # Pull data & run-cache from S3 and reproduce pipeline
+          dvc pull -d --run-cache siamese@sigmoid
+          dvc repro siamese@sigmoid
+          dvc push
+
+          scripts/basic_report.sh >> report.md
+          cml-send-comment report.md
+
+  imagenet_frozen:
+    runs-on: [self-hosted, big-gpu]
+    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - uses: iterative/setup-cml@v1
+
+      - name: train_imagenet_frozen:
+        shell: bash
+        env:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_AWS_ACCESS_KEY_ID}}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_AWS_SECRET_ACCESS_KEY }}
+          MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        run: |
+          echo "Training Sigmoid Model"
+          # Pull data & run-cache from S3 and reproduce pipeline
+          dvc pull -d --run-cache classifier@imagenet_frozen 
+          dvc repro classifier@imagenet_frozen
+          dvc push
+
+          scripts/basic_report.sh >> report.md
+          cml-send-comment report.md
+
+
+  imagenet_unfrozen:
+    runs-on: [self-hosted, big-gpu]
+    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - uses: iterative/setup-cml@v1
+
+      - name: train_imagenet_unfrozen:
+        shell: bash
+        env:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_AWS_ACCESS_KEY_ID}}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_AWS_SECRET_ACCESS_KEY }}
+          MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        run: |
+          echo "Training Sigmoid Model"
+          # Pull data & run-cache from S3 and reproduce pipeline
+          dvc pull -d --run-cache classifier@imagenet_unfrozen 
+          dvc repro classifier@imagenet_unfrozen
+          dvc push
+
+          scripts/basic_report.sh >> report.md
+          cml-send-comment report.md
+
+
+  gloves_frozen:
+    runs-on: [self-hosted, big-gpu]
+    needs: [l2_distance, cosine_distance, sigmoid]
+    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - uses: iterative/setup-cml@v1
+
+      - name: train_gloves_frozen:
+        shell: bash
+        env:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_AWS_ACCESS_KEY_ID}}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_AWS_SECRET_ACCESS_KEY }}
+          MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        run: |
+          echo "Training Sigmoid Model"
+          # Pull data & run-cache from S3 and reproduce pipeline
+          dvc pull -d --run-cache classifier@gloves_frozen 
+          dvc repro classifier@gloves_frozen
+          dvc push
+
+          scripts/basic_report.sh >> report.md
+          cml-send-comment report.md
+
+
+
+  gloves_unfrozen:
+    runs-on: [self-hosted, big-gpu]
+    needs: [l2_distance, cosine_distance, sigmoid]
+    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - uses: iterative/setup-cml@v1
+
+      - name: train_gloves_unfrozen:
+        shell: bash
+        env:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_AWS_ACCESS_KEY_ID}}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_AWS_SECRET_ACCESS_KEY }}
+          MLFLOW_S3_ENDPOINT_URL: ${{ secrets.MLFLOW_S3_ENDPOINT_URL }}
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        run: |
+          echo "Training Sigmoid Model"
+          # Pull data & run-cache from S3 and reproduce pipeline
+          dvc pull -d --run-cache classifier@gloves_unfrozen 
+          dvc repro classifier@gloves_unfrozen
+          dvc push
+
+          scripts/basic_report.sh >> report.md
+          cml-send-comment report.md
+
