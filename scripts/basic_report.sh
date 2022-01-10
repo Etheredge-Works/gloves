@@ -1,3 +1,4 @@
+#!/bin/bash
 # Report metrics
 echo "## Metrics"
 git fetch --prune
