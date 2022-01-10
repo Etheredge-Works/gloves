@@ -27,9 +27,8 @@ jobs:
     runs-on: [self-hosted, big-gpu]
     needs: [setup]
     container:
-      image: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
-      options:
-        - '--gpus=all'
+      image: etheredgeb/gloves:custom-tensorflow-2.7.0
+      options: --gpus=all
     
     steps:
       - uses: actions/checkout@v2
@@ -64,9 +63,8 @@ jobs:
     runs-on: [self-hosted, big-gpu]
     needs: [setup]
     container:
-      image: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
-      options:
-        - '--gpus=all'
+      image: etheredgeb/gloves:custom-tensorflow-2.7.0
+      options: --gpus=all
     
     steps:
       - uses: actions/checkout@v2
@@ -101,9 +99,8 @@ jobs:
     runs-on: [self-hosted, big-gpu]
     needs: [setup]
     container:
-      image: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
-      options:
-        - '--gpus=all'
+      image: etheredgeb/gloves:custom-tensorflow-2.7.0
+      options: --gpus=all
     
     steps:
       - uses: actions/checkout@v2
@@ -138,9 +135,8 @@ jobs:
     runs-on: [self-hosted, big-gpu]
     needs: [setup]
     container:
-      image: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
-      options:
-        - '--gpus=all'
+      image: etheredgeb/gloves:custom-tensorflow-2.7.0
+      options: --gpus=all
     
     steps:
       - uses: actions/checkout@v2
@@ -175,9 +171,8 @@ jobs:
     runs-on: [self-hosted, big-gpu]
     needs: [setup]
     container:
-      image: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
-      options:
-        - '--gpus=all'
+      image: etheredgeb/gloves:custom-tensorflow-2.7.0
+      options: --gpus=all
     
     steps:
       - uses: actions/checkout@v2
@@ -212,9 +207,8 @@ jobs:
     runs-on: [self-hosted, big-gpu]
     needs: [setup]
     container:
-      image: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
-      options:
-        - '--gpus=all'
+      image: etheredgeb/gloves:custom-tensorflow-2.7.0
+      options: --gpus=all
     
     steps:
       - uses: actions/checkout@v2
@@ -249,9 +243,8 @@ jobs:
   gloves_frozen:
     runs-on: [self-hosted, big-gpu]
     container:
-      image: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
-      options:
-        - '--gpus=all'
+      image: etheredgeb/gloves:custom-tensorflow-2.7.0
+      options: --gpus=all
     needs: [l1_distance, l2_distance, cosine_distance, sigmoid]
     
     steps:
@@ -288,7 +281,8 @@ jobs:
   gloves_unfrozen:
     runs-on: [self-hosted, big-gpu]
     container:
-      image: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
+      image: etheredgeb/gloves:custom-tensorflow-2.7.0
+      options: --gpus=all
       options:
         - '--gpus=all'
     needs: [l1_distance, l2_distance, cosine_distance, sigmoid]
