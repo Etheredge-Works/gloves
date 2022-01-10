@@ -237,7 +237,7 @@ jobs:
 
   gloves_unfrozen:
     runs-on: [self-hosted, big-gpu]
-    needs: [l2_distance, cosine_distance, sigmoid]
+    needs: [l1_distance, l2_distance, cosine_distance, sigmoid]
     container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     
     steps:
@@ -267,5 +267,6 @@ jobs:
           dvc push
 
           scripts/basic_report.sh >> report.md
+          # TODO generate report comparing frozen vs unfrozen vs siamese
           cml-send-comment report.md
 

@@ -3,7 +3,6 @@
 echo "## Metrics"
 git fetch --prune
 dvc metrics diff master --show-md 
-dvc plots show --show-md
 
 # Visual of logs
 #echo "\`\`\`html\n" "$(cat siamese_logs.html)" "\n\`\`\`" >> reprort.md
