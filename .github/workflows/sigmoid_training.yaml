@@ -1,14 +1,22 @@
-name: Testing DVC Action
+name: Train Sigmoid Model
 on: [push]
 jobs:
   run:
-    runs-on: [self-hosted, big-gpu, cml]
-    container: docker://tensorflow/tensorflow:latest-gpu
-    environment: test
+    runs-on: [self-hosted, big-gpu]
+    container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     
     steps:
       - uses: actions/checkout@v2
-      - name: cml_run
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      # - uses: actions/setup-python@v2
+      #   with:
+      #     python-version: '3.x'
+      - uses: iterative/setup-cml@v1
+
+      - name: train_sigmoid
         shell: bash
         env:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -18,16 +26,14 @@ jobs:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
         run: |
-          # Install requirements
-          pip install -r requirements.txt
-          nvidia-smi
-
           # Pull data & run-cache from S3 and reproduce pipeline
-          dvc pull -d --run-cache siamese@distance
-          dvc repro siamese@distance
+          dvc pull -d --run-cache siamese@sigmoid
+          dvc repro siamese@sigmoid
           dvc push
 
-          scripts/distance_report.sh >> report.md
-          cml-send-comment report.md
+          # scripts/distance_report.sh >> report.md
+          # cml-send-comment report.md
+
         
