@@ -266,7 +266,6 @@ jobs:
 
   gloves_unfrozen:
     runs-on: [self-hosted, big-gpu]
-    container: "docker:etheredgeb/gloves:custom-tensorflow-2.7.0"
     container: docker://etheredgeb/gloves:custom-tensorflow-2.7.0
     needs: [l1_distance, l2_distance, cosine_distance, sigmoid]
     
