@@ -13,4 +13,6 @@ RUN pip3 install -r /tmp/requirements.txt \
     && mkdir /.config && chmod 777 /.config
 # wandb complains .config for some reason
 
+ENV TF_FORCE_GPU_ALLOW_GROWTH=true
+
 WORKDIR /app
