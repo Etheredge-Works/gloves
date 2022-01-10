@@ -279,8 +279,10 @@ pygments==2.11.2
     # via
     #   icecream
     #   rich
-pygtrie==2.4.2
-    # via dvc
+pygtrie==2.3.2
+    # via
+    #   -r requirements.in
+    #   dvc
 pyparsing==2.4.7
     # via
     #   dvc
