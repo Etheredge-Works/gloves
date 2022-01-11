@@ -120,7 +120,7 @@ stages:
     do:
       cmd: >
         python ${classifier_src}
-        --encoder-model-path ${siamese_types.cosine_distance.out_encoder_path}
+        --encoder-model-path ${siamese_types.l2_distance.out_encoder_path}
         --train-dir ${out_dir}/${split.train_dir}
         --test-dir ${out_dir}/${split.test_dir}
         --param-path params.yaml
@@ -134,7 +134,7 @@ stages:
         - classifier
       deps:
         - ${classifier_src}
-        - ${siamese_types.cosine_distance.out_encoder_path}
+        - ${siamese_types.l2_distance.out_encoder_path}
         - ${out_dir}/${split.train_dir}
         - ${out_dir}/${split.test_dir}
       outs:
