@@ -89,7 +89,7 @@ if anchor_file is not None:
 
 other_files = st.file_uploader("Input Images to compare to Anchor Image", accept_multiple_files=True, type="jpg")
 if other_files is not None:
-    cols = st.beta_columns(4)
+    cols = st.columns(4)
     for idx, file in enumerate(other_files):
         cols[idx%4].image(file, caption=file.name, use_column_width=True)
 #st.write(Image.frombytes('RGB', anchor_file))
@@ -104,7 +104,7 @@ if anchor_file and other_files:
    # TODO pass all at once
    prediction_values = predict(model, cleaned_anchor, cleaned_others)
    st.write("## Distances")
-   cols = st.beta_columns(4)
+   cols = st.columns(4)
    for idx, (file, predictions) in enumerate(zip(other_files, prediction_values)):
        cols[idx%4].image(file, caption=str(*predictions), use_column_width=True)
 
@@ -112,7 +112,7 @@ if anchor_file and other_files:
    This is for trying to determine there's a good way to act off the anchor image.
    """)
    threshold = st.number_input('Cutoff Threshold', value=1.0, min_value=0., step=0.01)
-   cols = st.beta_columns(4)
+   cols = st.columns(4)
    for idx, (file, predictions) in enumerate(zip(other_files, prediction_values)):
        if predictions[0] <= threshold:
             cols[idx%4].image(file, caption=str(*predictions), use_column_width=True)
