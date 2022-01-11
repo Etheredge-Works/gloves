@@ -14,6 +14,13 @@ from pathlib import Path
 import datetime
 import tensorflow_addons as tfa
 
+def predict(model, anchor, others):
+    # TODO could optimize like I did for nway, but that's too much work right now
+    anchors = np.stack([anchor for _ in others])
+    #anchors = [anchor for _ in others]
+    others = np.stack(others)
+    return model.predict([anchors, others])
+
 #model = custom_model.get_model()
 st.title("Pet Breed Similarity")
 st.write("""
@@ -101,10 +108,10 @@ if anchor_file and other_file_1 and other_file_2:
    st.write("Predicting on images..")
    # TODO pass all at once
    prediction_value_1 = predict(dist_model, cleaned_anchor, cleaned_other_1)
-   prediction_value_2 = predict(distmodel, cleaned_anchor, cleaned_other_2)
+   prediction_value_2 = predict(dist_model, cleaned_anchor, cleaned_other_2)
    prediction_value_3 = predict(dist_model, cleaned_other_1, cleaned_other_2)
    st.write("Done.")
-   col1, col2 = st.beta_columns(2)
+   col1, col2 = st.columns(2)
    if prediction_value_1 < prediction_value_2:
       st.write("Image 1 is closer to anchor")
       #st.image([anchor_file, other_file_1], caption=['Anchor', 'Other'])

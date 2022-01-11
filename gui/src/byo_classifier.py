@@ -136,15 +136,19 @@ if anchor_file and other_files:
 
 #st.text(prediction_value)
 #st.help(prediction_value)
-st.write("# Apendix")
+st.write("# Appendix")
 st.write("""
 ## Background
 I originally started this project as a way to explore few-shot learners. It has since been a playground for me to explore tons of other technologies like
 Kubeflow, DVC, MLflow, Weights and Bias, docker, etc.
 """)
-st.write("## Model Summary")
-model.summary(print_fn=st.text)
-sub_model = [layer for layer in model.layers if layer.name == 'model'][0]
-st.write("## Sub Model Summary (duplicated siamese network / latent encoder)")
-sub_model.summary(print_fn=st.text)
-st.write(model)
+
+with st.expander("Model Summary"):
+   st.write("## Model Summary")
+   model.summary(print_fn=st.text)
+
+with st.expander("Sub-Model Summary"):
+   sub_model = [layer for layer in model.layers if layer.name == 'model'][0]
+   st.write("## Sub Model Summary (duplicated siamese network / latent encoder)")
+   sub_model.summary(print_fn=st.text)
+   st.write(model)

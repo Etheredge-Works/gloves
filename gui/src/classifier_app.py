@@ -57,7 +57,7 @@ def predict(model, anchor, others):
 
 model, model_version, summary, metrics = load_model_gloves()
 cls_model, cls_model_version, cls_summary, cls_metrics = load_model_gloves('gloves-classifier')
-with st.beta_expander("1. Distances and Classification"):
+with st.expander("1. Distances and Classification"):
     # TODO dynamically pull from a medium artical with information in it
     st.write("""
     ## How to use
@@ -72,7 +72,7 @@ with st.beta_expander("1. Distances and Classification"):
 
     other_files = st.file_uploader("Input Images to compare to Anchor Image", accept_multiple_files=True, type="jpg")
     if other_files is not None:
-        cols_1 = st.beta_columns(4)
+        cols_1 = st.columns(4)
         for idx, file in enumerate(other_files):
             cols_1[idx%4].image(file, caption=file.name, use_column_width=True)
 
@@ -84,13 +84,13 @@ with st.beta_expander("1. Distances and Classification"):
         dist_prediction_values = predict(model, cleaned_anchor, cleaned_others)
         cls_prediction_values = predict(cls_model, cleaned_anchor, cleaned_others)
         st.write("## Distances")
-        cols_2 = st.beta_columns(4)
+        cols_2 = st.columns(4)
         for idx, (file, predictions, matches) in enumerate(zip(other_files, dist_prediction_values, cls_prediction_values)):
             dist = predictions[0]
             y_hat = matches[0]
             cols_2[idx%4].image(file, caption=f"Dist: {dist}    match: {y_hat}", use_column_width=True)
 
-with st.beta_expander("1.1: Distance Model Summary"):
+with st.expander("1.1: Distance Model Summary"):
     st.write(f"""
     ### Distance Model Information
     | Model Creation Date |  Model Version |
@@ -104,7 +104,7 @@ with st.beta_expander("1.1: Distance Model Summary"):
     st.write("## Sub Model Summary (duplicated siamese network / latent encoder)")
     sub_model.summary(print_fn=st.text)
 
-with st.beta_expander("1.2: Classifier Model Summary"):
+with st.expander("1.2: Classifier Model Summary"):
     st.write(f"""
         ### Classifier Model Information
         | Model Creation Date |  Model Version |
@@ -141,7 +141,7 @@ model_names = [
 models = [(model_name, load_model(model_name)) for model_name in model_names]
 
 
-with st.beta_expander("2. Encoder Applied Demos"):
+with st.expander("2. Encoder Applied Demos"):
     st.write("""
         This page demonstrates the effectiveness of the current siamese network encoder applied to feature extraction for pet breed classifiction on the Oxford pet dataset. 
         Process: 
@@ -159,7 +159,7 @@ with st.beta_expander("2. Encoder Applied Demos"):
         st.image(image, caption="Uploaded Image.", use_column_width=True)
     n = st.number_input("Top Labels to get", value=5, max_value=34, step=1)
 
-    multi_cols = st.beta_columns(2)
+    multi_cols = st.columns(2)
 
     if image is not None:
         data = utils.simple_decode(image.read())
@@ -188,7 +188,7 @@ with st.beta_expander("2. Encoder Applied Demos"):
 
     #st.text(prediction_value)
 for idx, (name, (model, le, model_version, rundata)) in enumerate(models):
-    with st.beta_expander(f"2.{idx+1}: {name} model info"):
+    with st.expander(f"2.{idx+1}: {name} model info"):
         st.write(f"""
             | Model Creation Date |  Model Version |
             | :-------: | :---: |
