@@ -147,13 +147,14 @@ def mlflow_log_wrapper(func):
             #arg_name = f'{arg=}'.split('=')[0]
             #params[arg_name] = arg
 
-        mlflow.log_params(params)
         if params['loss'] == 'binary_crossentropy':
             name = 'gloves-sigmoid' 
         else: 
             sub_name = params['loss'].split('_')[0]
             name = f'gloves-{sub_name}-distance'
         wandb.init(project=name, config=params)
+        mlflow.set_experiment(name)
+        mlflow.log_params(params)
 
         return func(*args, **kwargs)
     return inner
@@ -417,8 +418,6 @@ def main(
         nway_disabled: bool,
         label_func: str,
 ):
-    mlflow.set_experiment(f"siamese-{loss}")
-    wandb.project=f"siamese-{loss}"
 
     mlflow.tensorflow.autolog(every_n_iter=1)
 
