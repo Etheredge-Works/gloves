@@ -15,6 +15,7 @@ import joblib
 import utils
 import pandas as pd
 import datetime
+import tensorflow_addons as tfa
 
 #model = custom_model.get_model()
 
@@ -40,7 +41,9 @@ def load_model_gloves(mlflow_model_name='gloves', mlflow_model_stage='Production
     rundata = client.get_run(model_version.run_id)
     model_path = client.download_artifacts(model_version.run_id, 'model', dst_path='/tmp/')
     model_summary_path = client.download_artifacts(model_version.run_id, 'model_summary.txt', dst_path='/tmp/')
-    model = tf.keras.models.load_model(model_path)
+    model = tf.keras.models.load_model(
+        model_path,
+        custom_objects={"ContrastiveLoss": tfa.losses.ContrastiveLoss})
     with open(model_summary_path) as f:
         summary = f.read()
     return model, model_version, summary, rundata.data.metrics

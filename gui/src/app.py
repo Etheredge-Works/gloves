@@ -12,6 +12,7 @@ import numpy as np
 import mlflow
 from pathlib import Path
 import datetime
+import tensorflow_addons as tfa
 
 #model = custom_model.get_model()
 st.title("Pet Breed Similarity")
@@ -41,7 +42,9 @@ def load_model(mlflow_model_name, mlflow_model_stage='Production'):
    client = mlflow.tracking.MlflowClient()
    model_version = client.get_latest_versions(name=mlflow_model_name, stages=[mlflow_model_stage])[0]
    model_artifact = client.download_artifacts(model_version.run_id, 'model', dst_path='/tmp/')
-   model = tf.keras.models.load_model('/tmp/model')
+   model = tf.keras.models.load_model(
+      '/tmp/model',
+      custom_objects={"ContrastiveLoss": tfa.losses.ContrastiveLoss})
    return model, model_version
 
 
