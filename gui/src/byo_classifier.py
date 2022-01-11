@@ -4,14 +4,15 @@ sys.path.append('.')
 import streamlit as st
 from gloves import utils
 #from gloves import custom_model
-from PIL import Image
+#from PIL import Image
 import os
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 import tensorflow as tf
-import numpy as np
+#import numpy as np
 import mlflow
-from pathlib import Path
-import datetime
+#from pathlib import Path
+#import datetime
+import tensorflow_addons as tfa
 
 #model = custom_model.get_model()
 
@@ -37,7 +38,10 @@ def load_model(mlflow_model_name='gloves', mlflow_model_stage='Production'):
    model_version = client.get_latest_versions(name=mlflow_model_name, stages=[mlflow_model_stage])[0]
    model_path = client.download_artifacts(model_version.run_id, 'model', dst_path='/tmp/')
    model_summary_path = client.download_artifacts(model_version.run_id, 'model_summary.txt', dst_path='/tmp/')
-   model = tf.keras.models.load_model(model_path)
+   model = tf.keras.models.load_model(
+      model_path,
+      custom_objects={'ContrastiveLoss': tfa.losses.ContrastiveLoss})
+
    with open(model_summary_path) as f:
     summary = f.read()
    return model, model_version, summary
