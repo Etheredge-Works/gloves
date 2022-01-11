@@ -3,14 +3,11 @@ sys.path.append('gloves')
 sys.path.append('.')
 import streamlit as st
 from gloves import utils
-#from gloves import custom_model
-#from PIL import Image
 import os
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 import tensorflow as tf
-#import numpy as np
+import numpy as np
 import mlflow
-#from pathlib import Path
 import datetime
 import tensorflow_addons as tfa
 
