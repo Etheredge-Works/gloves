@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  streamlit_byo:
+    build: 
+      context: ..
+      dockerfile: gui/Dockerfile
+    command: streamlit run gui/src/byo_classifier.py
+    ports:
+      - "8501:8501"
