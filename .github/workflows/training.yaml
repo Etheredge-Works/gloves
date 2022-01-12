@@ -28,7 +28,7 @@ jobs:
       run: |
         dvc pull -d --run-cache split
         dvc repro split
-        dvc push --run-cache
+        dvc push --run-cache split
       
 
   l1_distance:
@@ -62,7 +62,7 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@l1_distance
           dvc repro siamese@l1_distance
-          dvc push --run-cache
+          dvc push --run-cache siamese@l1_distance
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md
@@ -99,7 +99,7 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@l2_distance
           dvc repro siamese@l2_distance
-          dvc push --run-cache
+          dvc push --run-cache siamese@l2_distance
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md
@@ -136,7 +136,7 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@cosine_distance
           dvc repro siamese@cosine_distance
-          dvc push --run-cache
+          dvc push --run-cache siamese@cosine_distance
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md
@@ -173,7 +173,7 @@ jobs:
           # Pull data & run-cache from S3 and reproduce pipeline
           dvc pull -d --run-cache siamese@sigmoid
           dvc repro siamese@sigmoid
-          dvc push --run-cache
+          dvc push --run-cache siamese@sigmoid
 
           scripts/basic_report.sh >> report.md
           cml-send-comment report.md

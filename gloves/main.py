@@ -282,7 +282,8 @@ def train(
     # TODO extract and pass in
     train_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(train_dir)/glob_pattern)))
     train_labels = tf.convert_to_tensor(label_func(train_files_tf))
-    mlflow.log_param("dataset_size", len(train_labels))
+    mlflow.log_param("train_dataset_size", len(train_labels))
+    wandb.config.train_dataset_size = len(train_labels)
     assert len(train_files_tf) == len(train_labels)
     assert tf.size(train_files_tf) > 0, "no train files found"
 
@@ -290,24 +291,14 @@ def train(
     test_labels = tf.convert_to_tensor(label_func(test_files_tf))
     assert len(test_files_tf) == len(test_labels)
     assert tf.size(test_files_tf) > 0, "no test files found"
+    mlflow.log_param("test_dataset_size", len(test_labels))
+    wandb.config.test_dataset_size = len(test_labels)
 
-    @tf.function
-    def read_decode(file_path):
-        byte_data = tf.io.read_file(file_path)
-        img = tf.image.decode_jpeg(byte_data, channels=3)
-        img = tf.image.resize(img, [224, 224]) #TODO 
-
-        #img = preprocess_input(img)  # NOTE: This does A TON for accuracy
-        #img = tf.image.convert_image_dtype(img, 'float32')
-        return img
-    #all_files_tf  = tf.concat([train_files_tf, test_files_tf])
     ds = create_dataset(
         anchor_items=train_files_tf,
         anchor_labels=train_labels,
-        anchor_decode_func=read_decode,
-        #anchor_decode_func=random_read_decode if mutate_anchor else read_decode,
-        #other_decode_func=random_read_decode if mutate_other else read_decode,
-        other_decode_func=read_decode,
+        anchor_decode_func=random_read_decode if mutate_anchor else read_decode,
+        other_decode_func=random_read_decode if mutate_other else read_decode,
         #other_items=extra_train_files,
         #other_labels=get_labels_from_files_path(extra_train_files),
         #repeat=1,
