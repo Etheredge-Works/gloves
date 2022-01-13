@@ -1,4 +1,8 @@
 #! /bin/bash
+# This script exists to be able to run DVC commands inside a docker container with 
+# the correct enviornment.
+# Some DVC stages will not work due to needing access to docker (up to `split`)
+
 docker run -it --rm -v $PWD:/app \
     -e "MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI" \
     -e "MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL" \

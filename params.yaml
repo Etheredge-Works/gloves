@@ -37,7 +37,7 @@ split:
   img: etheredgeb/split_oxford_pet_data:latest
   train_dir: train
   test_dir: test
-  ratio: 0.1
+  ratio: 0.2
 
 siamese_types:
   l1_distance:
@@ -135,3 +135,17 @@ classifier:
   batch_size: 32
   epochs: 1000
   verbose: 1
+
+get_my_pets:
+  img: amazon/aws-cli:2.4.10
+  out_dir: get_my_pets
+  bucket: s3://data/my-pets
+
+rename_my_pets:
+  img: alpine:3.15.0
+  out_dir: rename_my_pets
+
+combine:
+  img: alpine:3.15.0
+  out_dir: combined
+

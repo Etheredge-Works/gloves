@@ -32,13 +32,13 @@ stages:
   split:
     cmd: >
       ${docker_cmd} ${split.img}
-      --data-dir ${docker_out_dir}/${clean.out_dir}
+      --data-dir ${docker_out_dir}/${combine.out_dir}
       --train-dir ${docker_out_dir}/${split.train_dir}
       --test-dir ${docker_out_dir}/${split.test_dir}
       --ratio ${split.ratio}
       --by-label False
     deps:
-    - ${out_dir}/${clean.out_dir}
+    - ${out_dir}/${combine.out_dir}
     params:
     - split.ratio
     outs:
@@ -163,3 +163,38 @@ stages:
     #deps:
       #- last_build.log
       
+  get_my_pets:
+    cmd: >
+      ${docker_cmd}
+      -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+      -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+      amazon/aws-cli:2.4.10
+      --endpoint-url $S3_ENDPOINT s3 cp ${get_my_pets.bucket} ${docker_out_dir}/${get_my_pets.out_dir} --recursive
+    outs:
+    - ${out_dir}/${get_my_pets.out_dir}
+
+  rename_my_pets:
+    cmd: >
+      ${docker_cmd}
+      bash:5.1.16-alpine3.14
+      bash
+      ${docker_work_dir}/scripts/rename.sh  
+      ${docker_out_dir}/${get_my_pets.out_dir} 
+      ${docker_out_dir}/${rename_my_pets.out_dir}
+    deps:
+      - scripts/rename.sh
+      - ${out_dir}/${get_my_pets.out_dir}
+    outs:
+    - ${out_dir}/${rename_my_pets.out_dir}
+
+
+  combine:
+    cmd: >
+      ${docker_cmd} alpine:3.15.0
+      sh -c 'mkdir -p ${docker_out_dir}/${combine.out_dir} && cp -r ${docker_out_dir}/${rename_my_pets.out_dir}/* ${docker_out_dir}/${clean.out_dir}/* ${docker_out_dir}/${combine.out_dir}'
+    deps:
+    - ${out_dir}/${rename_my_pets.out_dir}
+    - ${out_dir}/${clean.out_dir}
+    outs:
+    - ${out_dir}/${combine.out_dir}
+  
