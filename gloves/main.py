@@ -149,12 +149,17 @@ def mlflow_log_wrapper(func):
 
         if params['loss'] == 'binary_crossentropy':
             name = 'gloves-sigmoid' 
+            sub_name = 'sigmoid'
         else: 
             sub_name = params['loss'].split('_')[0]
             name = f'gloves-{sub_name}-distance'
-        wandb.init(project=name, config=params)
-        mlflow.set_experiment(name)
-        mlflow.log_params(params)
+        #wandb.init(project=name, config=params)
+        wandb.init(project="gloves", config=dict(
+            type=sub_name,
+            **params)
+            )
+        mlflow.set_experiment("gloves")
+        mlflow.log_params(dict(type=sub_name, **params))
 
         return func(*args, **kwargs)
     return inner

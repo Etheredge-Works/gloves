@@ -15,7 +15,6 @@ from icecream import ic
 from sklearn import preprocessing
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 import mlflow
-mlflow.set_experiment("gloves-classifier")
 import mlflow.tensorflow
 import numpy as np
 import joblib
@@ -108,14 +107,18 @@ def main(
         train_kwargs = yaml.safe_load(f)[param_parent_key]
 
     sub_name = "siamese" if use_imagenet else "imagenet"
-    forzen = "frozen" if is_frozen else "unfrozen"
-    project_name = f"gloves-classifier-{sub_name}-{forzen}"
+    frozen = "frozen" if is_frozen else "unfrozen"
+    project_name = f"gloves-classifier-{sub_name}-{frozen}"
     wandb.init(
-        project=project_name, 
+        #project=project_name, 
+        project="gloves-classifier",
         config=dict(
+            type=sub_name,
+            frozen=is_frozen,
             mixed_precision=mixed_precision,
             **train_kwargs)
     )
+    mlflow.set_experiment("gloves-classifier")
 
     train(train_dir, test_dir, encoder_model_path, out_model_path, out_metrics_path, out_label_encoder_path,
           use_imagenet=use_imagenet, is_frozen=is_frozen,
