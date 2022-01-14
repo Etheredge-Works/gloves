@@ -1,13 +1,13 @@
 {
-    "step": 607,
-    "loss": 0.04188646003603935,
-    "val_loss": 0.16010189056396484,
-    "lr": 9.99999993922529e-09,
-    "train_nway_acc": 0.9819548872180451,
-    "train_nway_avg_dist": 1.2364587783813477,
-    "train_nway_avg_var": 0.06432703882455826,
-    "test_nway_acc": 0.8809201623815968,
-    "test_nway_avg_dist": 1.1475192308425903,
-    "test_nway_avg_var": 0.04185967147350311,
-    "memory_use_GB": 7.05149507522583
+    "step": 733,
+    "loss": 0.038651276379823685,
+    "val_loss": 0.17714400589466095,
+    "lr": 9.999999092680234e-12,
+    "train_nway_acc": 0.97,
+    "train_nway_avg_dist": 1.2924259901046753,
+    "train_nway_avg_var": 0.07508004456758499,
+    "test_nway_acc": 0.906,
+    "test_nway_avg_dist": 1.168634057044983,
+    "test_nway_avg_var": 0.034040164202451706,
+    "memory_use_GB": 8.195406436920166
 }
