@@ -128,6 +128,7 @@ stages:
         --out-model-path ${item.out_model_path}
         --out-label-encoder-path ${item.out_label_encoder}
         --out-metrics-path ${item.out_metrics_path}
+        --mixed-precision ${siamese.mixed_precision}
         --use-imagenet ${item.use_imagenet}
         --is-frozen ${item.is_frozen}
       params:

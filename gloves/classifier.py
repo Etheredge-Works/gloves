@@ -9,7 +9,7 @@ from tensorflow.keras.layers import Flatten, Dense
 from models import softmax_model
 from utils import read_decode, random_read_decode
 from siamese.data import get_labels_from_filenames
-from tensorflow.keras.applications import MobileNet as pre_trained_model
+from tensorflow.keras.applications import ResNet50V2 as pre_trained_model
 import os
 from icecream import ic
 from sklearn import preprocessing
@@ -119,6 +119,12 @@ def main(
             **train_kwargs)
     )
     mlflow.set_experiment("gloves-classifier")
+    mlflow.start_run()
+    mlflow.log_params(dict(
+        type=sub_name,
+        frozen=is_frozen,
+        mixed_precision=mixed_precision,
+    ))
 
     train(train_dir, test_dir, encoder_model_path, out_model_path, out_metrics_path, out_label_encoder_path,
           use_imagenet=use_imagenet, is_frozen=is_frozen,
@@ -156,28 +162,27 @@ def train(
                 layer.trainable = False
 
     dvclive.init(out_metric_path)
-    with mlflow.start_run():
-        mlflow.tensorflow.autolog(every_n_iter=1)
-        mlflow.log_artifact(out_label_encoder_path)
+    mlflow.tensorflow.autolog(every_n_iter=1)
+    mlflow.log_artifact(out_label_encoder_path)
 
-        head = softmax_model(model.output_shape[1:], label_count, dense_nodes=[256], dropout_rate=0.5)
-        classifier = tf.keras.Model(inputs=model.inputs, outputs=head(model.outputs))
-        classifier.compile(optimizer='adam', loss=tf.keras.losses.CategoricalCrossentropy(), 
-                metrics=['acc', tf.keras.metrics.Precision(name='precision'), tf.keras.metrics.Recall(name='recall'), tf.keras.metrics.AUC(name='auc')])
+    head = softmax_model(model.output_shape[1:], label_count, dense_nodes=[256], dropout_rate=0.5)
+    classifier = tf.keras.Model(inputs=model.inputs, outputs=head(model.outputs))
+    classifier.compile(optimizer='adam', loss=tf.keras.losses.CategoricalCrossentropy(), 
+            metrics=['acc', tf.keras.metrics.Precision(name='precision'), tf.keras.metrics.Recall(name='recall'), tf.keras.metrics.AUC(name='auc')])
 
-        classifier.fit(ds, 
-            validation_data=val_ds,
-            validation_freq=1,
-            epochs=epochs, verbose=verbose, callbacks=[
-                ReduceLROnPlateau(monitor='loss', patience=10),
-                MetricsCallback(),
-                EarlyStopping(monitor='val_loss', patience=40, verbose=1, restore_best_weights=True),
-                wandb.keras.WandbCallback(),
-            ]
-        )
+    classifier.fit(ds, 
+        validation_data=val_ds,
+        validation_freq=1,
+        epochs=epochs, verbose=verbose, callbacks=[
+            ReduceLROnPlateau(monitor='loss', patience=10),
+            MetricsCallback(),
+            EarlyStopping(monitor='val_loss', patience=40, verbose=1, restore_best_weights=True),
+            wandb.keras.WandbCallback(),
+        ]
+    )
 
-        classifier.save(out_model_path, save_format='tf')
-        mlflow.log_artifact(out_model_path)
+    classifier.save(out_model_path, save_format='tf')
+    mlflow.log_artifact(out_model_path)
 
 if __name__ == "__main__":
     main()
