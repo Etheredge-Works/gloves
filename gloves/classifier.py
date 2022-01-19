@@ -33,7 +33,7 @@ class MetricsCallback(Callback):
         dvclive.next_step()
 
 
-def setup_ds(train_dir, batch_size, label_encoder=None, decode=random_read_decode):
+def setup_ds(train_dir, batch_size, label_encoder=None, decode=random_read_decode, reshuffle=True):
     # TODO pass labels?
     train_files_tf = tf.convert_to_tensor(tf.io.gfile.glob(str(Path(train_dir)/'**.jpg')))
     item_count = int(tf.size(train_files_tf))
@@ -53,7 +53,7 @@ def setup_ds(train_dir, batch_size, label_encoder=None, decode=random_read_decod
     label_ds = tf.data.Dataset.from_tensor_slices(train_labels)
 
     ds = tf.data.Dataset.zip((data_ds, label_ds))
-    ds = ds.shuffle(item_count, seed=4, reshuffle_each_iteration=False) # TODO pass seed mess things up?
+    ds = ds.shuffle(item_count, seed=4, reshuffle_each_iteration=reshuffle) # TODO pass seed mess things up?
 
     ds = ds.batch(batch_size)
     ds = ds.prefetch(-1)
@@ -143,13 +143,14 @@ def train(
     batch_size,
     epochs,
     verbose,
+    dropout_rate,
     **_  # Ignore other kwargs
 ):
 
     ds, label_count, label_encoder = setup_ds(train_dir, batch_size, decode=random_read_decode)
     joblib.dump(label_encoder, out_label_encoder_path)
 
-    val_ds, _, _ = setup_ds(test_dir, batch_size, label_encoder, decode=read_decode)
+    val_ds, _, _ = setup_ds(test_dir, batch_size, label_encoder, decode=read_decode, reshuffle=False)
     val_ds = val_ds.cache().prefetch(tf.data.AUTOTUNE)
 
     # Setup models
@@ -165,7 +166,7 @@ def train(
     mlflow.tensorflow.autolog(every_n_iter=1)
     mlflow.log_artifact(out_label_encoder_path)
 
-    head = softmax_model(model.output_shape[1:], label_count, dense_nodes=[256], dropout_rate=0.5)
+    head = softmax_model(model.output_shape[1:], label_count, dense_nodes=[256], dropout_rate=dropout_rate)
     classifier = tf.keras.Model(inputs=model.inputs, outputs=head(model.outputs))
     classifier.compile(optimizer='adam', loss=tf.keras.losses.CategoricalCrossentropy(), 
             metrics=['acc', tf.keras.metrics.Precision(name='precision'), tf.keras.metrics.Recall(name='recall'), tf.keras.metrics.AUC(name='auc')])
