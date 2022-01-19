@@ -135,7 +135,7 @@ classifier:
   batch_size: 32
   epochs: 1000
   verbose: 1
-  dropout_rate: 0.5
+  dropout_rate: 0.0
 
 get_my_pets:
   img: amazon/aws-cli:2.4.10
