@@ -2,6 +2,7 @@ from tensorflow.keras.callbacks import Callback
 import dvclive
 import mlflow
 import psutil
+import numpy as np
 
 
 class MetricsCallback(Callback):

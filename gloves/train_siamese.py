@@ -15,7 +15,12 @@ from utils import read_decode, random_read_decode
 from models import build_custom_encoder, sigmoid_model
 from utils.callbacks import MetricsCallback
 
-from models.custom_model import L1DistanceLayer, L2DistanceLayer, CosineDistanceLayer
+from models.custom_model import (
+    L1DistanceLayer, 
+    L2DistanceLayer, 
+    CosineDistanceLayer,
+    AbsDistanceLayer
+)
 
 def log_summary(model, dir=None, name=None):
     name = name or model.name

@@ -2,7 +2,20 @@ import tensorflow as tf
 from tensorflow import Tensor
 from tensorflow.keras import Model
 from tensorflow.keras.applications.resnet_v2 import ResNet50V2 as pre_trained_model
-from tensorflow.keras.layers import Conv2D, Flatten, Dense, Dropout, Lambda, BatchNormalization, ReLU, Add, AveragePooling2D, GlobalAveragePooling2D, Softmax
+from tensorflow.keras.layers import (
+    Conv2D, 
+    Flatten, 
+    Dense, 
+    Dropout, 
+    Lambda, 
+    BatchNormalization, 
+    ReLU, 
+    Add, 
+    AveragePooling2D, 
+    GlobalAveragePooling2D, 
+    Softmax,
+    GlobalMaxPool2D
+)
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
 import numpy as np
@@ -228,7 +241,8 @@ def build_custom_encoder(
     conv_reg_rate=0.01, 
     dense_reg_rate=0.1, 
     use_batch_norm=True,
-    latent_dense=False):
+    latent_dense=False,
+    pooling='avg'):
     # TODO pass activation as none and assign. str value so constructs in block.
     # TODO maybe linear final layer
 
@@ -263,9 +277,15 @@ def build_custom_encoder(
 
     # TODO not using sigmoid here?...
     # TODO pooling option
-    x = GlobalAveragePooling2D(dtype='float32')(x)
+    if pooling == 'avg':
+        x = GlobalAveragePooling2D(dtype='float32')(x)
+    elif pooling == 'max':
+        x = GlobalMaxPool2D(dtype='float32')(x)
+
     x = Flatten(dtype='float32')(x)
 
+    if pooling == '' or pooling is None:
+        x = Dense(latent_nodes, dtype='float32',)(x)
     # https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf
     # They use sigmoid here
     #for _ in range(dense_layers):
