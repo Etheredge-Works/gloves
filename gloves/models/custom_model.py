@@ -13,6 +13,7 @@ from icecream import ic
 
 from utils import settings
 import pathlib
+import tensorflow.keras.backend as K
 
 from utils import euclidean_distance, input_shape, get_dataset_values, limit_gpu_memory_use
 limit_gpu_memory_use()
@@ -261,6 +262,7 @@ def build_custom_encoder(
         x = block(x, latent_nodes, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
     # TODO not using sigmoid here?...
+    # TODO pooling option
     x = GlobalAveragePooling2D(dtype='float32')(x)
     x = Flatten(dtype='float32')(x)
 
@@ -296,3 +298,68 @@ def build_model(should_transfer_learn, latent_nodes, input_shape, *args, **kwarg
     head_model: tf.keras.Model = distance_model(base_model.output_shape[-1])
     return combine_models(base_model=base_model, head_model=head_model, name='vanilla'), base_model, head_model
 ##############################################################################
+
+
+class CosineDistanceLayer(tf.keras.layers.Layer):
+   def __init__(self, **kwargs):
+      super(CosineDistanceLayer, self).__init__(**kwargs)
+
+
+   def call(self, inputs):
+      # https://gist.github.com/ranarag/77014b952a649dbaf8f47969affdd3bc
+      # Tried and failed to get it working till I found this persons code
+      x1, x2 = inputs
+
+      x1_val = tf.sqrt(tf.reduce_sum(tf.matmul(x1,tf.transpose(x1)),axis=1))
+      x2_val = tf.sqrt(tf.reduce_sum(tf.matmul(x2,tf.transpose(x2)),axis=1))
+
+      denom =  tf.multiply(x1_val,x2_val)
+      num = tf.reduce_sum(tf.multiply(x1,x2),axis=1)
+      return num / denom
+
+      x = K.l2_normalize(x, axis=-1)
+      y = K.l2_normalize(y, axis=-1)
+      return K.dot(x, y) / (x*y)
+      #return K.mean(1 - K.sum((x * y), axis=-1))
+      # TODO does this have to be a layer, maybe since it's not the loss used
+      return tf.keras.losses.cosine_similarity(x, y, axis=-1)
+      return tf.losses.cosine_distance(x, y, axis=-1) #, reduction=tf.losses.Reduction.NONE)
+      #return tf.norm(x-y, ord=2, axis=-1, keepdims=True)
+
+
+class AbsDistanceLayer(tf.keras.layers.Layer):
+   def __init__(self, **kwargs):
+      super(AbsDistanceLayer, self).__init__(**kwargs)
+
+   def call(self, inputs):
+      x, y = inputs
+
+      return tf.abs(tf.math.subtract(x,y))
+
+class EuclideanDistanceLayer(tf.keras.layers.Layer):
+   def __init__(self, **kwargs):
+      super(AbsDistanceLayer, self).__init__(**kwargs)
+
+   def call(self, inputs):
+      x, y = inputs
+
+      return tf.sqrt(tf.reduce_sum(tf.math.pow(tf.math.subtract(x,y), 2), axis=-1, keepdims=True))
+
+
+class L1DistanceLayer(tf.keras.layers.Layer):
+   def __init__(self, **kwargs):
+      super(L1DistanceLayer, self).__init__(**kwargs)
+
+   def call(self, inputs):
+      x, y = inputs
+      return tf.norm(x-y, ord=1, axis=-1, keepdims=True)
+
+class L2DistanceLayer(tf.keras.layers.Layer):
+   def __init__(self, **kwargs):
+      super(L2DistanceLayer, self).__init__(**kwargs)
+
+   def call(self, inputs):
+      x, y = inputs
+      # TODO verify norm logic
+      return tf.norm(x-y, ord=2, axis=-1, keepdims=True)
+
