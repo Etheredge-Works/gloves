@@ -108,11 +108,13 @@ classifier_types:
     out_summaries_path: logs/imagenet_frozen_summaries
     use_imagenet: true
     is_frozen: true
+    model_src: gloves/models/imagenet.py
   imagenet_unfrozen:
     out_model_path: artifacts/models/gloves_imagenet_unfrozen
     out_label_encoder: artifacts/models/gloves_imagenet_unfrozen_label_encoder.joblib
     out_metrics_path: logs/imagenet_unfrozen
     out_summaries_path: logs/imagenet_unfrozen_summaries
+    model_src: gloves/models/imagenet.py
     use_imagenet: true
     is_frozen: false
   gloves_frozen:
@@ -120,6 +122,7 @@ classifier_types:
     out_label_encoder: artifacts/models/gloves_encoder_frozen_label_encoder.joblib
     out_metrics_path: logs/gloves_frozen
     out_summaries_path: logs/gloves_frozen_summaries
+    model_src: gloves/models/custom_model.py
     use_imagenet: false
     is_frozen: true
   gloves_unfrozen:
@@ -127,6 +130,7 @@ classifier_types:
     out_label_encoder: artifacts/models/gloves_encoder_unfrozen_label_encoder.joblib
     out_metrics_path: logs/gloves_unfrozen
     out_summaries_path: logs/gloves_unfrozen_summaries
+    model_src: gloves/models/custom_model.py
     use_imagenet: false
     is_frozen: false
 
@@ -135,7 +139,7 @@ classifier:
   batch_size: 32
   epochs: 1000
   verbose: 1
-  dropout_rate: 0.5
+  dropout_rate: 0.0
 
 get_my_pets:
   img: amazon/aws-cli:2.4.10

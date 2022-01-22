@@ -3,13 +3,9 @@ from pathlib import Path
 import yaml
 import tensorflow as tf
 from tensorflow.keras import mixed_precision
-from tensorflow.python.framework import auto_control_deps
-from tensorflow.python.keras.engine.training import Model
-from tensorflow.keras.layers import Flatten, Dense
-from models import softmax_model
+from models import softmax_model, build_imagenet_model
 from utils import read_decode, random_read_decode
 from siamese.data import get_labels_from_filenames
-from tensorflow.keras.applications import ResNet50V2 as pre_trained_model
 import os
 from icecream import ic
 from sklearn import preprocessing
@@ -60,16 +56,6 @@ def setup_ds(train_dir, batch_size, label_encoder=None, decode=random_read_decod
 
     return ds, label_count, label_encoder
 
-
-def build_imagenet_model(freeze):
-    imagenet = pre_trained_model(weights='imagenet', include_top=False, pooling='max', input_shape=(224,224,3))
-    if freeze:
-        for layer in imagenet.layers:
-            layer.trainable = False
-    x = imagenet.output
-    x = Flatten()(x)
-    imagenet_model = tf.keras.Model(inputs=imagenet.inputs, outputs=x)
-    return imagenet_model
 
 
 @click.command()
@@ -158,9 +144,10 @@ def train(
         model = build_imagenet_model(freeze=is_frozen)
     else:
         model = tf.keras.models.load_model(encoder_model_path)
-        if is_frozen:
-            for layer in model.layers:
-                layer.trainable = False
+        model.trainable = not is_frozen
+        # if is_frozen:
+        #     for layer in model.layers:
+        #         layer.trainable = False
 
     dvclive.init(out_metric_path)
     mlflow.tensorflow.autolog(every_n_iter=1)
