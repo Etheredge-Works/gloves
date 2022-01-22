@@ -138,6 +138,7 @@ stages:
         - ${siamese_types.l2_distance.out_encoder_path}
         - ${out_dir}/${split.train_dir}
         - ${out_dir}/${split.test_dir}
+        - ${item.model_src}
       outs:
         - ${item.out_model_path}
         - ${item.out_label_encoder}
