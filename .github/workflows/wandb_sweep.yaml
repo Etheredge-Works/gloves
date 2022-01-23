@@ -34,8 +34,6 @@ jobs:
 
   sweep:
     runs-on: [self-hosted, big-gpu]
-    strategy:
-      max-parallel: ${{ github.event.inputs.agent_count }}
     container:
       image: etheredgeb/gloves:custom-tensorflow-2.7.0
       options: --gpus=all
