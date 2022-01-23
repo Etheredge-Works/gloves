@@ -5,11 +5,37 @@ on:
     inputs:
       sweep_id:
         description: WandB Sweep ID
+        required: true
+        type: string
+      # agent_count:
+      #   description: Number of agents to sweep with
+      #   required: true
+      #   type: integer
   
 jobs:
 
+  # create_sweep:
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - uses: actions/setup-python@v2
+  #     with:
+  #       python-version: '3.8' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+  #       architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
+  #       #install-deps: true # optional. Defaults to true
+  #   - name: Install Wandb
+  #     run: pip install wandb
+  #   - name: Create Sweep
+  #     env:
+  #       WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+  #     run: |
+  #       wandb sweep wandb_sweep.yml 
+
+    
+
   sweep:
     runs-on: [self-hosted, big-gpu]
+    strategy:
+      max-parallel: ${{ github.event.inputs.agent_count }}
     container:
       image: etheredgeb/gloves:custom-tensorflow-2.7.0
       options: --gpus=all
