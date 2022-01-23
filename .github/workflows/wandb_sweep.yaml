@@ -55,5 +55,5 @@ jobs:
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
           WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
         run: |
-          wandb agent ${{ github.event.inputs.sweep_id }}
+          wandb agent benjamin-etheredge/gloves/${{ github.event.inputs.sweep_id }}
           
