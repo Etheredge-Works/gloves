@@ -40,8 +40,11 @@ jobs:
     
     steps:
       - uses: actions/checkout@v2
+      - name: Get Data
+        run: |
+          dvc pull split
 
-      - name: sweep
+      - name: Sweep
         shell: bash
         env:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
