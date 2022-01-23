@@ -1,0 +1,106 @@
+program: gloves/train_siamese.py
+method: bayes
+metric:
+  goal: maximize
+  name: test_nway_acc
+parameters:
+  train_dir: 
+    value: artifacts/train
+  test_dir: 
+    value: artifacts/test
+  mutate_anchor:
+    values:
+      - True
+      - False
+  mutate_other:
+    values:
+      - True
+      - False
+  dense_reg_rate:
+    min: 0.000001
+    max: 0.1
+  conv_reg_rate:
+    min: 0.000001
+    max: 0.1
+  latent_nodes:
+    values:
+      - 4
+      - 8
+      - 16
+      - 32
+      - 64
+      - 128
+      - 256
+      - 512
+      - 1024
+  final_activation:
+    values:
+      - linear
+      - sigmoid
+      - softmax
+      - relu
+
+  lr:
+    min: 0.000001
+    max: 0.1
+  optimizer:
+    values:
+      - adam
+      - sgd
+      - rmsprop
+      - adagrad
+      - adadelta
+      - adamax
+  epochs: 
+    min: 1
+    max: 2
+    #max: 1000
+
+  batch_size: 
+    values:
+      - 1
+      - 2
+      - 4
+      - 8
+      - 16
+      - 32
+      - 64
+      - 128
+      - 256
+      - 512
+      - 1024
+    min: 1
+    max: 128
+  reduce_lr_factor:
+    min: 0.01
+    max: 0.9
+  reduce_lr_patience:
+    min: 1
+    max: 50
+  early_stop_patience:
+    min: 1
+    max: 100
+  use_batch_norm:
+    values:
+      - True
+      - False
+  distance:
+    values:
+      - None
+      - l1
+      - l2
+      - cosine
+  use_sigmoid:
+    values:
+      - True
+      - False
+
+  monitor_metric:
+    values:
+      - loss
+      - val_loss
+      - acc
+      - val_acc
+      - test_nway_acc
+      - train_nway_acc
+

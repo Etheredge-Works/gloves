@@ -1,10 +1,12 @@
+from pygments import highlight
 import wandb
+import click
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping, ModelCheckpoint
 import tensorflow_addons as tfa
 from pathlib import Path
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Flatten, Concatenate
 from dvclive.keras import DvcLiveCallback
 import mlflow
 
@@ -71,7 +73,9 @@ def train(
     nway_freq,
     nways,
     use_batch_norm,
-    loss,
+    distance,
+    use_sigmoid,
+    monitor_metric,
     glob_pattern='*.jpg',
     nway_disabled=False,
     label_func='name',
@@ -84,7 +88,9 @@ def train(
     else:
         raise ValueError
 
-
+    if distance is None or distance == 'None':
+        latent_nodes /= 2 # if no distance layer, we need to halve the latent nodes
+    
     if mixed_precision:
       policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
       tf.keras.mixed_precision.experimental.set_policy(policy)
@@ -102,38 +108,48 @@ def train(
     input1 = tf.keras.Input(encoder.output_shape[-1])
     input2 = tf.keras.Input(encoder.output_shape[-1])
 
-    if loss == 'binary_crossentropy':
-        outputs = Dense(1, activation='sigmoid', dtype='float32')(AbsDistanceLayer(dtype='float32')((input1, input2)))
-        head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='Distance')
+    if distance == 'l1':
+        distance_layer = L1DistanceLayer(dtype='float32')((input1, input2))
+    elif distance == 'l2':
+        distance_layer = L2DistanceLayer(dtype='float32')((input1, input2))
+    elif distance == 'cosine':
+        distance_layer = CosineDistanceLayer(dtype='float32')((input1, input2))
+    elif distance == 'absolute':
+        distance_layer = AbsDistanceLayer(dtype='float32')((input1, input2))
+    elif distance is None or distance == 'None':
+        distance_layer = Concatenate()([input1, input2])
+    else:
+        raise ValueError("Unknown distance: {distance}")
+
+    if use_sigmoid:
+        outputs = Dense(1, activation='sigmoid', dtype='float32')(distance_layer)
+        head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='Sigmoid')
         loss = 'binary_crossentropy'
         nway_comparator = 'max'
         metrics=['acc']
         monitor_metric = 'val_loss'
-    else:
-        if loss == 'l1':
-            outputs = L1DistanceLayer(dtype='float32')((input1, input2))
-        elif loss == 'l2':
-            outputs = L2DistanceLayer(dtype='float32')((input1, input2))
-        elif loss == 'cosine':
-            #outputs = CosineDistanceLayer(dtype='float32')((input1, input2))
-            outputs = CosineDistanceLayer(dtype='float32')((input1, input2))
-        else:
-            raise ValueError("Unknown loss: {loss}")
 
-        head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='NormDistance')
+    else:
+        head = tf.keras.Model(inputs=(input1, input2), outputs=distance_layer, name='Distance')
         loss = tfa.losses.ContrastiveLoss()
         nway_comparator = 'min'
         metrics=None
         monitor_metric = 'loss'
 
     model = create_siamese_model(encoder, head)
-    log_summary(encoder, dir=out_summaries_path, name='encoder')
-    log_summary(head, dir=out_summaries_path, name='head')
-    log_summary(model, dir=out_summaries_path, name='model')
+    if out_summaries_path:
+        log_summary(encoder, dir=out_summaries_path, name='encoder')
+        log_summary(head, dir=out_summaries_path, name='head')
+        log_summary(model, dir=out_summaries_path, name='model')
     
-    from tensorflow.keras.optimizers import Adam
     optimizer_switch = {
-        'adam': Adam
+        'adam': tf.keras.optimizers.Adam,
+        'sgd': tf.keras.optimizers.SGD,
+        'rmsprop': tf.keras.optimizers.RMSprop,
+        'adagrad': tf.keras.optimizers.Adagrad,
+        'adadelta': tf.keras.optimizers.Adadelta,
+        'adamax': tf.keras.optimizers.Adamax,
+
     }
     optimizer = optimizer_switch[optimizer]
 
@@ -227,8 +243,133 @@ def train(
         #yaml.dump(history_dict, f, default_flow_style=False)
     #print(history_dict)
 
-    model.save(out_model_path, save_format='tf')
-    mlflow.log_artifact(out_model_path)
-    encoder.save(out_encoder_path, save_format='tf')
-    mlflow.log_artifact(out_model_path)
-    mlflow.log_artifact(out_metrics_path)
+    if out_model_path:
+        model.save(out_model_path, save_format='tf')
+        mlflow.log_artifact(out_model_path)
+    if out_encoder_path:
+        encoder.save(out_encoder_path, save_format='tf')
+    if out_metrics_path:
+        mlflow.log_artifact(out_metrics_path)
+
+
+
+@click.command()
+# File stuff
+@click.option('--train_dir', type=click.Path(exists=True), help='')
+@click.option('--train_extra_dir', default=None, type=click.Path(exists=True), help='')
+@click.option('--test_dir', type=click.Path(exists=True), help='')
+@click.option('--test_extra_dir',  default=None, type=click.Path(exists=True), help='')
+@click.option('--out_model_path', type=click.Path(exists=None), help='')
+@click.option('--out_encoder_path', type=click.Path(exists=None), help='')
+@click.option('--out_metrics_path', type=click.Path(exists=None), help='')
+@click.option('--out_summaries_path', type=click.Path(exists=None), help='')
+@click.option("--glob_pattern", default="*.jpg", type=str)
+@click.option("--nway_disabled", default=False, type=bool)
+@click.option("--label_func", default='name', type=str)
+@click.option("--height", default=224, type=int)
+@click.option("--width", default=224, type=int)
+@click.option("--depth", default=3, type=int)
+@click.option("--verbose", default=0, type=int)
+@click.option("--nways", default=32, type=int)
+@click.option("--nway_freq", default=20, type=int)
+@click.option("--eval_freq", default=1, type=int)
+@click.option("--mixed_precision", default=False, type=bool)
+
+@click.option("--mutate_anchor", type=bool)
+@click.option("--mutate_other", type=bool)
+@click.option("--dense_reg_rate", type=float)
+@click.option("--conv_reg_rate", type=float)
+@click.option("--latent_nodes", type=int)
+@click.option("--final_activation", type=str)
+@click.option("--lr", type=float)
+@click.option("--optimizer", type=str)
+@click.option("--epochs", type=int)
+@click.option("--batch_size", type=int)
+@click.option("--reduce_lr_factor", type=float)
+@click.option("--reduce_lr_patience", type=int)
+@click.option("--early_stop_patience", type=int)
+@click.option("--use_batch_norm", type=bool)
+@click.option("--distance", type=str)
+@click.option("--use_sigmoid", type=bool)
+@click.option("--monitor_metric", type=str)
+
+def main(
+    **kwargs
+        # train_dir: str, 
+        # train_extra_dir: str, 
+        # test_dir: str, 
+        # test_extra_dir: str, 
+        # out_model_path: str,
+        # out_encoder_path: str,
+        # out_metrics_path: str,
+        # out_summaries_path: str,
+        # glob_pattern: str,
+        # nway_disabled: bool,
+        # label_func: str,
+        # # Train args
+        # # hypers
+        # mutate_anchor,
+        # mutate_other,
+        # dense_reg_rate,
+        # conv_reg_rate,
+        # #activation,
+        # latent_nodes,
+        # final_activation,
+        # lr,
+        # optimizer,
+        # epochs,
+        # batch_size,
+        # verbose,
+        # reduce_lr_factor,
+        # reduce_lr_patience,
+        # early_stop_patience,
+        # mixed_precision,
+        # nway_freq,
+        # nways,
+        # use_batch_norm,
+        # distance,
+        # use_sigmoid,
+):
+
+    wandb.init(project="gloves", config=kwargs)
+    mlflow.set_experiment("gloves")
+    mlflow.log_params(kwargs)
+    train(
+        **kwargs
+        # train_dir=train_dir,
+        # train_extra_dir=train_extra_dir,
+        # test_dir=test_dir,
+        # test_extra_dir=test_extra_dir,
+        # out_model_path=out_model_path,
+        # out_encoder_path=out_encoder_path,
+        # out_metrics_path=out_metrics_path,
+        # out_summaries_path=out_summaries_path,
+        # glob_pattern=glob_pattern,
+        # nway_disabled=nway_disabled,
+        # label_func=label_func,
+        # # train kwargs
+        # # hypers
+        # mutate_anchor=mutate_anchor,
+        # mutate_other=mutate_other,
+        # dense_reg_rate=dense_reg_rate,
+        # conv_reg_rate=conv_reg_rate,
+        # #activation=activation,
+        # latent_nodes=latent_nodes,
+        # final_activation=final_activation,
+        # lr=lr,
+        # optimizer=optimizer,
+        # epochs=epochs,
+        # batch_size=batch_size,
+        # verbose=verbose,
+        # reduce_lr_factor=reduce_lr_factor,
+        # reduce_lr_patience=reduce_lr_patience,
+        # early_stop_patience=early_stop_patience,
+        # mixed_precision=mixed_precision,
+        # use_batch_norm=use_batch_norm,
+        # distance=distance,
+        # use_sigmoid=use_sigmoid,
+        )
+
+
+if __name__ == "__main__":
+    main()
