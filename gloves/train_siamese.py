@@ -223,7 +223,7 @@ def train(
     ]
 
     # TODO remove model from here and have it submit a post request to locally running rest api
-    model.compile(loss=loss, optimizer=optimizer(lr=lr), metrics=metrics)
+    model.compile(loss=loss, optimizer=optimizer(learning_rate=lr), metrics=metrics)
     print('Starting training')
     train_hist = model.fit(
         ds,
