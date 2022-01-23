@@ -37,6 +37,7 @@ jobs:
     container:
       image: etheredgeb/gloves:custom-tensorflow-2.7.0
       options: --gpus=all
+    timeout-minutes: 5760
     
     steps:
       - uses: actions/checkout@v2
