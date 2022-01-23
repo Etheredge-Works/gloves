@@ -40,7 +40,12 @@ jobs:
     
     steps:
       - uses: actions/checkout@v2
+
       - name: Get Data
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_AWS_ACCESS_KEY_ID}}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_AWS_SECRET_ACCESS_KEY }}
+          S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
         run: |
           dvc pull split
 
