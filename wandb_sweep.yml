@@ -17,10 +17,10 @@ parameters:
       - True
       - False
   dense_reg_rate:
-    min: 0.000001
+    min: 0.0
     max: 0.1
   conv_reg_rate:
-    min: 0.000001
+    min: 0.0
     max: 0.1
   latent_nodes:
     values:
@@ -65,9 +65,6 @@ parameters:
       - 32
       - 64
       - 128
-      - 256
-      - 512
-      - 1024
   reduce_lr_factor:
     min: 0.01
     max: 0.9
