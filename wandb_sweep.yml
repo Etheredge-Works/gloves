@@ -24,6 +24,8 @@ parameters:
     max: 0.1
   latent_nodes:
     values:
+      - 1
+      - 2
       - 4
       - 8
       - 16
@@ -37,23 +39,24 @@ parameters:
     values:
       - linear
       - sigmoid
-      - softmax
+      #- softmax
       - relu
 
   lr:
     min: 0.000001
-    max: 0.1
+    max: 0.01
   optimizer:
     values:
       - adam
       - sgd
       - rmsprop
-      - adagrad
-      - adadelta
-      - adamax
+      # - adagrad
+      # - adadelta
+      # - adamax
   epochs: 
-    min: 1
-    max: 1000
+    value: 1000
+    # min: 1
+    # max: 1000
 
   batch_size: 
     values:
@@ -80,7 +83,7 @@ parameters:
       - False
   distance:
     values:
-      - None
+      #- None
       - l1
       - l2
       - cosine
@@ -93,8 +96,8 @@ parameters:
     values:
       - loss
       - val_loss
-      - acc
-      - val_acc
-      - test_nway_acc
-      - train_nway_acc
+      #- acc
+      #- val_acc
+      #- test_nway_acc
+      #- train_nway_acc
 
