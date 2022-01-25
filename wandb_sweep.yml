@@ -87,10 +87,12 @@ parameters:
       - l1
       - l2
       - cosine
+      - sigmoid
   use_sigmoid:
-    values:
-      - True
-      - False
+    value: False
+    # values:
+    #   - True
+    #   - False
 
   monitor_metric:
     values:
