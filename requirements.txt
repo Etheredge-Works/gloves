@@ -399,7 +399,7 @@ tensorboard-plugin-wit==1.8.1
     # via tensorboard
 tensorflow==2.7.0
     # via -r requirements.in
-tensorflow-addons==0.13.0
+tensorflow_addons==0.15.0
     # via -r requirements.in
 tensorflow-estimator==2.7.0
     # via tensorflow
