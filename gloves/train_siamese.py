@@ -284,8 +284,8 @@ def train(
 @click.option("--width", default=224, type=int)
 @click.option("--depth", default=3, type=int)
 @click.option("--verbose", default=0, type=int)
-@click.option("--nways", default=32, type=int)
-@click.option("--nway_freq", default=20, type=int)
+@click.option("--nways", default=24, type=int)
+@click.option("--nway_freq", default=10, type=int)
 @click.option("--eval_freq", default=1, type=int)
 @click.option("--mixed_precision", default=False, type=bool)
 
