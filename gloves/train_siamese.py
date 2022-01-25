@@ -108,6 +108,12 @@ def train(
     input1 = tf.keras.Input(encoder.output_shape[-1])
     input2 = tf.keras.Input(encoder.output_shape[-1])
 
+    loss = tfa.losses.ContrastiveLoss()
+    nway_comparator = 'min'
+    metrics=['acc']
+
+    distance_output = None
+    # all must have 1 output
     if distance == 'l1':
         distance_layer = L1DistanceLayer(dtype='float32')
     elif distance == 'l2':
@@ -117,24 +123,32 @@ def train(
     elif distance == 'absolute':
         distance_layer = AbsDistanceLayer(dtype='float32')
     elif distance is None or distance == 'None':
-        distance_layer = Concatenate()([input1, input2])
-    else:
-        raise ValueError("Unknown distance: {distance}")
-    distance_output = distance_layer([input1, input2])
-
-    print(f"Distance layer: {distance_layer}")
-    if use_sigmoid:
-        outputs = Dense(1, activation='sigmoid', dtype='float32')(distance_output)
-        head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='Sigmoid')
+        distance_layer = Concatenate()
+    elif distance == 'sigmoid':
+        distance_output = Dense(1, activation='sigmoid')(Concatenate()([input1, input2]))
         loss = 'binary_crossentropy'
         nway_comparator = 'max'
-        metrics=['acc']
-
     else:
-        head = tf.keras.Model(inputs=(input1, input2), outputs=distance_output, name='Distance')
-        loss = tfa.losses.ContrastiveLoss()
-        nway_comparator = 'min'
-        metrics=['acc']
+        raise ValueError("Unknown distance: {distance}")
+
+    if distance_output is None:
+        distance_output = distance_layer([input1, input2])
+
+
+    # print(f"Distance layer: {distance_layer}")
+    # if use_sigmoid:
+    #     #outputs = Dense(1, activation='sigmoid', dtype='float32')(distance_output)
+    #     #head = tf.keras.Model(inputs=(input1, input2), outputs=outputs, name='Sigmoid')
+    #     loss = 'binary_crossentropy'
+    #     nway_comparator = 'max'
+    #     metrics=['acc']
+
+    # else:
+    #     head = tf.keras.Model(inputs=(input1, input2), outputs=distance_output, name='Distance')
+    #     loss = tfa.losses.ContrastiveLoss()
+    #     nway_comparator = 'min'
+    #     metrics=['acc']
+    head = tf.keras.Model(inputs=(input1, input2), outputs=distance_output, name='Distance')
 
     model = create_siamese_model(encoder, head)
     if out_summaries_path:
@@ -232,7 +246,7 @@ def train(
         validation_data=val_ds,
         validation_freq=eval_freq,
         #steps_per_epoch=steps_per_epoch,
-        verbose=verbose,
+        verbose=1, # needs 1 for logging?
         callbacks=callbacks
     )
     # TODO remove nway from sigmoid training
