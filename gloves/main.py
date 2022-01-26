@@ -73,9 +73,6 @@ def mlflow_log_wrapper(func):
     return inner
 
 
-
-
-
 @click.command()
 # File stuff
 @click.option('--train-dir', type=click.Path(exists=True), help='')

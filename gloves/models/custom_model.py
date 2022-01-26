@@ -140,10 +140,13 @@ def sigmoid_model(input_shape):
     return Model(inputs=(input1, input2), outputs=y_pred, name='sigmoid_model')
 
 
-def softmax_model(input_shape, label_count, 
-            dense_nodes: list = [],
-            activation='relu',
-            dropout_rate=0.0):
+def softmax_model(
+        input_shape, 
+        label_count, 
+        dense_nodes: list = [],
+        activation='relu',
+        dropout_rate=0.0
+    ):
     input1 = tf.keras.Input(input_shape)
     # TODO add dense here?
     x = input1
