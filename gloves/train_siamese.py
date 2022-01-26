@@ -37,7 +37,6 @@ def log_summary(model, dir=None, name=None):
     mlflow.log_artifact(filename)
 
 
-
 def train(
     train_dir: str, 
     train_extra_dir: str, 
@@ -231,7 +230,7 @@ def train(
     callbacks=[
         ReduceLROnPlateau(monitor=monitor_metric, factor=reduce_lr_factor, patience=reduce_lr_patience),
         *nway_callbacks,
-        EarlyStopping(monitor=monitor_metric, min_delta=0, patience=early_stop_patience, verbose=1, restore_best_weights=True),
+        #EarlyStopping(monitor=monitor_metric, min_delta=0, patience=early_stop_patience, verbose=1, restore_best_weights=True),
         MetricsCallback(),
         wandb.keras.WandbCallback(),
     ]

@@ -1,8 +1,13 @@
 program: gloves/train_siamese.py
-method: bayes
+method: random
 metric:
   goal: maximize
   name: test_nway_acc
+early_early_terminate:
+  type: hyperband
+  max_iter: 100 # nways logged every 10 so this is 1000 epochs
+  s: 10
+
 parameters:
   train_dir: 
     value: artifacts/train
@@ -17,11 +22,23 @@ parameters:
       - True
       - False
   dense_reg_rate:
-    min: 0.0
-    max: 0.1
+    values:
+      - 0.01
+      - 0.001
+      - 0.0001
+      - 0.00001
+      - 0.0
+    #distribution: log_uniform
   conv_reg_rate:
-    min: 0.0
-    max: 0.1
+    values:
+      - 0.01
+      - 0.001
+      - 0.0001
+      - 0.00001
+      - 0.0
+    # min: 0.0
+    # max: 0.1
+    #distribution: log_uniform
   latent_nodes:
     values:
       - 1
@@ -35,6 +52,9 @@ parameters:
       - 256
       - 512
       - 1024
+    # distribution: q_log_uniform
+    # q: 2
+
   final_activation:
     values:
       - linear
@@ -43,8 +63,15 @@ parameters:
       - relu
 
   lr:
-    min: 0.000001
-    max: 0.01
+    values:
+      - 0.01
+      - 0.001
+      - 0.0001
+      - 0.00001
+      - 0.000001
+    # min: 0.000001
+    # max: 0.01
+    #distribution: log_uniform
   optimizer:
     values:
       - adam
@@ -55,28 +82,26 @@ parameters:
       # - adamax
   epochs: 
     value: 1000
-    # min: 1
-    # max: 1000
 
   batch_size: 
     values:
       - 1
-      - 2
       - 4
-      - 8
       - 16
       - 32
       - 64
-      - 128
   reduce_lr_factor:
-    min: 0.01
-    max: 0.9
+    values: 
+      - 0.1
+      - 0.5
+      - 0.9
+    #distribution: log_uniform
   reduce_lr_patience:
-    min: 1
-    max: 50
-  early_stop_patience:
-    min: 1
-    max: 100
+    values:
+      - 5
+      - 10
+      - 20
+      - 50
   use_batch_norm:
     values:
       - True
