@@ -3,7 +3,7 @@ method: random
 metric:
   goal: maximize
   name: test_nway_acc
-early_early_terminate:
+early_terminate:
   type: hyperband
   max_iter: 100 # nways logged every 10 so this is 1000 epochs
   s: 10
