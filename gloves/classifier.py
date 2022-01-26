@@ -60,81 +60,85 @@ def setup_ds(train_dir, batch_size, label_encoder=None, decode=random_read_decod
 
 @click.command()
 # File stuff
-@click.option('--encoder-model-path', type=click.Path(exists=True), help='')
-@click.option('--train-dir', type=click.Path(exists=True), help='')
-@click.option('--test-dir', type=click.Path(exists=True), help='')
-@click.option('--param-path', type=click.Path(exists=True), help='')
-@click.option('--param-parent-key', type=click.STRING, help='')
-@click.option('--out-model-path', type=click.Path(exists=False), help='')
-@click.option('--out-label-encoder-path', type=click.Path(exists=None), help='')
-@click.option('--out-metrics-path', type=click.Path(exists=None), help='')
-@click.option('--mixed-precision', default=True, type=click.BOOL, help='')
-@click.option('--use-imagenet', default=True, type=click.BOOL, help='')
-@click.option('--is-frozen', default=True, type=click.BOOL, help='')
+@click.option('--mixed_precision', default=False, type=click.BOOL, help='')
+@click.option('--encoder_model_path', type=click.Path(exists=True), help='')
+@click.option('--train_dir', type=click.Path(exists=True), help='')
+@click.option('--test_dir', type=click.Path(exists=True), help='')
+@click.option('--out_model_path', type=click.Path(exists=False), help='')
+@click.option('--out_label_encoder_path', type=click.Path(exists=None), help='')
+@click.option('--out_metrics_path', type=click.Path(exists=None), help='')
+@click.option('--use_imagenet', default=True, type=click.BOOL, help='')
+@click.option('--is_frozen', default=True, type=click.BOOL, help='')
+# passed through (ish)
+@click.option('--verbose', default=1, type=click.INT)
+@click.option('--batch_size', type=click.INT, help='give power of two')
+@click.option('--epochs', type=click.INT)
+@click.option('--dropout_rate', type=click.FLOAT)
+@click.option('--learning_rate', type=click.FLOAT)
+@click.option('--mutate_ds', type=click.BOOL)
+@click.option('--lr_monitor_metric', type=click.STRING)
+@click.option('--lr_monitor_patience', type=click.INT)
+@click.option('--lr_monitor_factor', type=click.FLOAT)
+@click.option('--stop_monitor_metric', type=click.STRING)
+@click.option('--stop_monitor_patience', type=click.INT)
+@click.option('--optimizer', type=click.STRING)
+@click.option('--activation', type=click.STRING)
+@click.option('--layers', type=click.INT)
+@click.option('--nodes', type=click.INT, help='give power of two')
 def main(
-    encoder_model_path: str,
-    train_dir: str,
-    test_dir: str,
-    param_path,
-    param_parent_key,
-    out_model_path: Path,
-    out_label_encoder_path: Path,
-    out_metrics_path,
     mixed_precision: bool,
-    use_imagenet,
-    is_frozen
+    **train_kwargs
 ):
-
 
     if mixed_precision:
       policy = tf.keras.mixed_precision.experimental.Policy('mixed_float16')
       tf.keras.mixed_precision.experimental.set_policy(policy)
-    with open(param_path, "r") as f:
-        train_kwargs = yaml.safe_load(f)[param_parent_key]
 
-    sub_name = "siamese" if use_imagenet else "imagenet"
-    frozen = "frozen" if is_frozen else "unfrozen"
-    project_name = f"gloves-classifier-{sub_name}-{frozen}"
     wandb.init(
-        #project=project_name, 
         project="gloves-classifier",
-        config=dict(
-            type=sub_name,
-            frozen=is_frozen,
-            mixed_precision=mixed_precision,
-            **train_kwargs)
-    )
+        config=train_kwargs)
     mlflow.set_experiment("gloves-classifier")
     mlflow.start_run()
-    mlflow.log_params(dict(
-        type=sub_name,
-        frozen=is_frozen,
-        mixed_precision=mixed_precision,
-    ))
-
-    train(train_dir, test_dir, encoder_model_path, out_model_path, out_metrics_path, out_label_encoder_path,
-          use_imagenet=use_imagenet, is_frozen=is_frozen,
-          **train_kwargs)
+    mlflow.log_params(train_kwargs)
+    train(**train_kwargs)
 
 def train(
     train_dir,
     test_dir,
     encoder_model_path,
     out_model_path,
-    out_metric_path,
+    out_metrics_path,
     out_label_encoder_path,
     use_imagenet,
     is_frozen,
-    *,
+    verbose,
     batch_size,
     epochs,
-    verbose,
     dropout_rate,
-    **_  # Ignore other kwargs
-):
+    learning_rate,
+    mutate_ds,
+    lr_monitor_metric,
+    lr_monitor_patience,
+    lr_monitor_factor,
+    stop_monitor_metric,
+    stop_monitor_patience,
+    optimizer,
+    activation,
+    layers,
+    nodes,
 
-    ds, label_count, label_encoder = setup_ds(train_dir, batch_size, decode=random_read_decode)
-    joblib.dump(label_encoder, out_label_encoder_path)
+    #**_  # Ignore other kwargs
+):
+    nodes = 2**nodes
+
+    ds, label_count, label_encoder = setup_ds(
+        train_dir, 
+        batch_size, 
+        decode=random_read_decode if mutate_ds else read_decode
+    )
+
+    if out_label_encoder_path:
+        joblib.dump(label_encoder, out_label_encoder_path)
 
     val_ds, _, _ = setup_ds(test_dir, batch_size, label_encoder, decode=read_decode, reshuffle=False)
     val_ds = val_ds.cache().prefetch(tf.data.AUTOTUNE)
@@ -148,29 +152,52 @@ def train(
         # if is_frozen:
         #     for layer in model.layers:
         #         layer.trainable = False
-
-    dvclive.init(out_metric_path)
+    if out_metrics_path:
+        dvclive.init(out_metrics_path)
     mlflow.tensorflow.autolog(every_n_iter=1)
-    mlflow.log_artifact(out_label_encoder_path)
+    if out_label_encoder_path:
+        mlflow.log_artifact(out_label_encoder_path)
 
-    head = softmax_model(model.output_shape[1:], label_count, dense_nodes=[256], dropout_rate=dropout_rate)
+    head = softmax_model(
+        model.output_shape[1:], 
+        label_count, 
+        dense_nodes=[nodes for _ in range(layers)], 
+        dropout_rate=dropout_rate,
+        activation=activation,
+    )
     classifier = tf.keras.Model(inputs=model.inputs, outputs=head(model.outputs))
-    classifier.compile(optimizer='adam', loss=tf.keras.losses.CategoricalCrossentropy(), 
-            metrics=['acc', tf.keras.metrics.Precision(name='precision'), tf.keras.metrics.Recall(name='recall'), tf.keras.metrics.AUC(name='auc')])
 
+    if optimizer == 'adam':
+        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    elif optimizer == 'sgd':
+        optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate)
+    elif optimizer == 'rmsprop':
+        optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
+    else:
+        raise Exception(f"Unknown optimizer: {optimizer}")
+
+    classifier.compile(optimizer=optimizer, loss=tf.keras.losses.CategoricalCrossentropy(), 
+            metrics=[
+                'acc', 
+                tf.keras.metrics.Precision(name='precision'), 
+                tf.keras.metrics.Recall(name='recall'), 
+                tf.keras.metrics.AUC(name='auc')])
+
+    # TODO add AUC to montior metrics list since imbalanced
     classifier.fit(ds, 
         validation_data=val_ds,
         validation_freq=1,
         epochs=epochs, verbose=verbose, callbacks=[
-            ReduceLROnPlateau(monitor='loss', patience=10),
+            ReduceLROnPlateau(monitor=lr_monitor_metric, patience=lr_monitor_patience, factor=lr_monitor_factor),
             MetricsCallback(),
-            EarlyStopping(monitor='val_loss', patience=40, verbose=1, restore_best_weights=True),
+            #EarlyStopping(monitor=stop_monitor_metric, patience=stop_monitor_patience, verbose=1, restore_best_weights=True),
             wandb.keras.WandbCallback(),
         ]
     )
 
-    classifier.save(out_model_path, save_format='tf')
-    mlflow.log_artifact(out_model_path)
+    if out_model_path:
+        classifier.save(out_model_path, save_format='tf')
+        mlflow.log_artifact(out_model_path)
 
 if __name__ == "__main__":
     main()
