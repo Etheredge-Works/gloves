@@ -74,6 +74,8 @@ def train(
     use_batch_norm,
     distance,
     use_sigmoid,
+    pooling,
+    conv_layers,
     monitor_metric,
     glob_pattern='*.jpg',
     nway_disabled=False,
@@ -102,6 +104,8 @@ def train(
         dense_reg_rate=dense_reg_rate,
         conv_reg_rate=conv_reg_rate,
         use_batch_norm=use_batch_norm,
+        pooling=pooling,
+        conv_layers=conv_layers
     )
 
     input1 = tf.keras.Input(encoder.output_shape[-1])
@@ -210,14 +214,14 @@ def train(
         test_nway_ds = create_n_way_dataset(
             items=test_files_tf, 
             labels=test_labels,
-            ratio=1.0, 
+            ratio=(len(test_labels)/nways)/len(test_labels), # still not sure what ratio to use
             anchor_decode_func=read_decode, 
             n_way_count=nways)
 
         nway_ds = create_n_way_dataset(
             items=train_files_tf, 
             labels=train_labels,
-            ratio=0.1, 
+            ratio=(len(train_labels)/nways)/len(train_labels), # still not sure what ratio to use
             anchor_decode_func=read_decode, 
             n_way_count=nways)
     
@@ -227,6 +231,7 @@ def train(
     nway_callbacks = [] if nway_disabled else [
         NWayCallback(encoder=encoder, head=head, nway_ds=nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="train_"),
         NWayCallback(encoder=encoder, head=head, nway_ds=test_nway_ds, freq=nway_freq, comparator=nway_comparator, prefix_name="test_")]
+
     callbacks=[
         ReduceLROnPlateau(monitor=monitor_metric, factor=reduce_lr_factor, patience=reduce_lr_patience),
         *nway_callbacks,
@@ -305,6 +310,8 @@ def train(
 @click.option("--distance", type=str)
 @click.option("--use_sigmoid", type=bool)
 @click.option("--monitor_metric", type=str)
+@click.option("--pooling", type=str)
+@click.option("--conv_layers", type=int, default = 3)
 
 def main(
     **kwargs

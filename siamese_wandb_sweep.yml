@@ -5,14 +5,18 @@ metric:
   name: test_nway_acc
 early_terminate:
   type: hyperband
-  max_iter: 100 # nways logged every 10 so this is 1000 epochs
-  s: 10
+  min_iter: 350
+  s: 3
 
 parameters:
   train_dir: 
     value: artifacts/train
   test_dir: 
     value: artifacts/test
+
+  conv_layers:
+    min: 1
+    max: 6
   mutate_anchor:
     values:
       - True
@@ -60,7 +64,7 @@ parameters:
       - linear
       - sigmoid
       #- softmax
-      - relu
+      # - relu
 
   lr:
     values:
@@ -83,13 +87,16 @@ parameters:
   epochs: 
     value: 1000
 
+  nways: 
+    value: 16
   batch_size: 
-    values:
-      - 1
-      - 4
-      - 16
-      - 32
-      - 64
+    value: 16 # locking in for now due to batch norm and nway
+    # values:
+    #   - 1
+    #   - 4
+    #   - 16
+    #   - 32
+    #   - 64
   reduce_lr_factor:
     values: 
       - 0.1

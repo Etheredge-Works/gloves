@@ -241,10 +241,11 @@ def build_custom_encoder(
     #dropout_rate, 
     #padding='same', 
     #pooling='max', 
+    conv_layers,
     conv_reg_rate=0.01, 
     dense_reg_rate=0.1, 
     use_batch_norm=True,
-    latent_dense=False,
+    latent_dense=True,
     pooling='avg'):
     # TODO pass activation as none and assign. str value so constructs in block.
     # TODO maybe linear final layer
@@ -262,16 +263,23 @@ def build_custom_encoder(
     x = ReLU()(BatchNormalization()(x))
     x = MaxPool2D(pool_size=3, strides=2, padding='same')(x)
 
-    #x = block(x, 32, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    #x = block(x, 32, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    if conv_layers > 0:
+        x = block(x, 32, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+        if conv_layers > 4:
+            x = block(x, 32, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
-    x = block(x, 64, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    #x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    if conv_layers > 1:
+        x = block(x, 64, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+        if conv_layers > 5:
+            x = block(x, 64, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
-    x = block(x, 128, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
-    #x = block(x, 128, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    if conv_layers > 2:
+        x = block(x, 128, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+        if conv_layers > 6:
+            x = block(x, 128, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
-    x = block(x, 256, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
+    if conv_layers > 3:
+        x = block(x, 256, downsample=True, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
 
     # TODO why didn't this work well? lack of sigmoid? not expressive enough?
     #x = block(x, latent_nodes, reg_rate=conv_reg_rate, use_batch_norm=use_batch_norm)
@@ -287,8 +295,8 @@ def build_custom_encoder(
 
     x = Flatten(dtype='float32')(x)
 
-    if pooling == '' or pooling is None:
-        x = Dense(latent_nodes, dtype='float32',)(x)
+    # if pooling == '' or pooling is None:
+    #     x = Dense(latent_nodes, dtype='float32',)(x)
     # https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf
     # They use sigmoid here
     #for _ in range(dense_layers):
