@@ -45,61 +45,40 @@ stages:
     - ${out_dir}/${split.train_dir}
     - ${out_dir}/${split.test_dir}
     
-  # siamese_pretrain:
-  #   foreach: ${siamese_types}
-  #   do:
-  #     cmd: >
-  #       python gloves/main.py
-  #       --train-dir /nfs/data/imagenet/imagenet21k_resized/imagenet21k_train
-  #       --test-dir  /nfs/data/imagenet/imagenet21k_resized/imagenet21k_train
-  #       --sigmoid-head ${item.sigmoid_head}
-  #       --param-path params.yaml
-  #       --param-parent-key siamese
-  #       --out-model-path ${item.out_model_path}_imagenet
-  #       --out-encoder-path ${item.out_encoder_path}_imagenet
-  #       --out-metrics-path ${item.out_metrics_path}_imagenet
-  #       --out-summaries-path ${item.out_summaries_path}_imagenet
-  #       --glob-pattern "**/*.JPEG"
-  #       --nway-disabled True
-  #       --label-func path
-  #     params:
-  #       - siamese
-  #     deps:
-  #       - gloves/imagenet.py
-  #       - ${siamese_model_src}
-  #       #- ${out_dir}/${split.train_dir}_imagenet
-  #       #- ${out_dir}/${split.test_dir}_imagenet
-  #     outs:
-  #       - ${item.out_model_path}_imagenet
-  #       - ${item.out_encoder_path}_imagenet
-  #     # TODO why no metrics html?
-  #     #plots:
-  #       #- ${item.out_metrics_path}_imagenet
-  #     #metrics:
-  #       #- ${item.out_metrics_path}.html
-  #       #- ${item.out_metrics_path}_imagenet.json:
-  #           #cache: false
-  #       #- ${item.out_summaries_path}_imagenet
-
   siamese:
     foreach: ${siamese_types}
     do:
       cmd: >
         python ${siamese_src}
-        --train-dir ${out_dir}/${split.train_dir}
-        --test-dir ${out_dir}/${split.test_dir}
-        --loss ${item.loss}
-        --param-path params.yaml
-        --param-parent-key siamese
-        --out-model-path ${item.out_model_path}
-        --out-encoder-path ${item.out_encoder_path}
-        --out-metrics-path ${item.out_metrics_path}
-        --out-summaries-path ${item.out_summaries_path}
-     
+        --train_dir ${out_dir}/${split.train_dir}
+        --test_dir ${out_dir}/${split.test_dir}
+        --distance ${item.distance}
+        --out_model_path ${item.out_model_path}
+        --out_encoder_path ${item.out_encoder_path}
+        --out_metrics_path ${item.out_metrics_path}
+        --out_summaries_path ${item.out_summaries_path}
+        --mutate_anchor ${siamese.mutate_anchor}
+        --mutate_other ${siamese.mutate_other}
+        --dense_reg_rate ${siamese.dense_reg_rate}
+        --conv_reg_rate ${siamese.conv_reg_rate}
+        --latent_nodes ${siamese.latent_nodes}
+        --final_activation ${siamese.final_activation}
+        --lr ${siamese.lr}
+        --optimizer ${siamese.optimizer}
+        --epochs ${siamese.epochs}
+        --batch_size ${siamese.batch_size}
+        --reduce_lr_factor ${siamese.reduce_lr_factor}
+        --reduce_lr_patience ${siamese.reduce_lr_patience}
+        --use_batch_norm ${siamese.use_batch_norm}
+        --use_sigmoid ${siamese.use_sigmoid}
+        --monitor_metric ${siamese.monitor_metric}
+        --pooling ${siamese.pooling}
+        --conv_layers ${siamese.conv_layers}
+    
       params:
         - siamese
       deps:
-        - ${siamese_src}
+        #- gloves/imagenet.py
         - ${siamese_model_src}
         - ${out_dir}/${split.train_dir}
         - ${out_dir}/${split.test_dir}
@@ -107,52 +86,129 @@ stages:
         - ${item.out_model_path}
         - ${item.out_encoder_path}
       # TODO why no metrics html?
-      plots:
-        - ${item.out_metrics_path}
+      #plots:
+        #- ${item.out_metrics_path}
       metrics:
         #- ${item.out_metrics_path}.html
         - ${item.out_metrics_path}.json:
             cache: false
         - ${item.out_summaries_path}
+  # siamese_main:
+  #   cmd: >
+  #     python ${siamese_src}
+  #     --train_dir ${out_dir}/${split.train_dir}
+  #     --test_dir ${out_dir}/${split.test_dir}
+  #     --distance ${siamese.distance}
+  #     --out_model_path ${siamese.out_model_path}
+  #     --out_encoder_path ${siamese.out_encoder_path}
+  #     --out_metrics_path ${siamese.out_metrics_path}
+  #     --out_summaries_path ${siamese.out_summaries_path}
+  #     --mutate_anchor ${siamese.mutate_anchor}
+  #     --mutate_other ${siamese.mutate_other}
+  #     --dense_reg_rate ${siamese.dense_reg_rate}
+  #     --conv_reg_rate ${siamese.conv_reg_rate}
+  #     --latent_nodes ${siamese.latent_nodes}
+  #     --final_activation ${siamese.final_activation}
+  #     --lr ${siamese.lr}
+  #     --optimizer ${siamese.optimizer}
+  #     --epochs ${siamese.epochs}
+  #     --batch_size ${siamese.batch_size}
+  #     --reduce_lr_factor ${siamese.reduce_lr_factor}
+  #     --reduce_lr_patience ${siamese.reduce_lr_patience}
+  #     --use_batch_norm ${siamese.use_batch_norm}
+  #     --use_sigmoid ${siamese.use_sigmoid}
+  #     --monitor_metric ${siamese.monitor_metric}
+    
+  #   params:
+  #     - siamese
+  #   deps:
+  #     - ${siamese_src}
+  #     - ${siamese_model_src}
+  #     - ${out_dir}/${split.train_dir}
+  #     - ${out_dir}/${split.test_dir}
+  #   outs:
+  #     - ${siamese.out_model_path}
+  #     - ${siamese.out_encoder_path}
+  #   # TODO why no metrics html?
+  #   plots:
+  #     - ${siamese.out_metrics_path}
+  #   metrics:
+  #     #- ${item.out_metrics_path}.html
+  #     - ${siamese.out_metrics_path}.json:
+  #         cache: false
+  #     - ${siamese.out_summaries_path}
 
-  classifier:
-    foreach: ${classifier_types}
-    do:
-      cmd: >
-        python ${classifier_src}
-        --encoder-model-path ${siamese_types.l2_distance.out_encoder_path}
-        --train-dir ${out_dir}/${split.train_dir}
-        --test-dir ${out_dir}/${split.test_dir}
-        --param-path params.yaml
-        --param-parent-key classifier
-        --out-model-path ${item.out_model_path}
-        --out-label-encoder-path ${item.out_label_encoder}
-        --out-metrics-path ${item.out_metrics_path}
-        --mixed-precision ${siamese.mixed_precision}
-        --use-imagenet ${item.use_imagenet}
-        --is-frozen ${item.is_frozen}
-      params:
-        - classifier
-      deps:
-        - ${classifier_src}
-        - ${siamese_types.l2_distance.out_encoder_path}
-        - ${out_dir}/${split.train_dir}
-        - ${out_dir}/${split.test_dir}
-        - ${item.model_src}
-      outs:
-        - ${item.out_model_path}
-        - ${item.out_label_encoder}
-      # TODO why no metrics html?
-      plots:
-        - ${item.out_metrics_path}
-      metrics:
-        - ${item.out_metrics_path}.json:
-            cache: false
-        #- ${item.out_summaries_path}
-      #live:
-        #${item.out_metrics_path}:
-          #summary: true
-          #html: true
+
+  # siamese:
+  #   foreach: ${siamese_types}
+  #   do:
+  #     cmd: >
+  #       python ${siamese_src}
+  #       --train-dir ${out_dir}/${split.train_dir}
+  #       --test-dir ${out_dir}/${split.test_dir}
+  #       --distance ${item.distance}
+  #       --out-model-path ${item.out_model_path}
+  #       --out-encoder-path ${item.out_encoder_path}
+  #       --out-metrics-path ${item.out_metrics_path}
+  #       --out-summaries-path ${item.out_summaries_path}
+     
+  #     params:
+  #       - siamese
+  #     deps:
+  #       - ${siamese_src}
+  #       - ${siamese_model_src}
+  #       - ${out_dir}/${split.train_dir}
+  #       - ${out_dir}/${split.test_dir}
+  #     outs:
+  #       - ${item.out_model_path}
+  #       - ${item.out_encoder_path}
+  #     # TODO why no metrics html?
+  #     plots:
+  #       - ${item.out_metrics_path}
+  #     metrics:
+  #       #- ${item.out_metrics_path}.html
+  #       - ${item.out_metrics_path}.json:
+  #           cache: false
+  #       - ${item.out_summaries_path}
+
+  # classifier:
+  #   foreach: ${classifier_types}
+  #   do:
+  #     cmd: >
+  #       python ${classifier_src}
+  #       --encoder-model-path ${siamese_types.l2_distance.out_encoder_path}
+  #       --train-dir ${out_dir}/${split.train_dir}
+  #       --test-dir ${out_dir}/${split.test_dir}
+  #       --param-path params.yaml
+  #       --param-parent-key classifier
+  #       --out-model-path ${item.out_model_path}
+  #       --out-label-encoder-path ${item.out_label_encoder}
+  #       --out-metrics-path ${item.out_metrics_path}
+  #       --mixed-precision ${siamese.mixed_precision}
+  #       --use-imagenet ${item.use_imagenet}
+  #       --is-frozen ${item.is_frozen}
+  #     params:
+  #       - classifier
+  #     deps:
+  #       - ${classifier_src}
+  #       - ${siamese_types.l2_distance.out_encoder_path}
+  #       - ${out_dir}/${split.train_dir}
+  #       - ${out_dir}/${split.test_dir}
+  #       - ${item.model_src}
+  #     outs:
+  #       - ${item.out_model_path}
+  #       - ${item.out_label_encoder}
+  #     # TODO why no metrics html?
+  #     plots:
+  #       - ${item.out_metrics_path}
+  #     metrics:
+  #       - ${item.out_metrics_path}.json:
+  #           cache: false
+  #       #- ${item.out_summaries_path}
+  #     #live:
+  #       #${item.out_metrics_path}:
+  #         #summary: true
+  #         #html: true
 
   # TODO continue hydra experiments
   #hydra:

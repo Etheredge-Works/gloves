@@ -16,6 +16,7 @@ from siamese.callbacks import NWayCallback
 from utils import read_decode, random_read_decode
 from models import build_custom_encoder, sigmoid_model
 from utils.callbacks import MetricsCallback
+import dvclive
 
 from models.custom_model import (
     L1DistanceLayer, 
@@ -82,6 +83,9 @@ def train(
     label_func='name',
     **_  # Other args in params file to ignore
 ):
+    if out_metrics_path:
+        dvclive.init(out_metrics_path, summary=True, html=True)
+
     if label_func == 'name':
         label_func = get_labels_from_filenames
     elif label_func == 'path':
@@ -132,7 +136,7 @@ def train(
         loss = 'binary_crossentropy'
         nway_comparator = 'max'
     else:
-        raise ValueError("Unknown distance: {distance}")
+        raise ValueError(f"Unknown distance: {distance}")
 
     if distance_output is None:
         distance_output = distance_layer([input1, input2])
@@ -193,7 +197,7 @@ def train(
         #other_items=extra_train_files,
         #other_labels=get_labels_from_files_path(extra_train_files),
         #repeat=1,
-    ).batch(batch_size).prefetch(-1)
+    ).batch(batch_size, drop_remainder=True, num_parallel_calls=tf.data.AUTOTUNE).prefetch(-1)
 
     # NOTE can just take from ds here to remove those items from the training set but leave the files available
     #ds = ds.take(1000)
@@ -204,9 +208,9 @@ def train(
         # anchor_items=train_files_tf,
         # anchor_labels=train_labels,
         anchor_decode_func=read_decode,
-        # other_items=train_files_tf, # needed since test set won't have many items
-        # other_labels=train_labels
-    ).batch(batch_size).prefetch(-1) # TODO param cache
+        other_items=train_files_tf, # needed since test set won't have many items
+        other_labels=train_labels
+    ).batch(batch_size, drop_remainder=True, num_parallel_calls=tf.data.AUTOTUNE).prefetch(-1) # TODO param cache
     # TODO should val_ds be cached? or should it change?
 
     if not nway_disabled:
@@ -214,7 +218,8 @@ def train(
         test_nway_ds = create_n_way_dataset(
             items=test_files_tf, 
             labels=test_labels,
-            ratio=(len(test_labels)/nways)/len(test_labels), # still not sure what ratio to use
+            ratio=1.0,
+            #ratio=(len(test_labels)/nways)/len(test_labels), # still not sure what ratio to use
             anchor_decode_func=read_decode, 
             n_way_count=nways)
 
@@ -289,7 +294,7 @@ def train(
 @click.option("--depth", default=3, type=int)
 @click.option("--verbose", default=0, type=int)
 @click.option("--nways", default=24, type=int)
-@click.option("--nway_freq", default=10, type=int)
+@click.option("--nway_freq", default=1, type=int)
 @click.option("--eval_freq", default=1, type=int)
 @click.option("--mixed_precision", default=False, type=bool)
 

@@ -37,35 +37,41 @@ split:
   img: etheredgeb/split_oxford_pet_data:latest
   train_dir: train
   test_dir: test
-  ratio: 0.2
+  ratio: 0.1
 
 siamese_types:
   l1_distance:
-    out_model_path: artifacts/models/siamese_l1_distance/model
-    out_encoder_path: artifacts/models/siamese_l1_distance/encoder
-    out_metrics_path: logs/l1_distance_siamese_logs
-    out_summaries_path: logs/l1_distance_siamese_summaries
-    loss: l1
+    out_model_path: artifacts/models/siamese_l1/model
+    out_encoder_path: artifacts/models/siamese_l1/encoder
+    out_metrics_path: artifacts/logs/l1
+    out_summaries_path: artifacts/logs/l1
+    distance: l1
   l2_distance:
-    out_model_path: artifacts/models/siamese_l2_distance/model
-    out_encoder_path: artifacts/models/siamese_l2_distance/encoder
-    out_metrics_path: logs/l2_distance_siamese_logs
-    out_summaries_path: logs/l2_distance_siamese_summaries
-    loss: l2
+    out_model_path: artifacts/models/siamese_l2/model
+    out_encoder_path: artifacts/models/siamese_l2/encoder
+    out_metrics_path: artifacts/logs/l2
+    out_summaries_path: artifacts/logs/l2_summaries
+    distance: l2
   cosine_distance:
-    out_model_path: artifacts/models/siamese_cosine_distance/model
-    out_encoder_path: artifacts/models/siamese_cosine_distance/encoder
-    out_metrics_path: logs/cosine_distance_siamese_logs
-    out_summaries_path: logs/cosine_distance_siamese_summaries
-    loss: cosine
+    out_model_path: artifacts/models/cosine/model
+    out_encoder_path: artifacts/models/cosine/encoder
+    out_metrics_path: artifacts/logs/cosine
+    out_summaries_path: artifacts/logs/cosine_summaries
+    distance: cosine
   sigmoid:
-    out_model_path: artifacts/models/siamese_sigmoid/model
-    out_encoder_path: artifacts/models/siamese_sigmoid/encoder
-    out_metrics_path: logs/sigmoid_siamese_logs
-    out_summaries_path: logs/sigmoid_siamese_summaries
-    loss: binary_crossentropy
+    out_model_path: artifacts/models/sigmoid/model
+    out_encoder_path: artifacts/models/sigmoid/encoder
+    out_metrics_path: artifacts/logs/sigmoid
+    out_summaries_path: artifacts/logs/sigmoid_summaries
+    distance: sigmoid
+  main:
+    out_model_path: artifacts/models/siamese/model
+    out_encoder_path: artifacts/models/siamese/encoder
+    out_metrics_path: artifacts/logs/siamese
+    out_summaries_path: artifacts/logs/siamese_summaries
+    distance: l2
 
-siamese_src: gloves/main.py
+siamese_src: gloves/train_siamese.py
 siamese_model_src: gloves/models/custom_model.py
 
 siamese:
@@ -86,7 +92,7 @@ siamese:
   final_activation: linear
   lr: 0.0001
   optimizer: adam
-  epochs: 1000
+  epochs: 100
   batch_size: 32
   verbose: 0
   eval_freq: 1
@@ -97,6 +103,17 @@ siamese:
   nway_freq: 20
   nways: 32
   use_batch_norm: true
+  use_sigmoid: false
+  conv_layers: 3
+  pooling: None
+
+  distance: l2
+  # out_model_path: artifacts/models/siamese/model
+  # out_encoder_path: artifacts/models/siamese/encoder
+  # out_metrics_path: logs/siamese_logs
+  # out_summaries_path: logs/siamese_summaries
+  monitor_metric: val_loss
+
 
 classifier_src: gloves/classifier.py
 
@@ -137,7 +154,7 @@ classifier_types:
 classifier:
   # hypers
   batch_size: 32
-  epochs: 1000
+  epochs: 10
   verbose: 1
   dropout_rate: 0.0
 
