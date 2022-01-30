@@ -245,7 +245,7 @@ def build_custom_encoder(
     conv_reg_rate=0.01, 
     dense_reg_rate=0.1, 
     use_batch_norm=True,
-    latent_dense=True,
+    latent_dense=False,
     pooling='avg'):
     # TODO pass activation as none and assign. str value so constructs in block.
     # TODO maybe linear final layer
@@ -392,5 +392,7 @@ class L2DistanceLayer(tf.keras.layers.Layer):
    def call(self, inputs):
       x, y = inputs
       # TODO verify norm logic
+      return tf.sqrt(tf.reduce_sum(tf.math.pow(tf.math.subtract(x,y), 2), axis=-1, keepdims=True))
+      return tf.linalg.norm(x-y,axis=1,keepdims=True)
       return tf.norm(x-y, ord=2, axis=-1, keepdims=True)
 

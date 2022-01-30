@@ -36,6 +36,8 @@ def log_summary(model, dir=None, name=None):
     with open(filename, "w") as f:
         model.summary(print_fn=lambda x: f.write(x + '\n'))
     mlflow.log_artifact(filename)
+    #wandb.F({filename: filename})
+
 
 
 def train(
@@ -75,9 +77,10 @@ def train(
     use_batch_norm,
     distance,
     use_sigmoid,
+    monitor_metric,
     pooling,
     conv_layers,
-    monitor_metric,
+    latent_dense,
     glob_pattern='*.jpg',
     nway_disabled=False,
     label_func='name',
@@ -109,7 +112,8 @@ def train(
         conv_reg_rate=conv_reg_rate,
         use_batch_norm=use_batch_norm,
         pooling=pooling,
-        conv_layers=conv_layers
+        conv_layers=conv_layers,
+        latent_dense=latent_dense,
     )
 
     input1 = tf.keras.Input(encoder.output_shape[-1])
@@ -294,7 +298,7 @@ def train(
 @click.option("--depth", default=3, type=int)
 @click.option("--verbose", default=0, type=int)
 @click.option("--nways", default=24, type=int)
-@click.option("--nway_freq", default=1, type=int)
+@click.option("--nway_freq", default=5, type=int)
 @click.option("--eval_freq", default=1, type=int)
 @click.option("--mixed_precision", default=False, type=bool)
 
@@ -317,6 +321,7 @@ def train(
 @click.option("--monitor_metric", type=str)
 @click.option("--pooling", type=str)
 @click.option("--conv_layers", type=int, default = 3)
+@click.option("--latent_dense", type=bool)
 
 def main(
     **kwargs
@@ -359,6 +364,7 @@ def main(
     wandb.init(project="gloves", config=kwargs)
     mlflow.set_experiment("gloves")
     mlflow.log_params(kwargs)
+    mlflow.tensorflow.autolog(every_n_iter=1)
     train(
         **kwargs
         # train_dir=train_dir,
